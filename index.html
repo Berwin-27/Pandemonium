@@ -1418,6 +1418,26 @@ function getWinsToNextEvo(id) {
   return null;
 }
 
+// Boss battles — one per Michelin star, mandatory to earn the star
+const BOSSES = [
+  null, // no star 0
+  { id:'boss1', name:'Sous Chef Steve',     emoji:'👨‍🍳', element:'fire',     hp:180,  atk:12, star:1,
+    intro:'Sous Chef Steve storms in! "You call yourself a chef?! Prove your seasoning or get out of MY kitchen!"',
+    defeat:'Steve wipes his brow. "Fine... you can stay. For now."' },
+  { id:'boss2', name:'Health Inspector',     emoji:'🕵️', element:'ice',      hp:280,  atk:18, star:2,
+    intro:'The Health Inspector appears! "I\'m shutting this operation DOWN. Your Pandex license is EXPIRED!"',
+    defeat:'"Everything... checks out. Carry on, chef." He stamps your license reluctantly.' },
+  { id:'boss3', name:'Gordon Ramsay',        emoji:'😡', element:'fire',     hp:400,  atk:24, star:3,
+    intro:'GORDON RAMSAY kicks open the door! "THIS PANDEX IS RAW! IT\'S BLOODY RAW! FIGHT ME OR GET OUT!"',
+    defeat:'"Finally... some good food." Gordon nods with the faintest respect.' },
+  { id:'boss4', name:'The Food Critic',      emoji:'🧐', element:'electric', hp:550,  atk:30, star:4,
+    intro:'The Food Critic adjusts her monocle. "Hmm. Your collection is... adequate. But can you PERFORM under pressure?"',
+    defeat:'"Three stars. Out of five. ...Fine, four." She scribbles furiously in her notepad.' },
+  { id:'boss5', name:'Chef Supreme Azurite', emoji:'👑', element:'electric', hp:750,  atk:38, star:5,
+    intro:'The legendary Chef Supreme Azurite materializes! "You have gathered them all. Now face the ULTIMATE culinary exam!"',
+    defeat:'"You... you have surpassed even me. The title of Chef Supreme is yours." Azurite bows.' }
+];
+
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
 const TOTAL_DEX = 63;
@@ -1688,7 +1708,8 @@ const state = {
   gadget: false,            // professor's gadget (extends fog-of-war)
   adminPrompt: false,       // text input dialog for admin code
   applianceWins: {},        // id → battle wins with that appliance active
-  shinies: {}               // id → true if caught as shiny
+  shinies: {},              // id → true if caught as shiny
+  bossesDefeated: {}        // boss id → true when beaten
 };
 
 function checkAdminTerminal() {
@@ -1745,13 +1766,21 @@ function countRarityCaught(r) {
 }
 function computeMichelin() {
   let s = 0;
-  if (countRarityCaught('common') >= 5) s = 1;
-  if (state.caught.size >= 12) s = Math.max(s, 2);
-  if (hasRarityCaught('mythic')) s = Math.max(s, 3);
-  if (state.caught.size >= 30) s = Math.max(s, 4);
-  if (state.caught.size >= TOTAL_DEX) s = 5;
+  if (countRarityCaught('common') >= 5 && state.bossesDefeated['boss1']) s = 1;
+  if (state.caught.size >= 12 && state.bossesDefeated['boss2']) s = Math.max(s, 2);
+  if (hasRarityCaught('mythic') && state.bossesDefeated['boss3']) s = Math.max(s, 3);
+  if (state.caught.size >= 30 && state.bossesDefeated['boss4']) s = Math.max(s, 4);
+  if (state.caught.size >= TOTAL_DEX && state.bossesDefeated['boss5']) s = 5;
   state.michelinStars = s;
   return s;
+}
+function pendingBossStar() {
+  if (countRarityCaught('common') >= 5 && !state.bossesDefeated['boss1']) return 1;
+  if (state.caught.size >= 12 && state.bossesDefeated['boss1'] && !state.bossesDefeated['boss2']) return 2;
+  if (hasRarityCaught('mythic') && state.bossesDefeated['boss2'] && !state.bossesDefeated['boss3']) return 3;
+  if (state.caught.size >= 30 && state.bossesDefeated['boss3'] && !state.bossesDefeated['boss4']) return 4;
+  if (state.caught.size >= TOTAL_DEX && state.bossesDefeated['boss4'] && !state.bossesDefeated['boss5']) return 5;
+  return 0;
 }
 function caveUnlocked()      { return state.michelinStars >= 1; }
 function sacredFiveComplete(){ for (const id of SACRED_FIVE) if (!state.caught.has(id)) return false; return true; }
@@ -2604,7 +2633,8 @@ function saveGame() {
     gadget: state.gadget, won: state.won, started: state.started,
     screen: state.screen,
     applianceWins: state.applianceWins,
-    shinies: state.shinies
+    shinies: state.shinies,
+    bossesDefeated: state.bossesDefeated
   };
   try {
     localStorage.setItem('pandemonium_save', JSON.stringify(data));
@@ -2629,6 +2659,7 @@ function loadGame() {
     state.won = d.won || false;
     state.applianceWins = d.applianceWins || {};
     state.shinies = d.shinies || {};
+    state.bossesDefeated = d.bossesDefeated || {};
     state.started = true; state.screen = 'world';
     state.moving = false; state.prog = 0;
     document.getElementById('intro').style.display = 'none';
@@ -2909,6 +2940,59 @@ function startBattle(enemyEnt) {
   audio.startBattle();
 }
 
+function startBossBattle(starNum) {
+  const boss = BOSSES[starNum]; if (!boss) return;
+  audio.encounter();
+  if (!state.activeAppliance) state.activeAppliance = state.starter;
+  const active = entities.find(e => e.id === state.activeAppliance);
+  if (state.playerHp <= 0) state.playerHp = state.playerMaxHp;
+
+  // Build roster of up to 3 appliances with individual HP
+  const roster = [];
+  roster.push({ id: state.activeAppliance, hp: state.playerHp, maxHp: state.playerMaxHp });
+  const others = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
+  for (let i = 0; i < Math.min(2, others.length); i++) {
+    const hp = starterBaseHp(others[i].id);
+    roster.push({ id: others[i].id, hp, maxHp: hp });
+  }
+
+  state.battle = {
+    enemy: { id: boss.id, n: boss.name, e: boss.emoji, rarity: 'ultra', dex: boss.intro, habitat: 'BOSS ARENA' },
+    enemyMaxHp: boss.hp,
+    enemyHp: boss.hp,
+    starter: active,
+    phase: 'intro',
+    log: [],
+    moveFocus: 0,
+    menuFocus: 0,
+    ended: false,
+    pendingMove: null,
+    turnCount: 0,
+    lastMinigame: null,
+    switchList: null,
+    enemyShiny: false,
+    isBoss: true,
+    bossData: boss,
+    bossRoster: roster,
+    bossRosterIdx: 0,
+    bossAtkPower: boss.atk
+  };
+  battleEl.classList.add('show');
+  populateStands();
+  btEnemySprite.classList.remove('hurt','faint','attacking','shiny');
+  btPlayerSprite.classList.remove('hurt','faint','attacking','shiny');
+  btEnemySprite.classList.add('entering');
+  btPlayerSprite.classList.add('entering');
+  setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
+  battleLog(`<b style="color:#ff6080;font-size:14px">★ BOSS BATTLE ★</b>`);
+  battleLog(boss.intro);
+  battleLog(`<span style="color:#888">You have ${roster.length} appliance${roster.length>1?'s':''} in your roster.</span>`);
+  renderBattle();
+  setBattleMenu('continue');
+  audio.stopArea();
+  audio.startBattle();
+}
+
 function populateStands() {
   const standsEl = document.getElementById('btStands');
   const crowd = entities.filter(e => e.e).map(e => e.e);
@@ -3031,10 +3115,11 @@ function battleLog(html) {
 function renderBattle() {
   const b = state.battle; if (!b) return;
   const e = b.enemy, p = b.starter;
-  const eElem = ELEMENTS[getElement(e.id)];
-  btEnemyName.innerHTML = `${e.n.toUpperCase()} <span style="font-size:11px;color:${eElem.color}">${eElem.icon}</span>`;
-  btEnemyRarity.textContent = RARITY_LABEL[e.rarity];
-  btEnemyRarity.style.color = RARITY_COLOR[e.rarity];
+  const eElem = b.isBoss && b.bossData ? ELEMENTS[b.bossData.element] : ELEMENTS[getElement(e.id)];
+  const bossTag = b.isBoss ? ' <span style="color:#ff6080;font-size:9px">BOSS</span>' : '';
+  btEnemyName.innerHTML = `${e.n.toUpperCase()} <span style="font-size:11px;color:${eElem.color}">${eElem.icon}</span>${bossTag}`;
+  btEnemyRarity.textContent = b.isBoss ? `★ STAR ${b.bossData.star}` : RARITY_LABEL[e.rarity];
+  btEnemyRarity.style.color = b.isBoss ? '#ff6080' : RARITY_COLOR[e.rarity];
   btEnemySprite.textContent = e.e || '?';
   updateHpBar(btEnemyHp, btEnemyHpText, b.enemyHp, b.enemyMaxHp);
 
@@ -3068,6 +3153,24 @@ function setBattleMenu(kind) {
     btMenu.querySelector('[data-act="go"]').addEventListener('click', () => openBattleMenu());
   } else if (kind === 'main') {
     b.phase = 'menu'; b.menuFocus = 0;
+    if (b.isBoss) {
+      const hasSwitch = b.bossRoster && b.bossRoster.filter((r,i) => i !== b.bossRosterIdx && r.hp > 0).length > 0;
+      const opts = [
+        { a:'fight',  label:'FIGHT',  disabled:false },
+        { a:'switch', label:'SWITCH', disabled:!hasSwitch },
+        { a:'run',    label:'<span style="opacity:0.35">RUN</span><span class="bt-mg" style="color:#e55">BOSS — NO ESCAPE</span>', disabled:true }
+      ];
+      btMenu.innerHTML = opts.map((o, i) => {
+        const cls = `bt-btn ${i===0?'focus':''} ${o.disabled?'dim':''}`;
+        return `<div class="${cls}" data-act="${o.a}" data-disabled="${o.disabled?1:0}">${o.label}</div>`;
+      }).join('');
+      btMenu.querySelectorAll('.bt-btn').forEach(el => {
+        el.addEventListener('click', () => {
+          if (el.dataset.disabled === '1') return;
+          pickBattleAction(el.dataset.act);
+        });
+      });
+    } else {
     const canCatch = b.enemyHp > 0 && (b.enemyHp / b.enemyMaxHp) < 0.30;
     const hasSwitchTargets = entities.some(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
     const catchLabel = canCatch
@@ -3089,6 +3192,7 @@ function setBattleMenu(kind) {
         pickBattleAction(el.dataset.act);
       });
     });
+    } // end else (non-boss)
   } else if (kind === 'moves') {
     b.phase = 'moves'; b.moveFocus = 0;
     const moves = getMovesForAppliance(state.activeAppliance);
@@ -3120,14 +3224,22 @@ function setBattleMenu(kind) {
     });
   } else if (kind === 'switch') {
     b.phase = 'switch'; b.moveFocus = 0;
-    const caught = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
-    b.switchList = caught;
-    btMenu.innerHTML = caught.map((e, i) => {
+    let switchEntities;
+    if (b.isBoss && b.bossRoster) {
+      switchEntities = b.bossRoster
+        .map((r, i) => ({ ...entities.find(e => e.id === r.id), _rosterIdx: i, _rosterHp: r.hp, _rosterMaxHp: r.maxHp }))
+        .filter(r => r._rosterIdx !== b.bossRosterIdx && r._rosterHp > 0);
+    } else {
+      switchEntities = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
+    }
+    b.switchList = switchEntities;
+    btMenu.innerHTML = switchEntities.map((e, i) => {
       const el = ELEMENTS[getElement(e.id)];
       const evo = getEvoStage(e.id);
       const evoMark = evo > 0 ? ` <span style="color:${EVO_COLOR[evo]};font-size:9px">★${evo}</span>` : '';
       const shMark = state.shinies[e.id] ? ' <span style="color:#ffd700;font-size:9px">✦SHINY</span>' : '';
-      return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${getEvoName(e.id).toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span>${evoMark}${shMark}</div>`;
+      const hpInfo = b.isBoss ? ` <span style="color:#aaa;font-size:9px">${Math.ceil(e._rosterHp)}/${e._rosterMaxHp} HP</span>` : '';
+      return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${getEvoName(e.id).toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span>${evoMark}${shMark}${hpInfo}</div>`;
     }).join('');
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
       el.addEventListener('click', () => doSwitch(+el.dataset.sw));
@@ -3348,12 +3460,25 @@ function useStruggle() {
 function doSwitch(idx) {
   const b = state.battle; if (!b) return;
   const target = b.switchList[idx]; if (!target) return;
-  state.activeAppliance = target.id;
-  b.starter = target;
+
+  if (b.isBoss && b.bossRoster) {
+    // Save current appliance's HP to roster
+    b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
+    // Switch to new roster entry
+    const newIdx = target._rosterIdx;
+    b.bossRosterIdx = newIdx;
+    state.activeAppliance = target.id;
+    b.starter = entities.find(e => e.id === target.id);
+    state.playerHp = b.bossRoster[newIdx].hp;
+    state.playerMaxHp = b.bossRoster[newIdx].maxHp;
+  } else {
+    state.activeAppliance = target.id;
+    b.starter = target;
+  }
   b.lastMinigame = null;
   btPlayerSprite.classList.add('entering');
   setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
-  battleLog(`Go, <b style="color:${RARITY_COLOR[target.rarity]}">${target.n.toUpperCase()}</b>!`);
+  battleLog(`Go, <b style="color:${RARITY_COLOR[target.rarity]}">${getEvoName(target.id).toUpperCase()}</b>!`);
   renderBattle();
   setBattleMenu('none');
   setTimeout(() => enemyTurn(), 850);
@@ -3408,7 +3533,8 @@ function resolveBattleMove(score, gotGood) {
   b.lastMinigame = mv.mg;
   const base = mv.power + playerAtkBonus();
   const crit = score > 0.92;
-  const matchup = elemMatchup(activeElement(), getElement(b.enemy.id));
+  const enemyElem = b.isBoss && b.bossData ? b.bossData.element : getElement(b.enemy.id);
+  const matchup = elemMatchup(activeElement(), enemyElem);
   const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
   let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus);
   if (crit) dmg = Math.round(dmg * 1.35);
@@ -3436,10 +3562,22 @@ function resolveBattleMove(score, gotGood) {
 function enemyTurn() {
   const b = state.battle; if (!b || b.ended) return;
   b.turnCount++;
-  const atk = enemyAttack(b.enemy);
-  const eMatchup = elemMatchup(getElement(b.enemy.id), activeElement());
+  let atk;
+  if (b.isBoss) {
+    const baseDmg = b.bossAtkPower + Math.floor(Math.random() * 6);
+    const bossVerbs = [
+      `${b.enemy.n} slams the counter!`, `${b.enemy.n} hurls a flaming saucepan!`,
+      `${b.enemy.n} unleashes a withering critique!`, `${b.enemy.n} throws a knife!`,
+      `${b.enemy.n} screams "IT'S RAW!"`, `${b.enemy.n} charges with furious energy!`
+    ];
+    atk = { dmg: baseDmg, flavor: bossVerbs[Math.floor(Math.random()*bossVerbs.length)] };
+  } else {
+    atk = enemyAttack(b.enemy);
+  }
+  const eMatchup = b.isBoss ? elemMatchup(b.bossData.element, activeElement()) : elemMatchup(getElement(b.enemy.id), activeElement());
   const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
+  if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
   const eMg = atkTypes[Math.floor(Math.random()*atkTypes.length)];
   btAttackAnim(btEnemySprite);
@@ -3451,9 +3589,31 @@ function enemyTurn() {
   if (state.adminMode) audio.glance();
   else audio.takeDmg();
   if (state.adminMode) battleLog(`${atk.flavor} The blow phases through your <b style="color:#f067ff">ADMIN</b> aura. <b>0</b> HP lost.`);
-  else battleLog(`${atk.flavor} You lose <b>${atk.dmg}</b> HP.`);
+  else battleLog(`${atk.flavor} You lose <b>${realDmg}</b> HP.`);
   renderBattle();
-  if (state.playerHp <= 0) return onPlayerFaint();
+  if (state.playerHp <= 0) {
+    if (b.isBoss && b.bossRoster) {
+      const nextAlive = b.bossRoster.findIndex((r, i) => i !== b.bossRosterIdx && r.hp > 0);
+      if (nextAlive >= 0) {
+        const nxt = b.bossRoster[nextAlive];
+        const nxtEnt = entities.find(e => e.id === nxt.id);
+        battleLog(`<b>${getEvoName(state.activeAppliance).toUpperCase()}</b> is overcooked!`);
+        b.bossRosterIdx = nextAlive;
+        state.activeAppliance = nxt.id;
+        b.starter = nxtEnt;
+        state.playerHp = nxt.hp;
+        state.playerMaxHp = nxt.maxHp;
+        b.lastMinigame = null;
+        btPlayerSprite.classList.add('entering');
+        setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
+        battleLog(`Go, <b style="color:${RARITY_COLOR[nxtEnt.rarity]}">${getEvoName(nxt.id).toUpperCase()}</b>!`);
+        renderBattle();
+        setTimeout(() => setBattleMenu('main'), 900);
+        return;
+      }
+    }
+    return onPlayerFaint();
+  }
   setTimeout(() => setBattleMenu('main'), 900);
 }
 
@@ -3461,6 +3621,23 @@ function onEnemyFaint() {
   const b = state.battle; if (!b) return;
   b.ended = true;
   audio.victory();
+
+  if (b.isBoss && b.bossData) {
+    state.bossesDefeated[b.bossData.id] = true;
+    battleLog(`<b style="color:#ff6080;font-size:14px">★ BOSS DEFEATED ★</b>`);
+    battleLog(b.bossData.defeat);
+    const prev = state.michelinStars;
+    computeMichelin();
+    if (state.michelinStars > prev) {
+      battleLog(`<b style="color:#f4c165;font-size:13px">&#9733; MICHELIN STAR ${state.michelinStars} EARNED!</b>`);
+      if (state.michelinStars === 1) battleLog('The forest cave is now open.');
+    }
+    state.playerHp = state.playerMaxHp;
+    setTimeout(() => { renderBattle(); setBattleMenu('end'); }, 650);
+    setTimeout(checkEnding, 900);
+    return;
+  }
+
   if (b.wasCaught) {
     const shinyMsg = b.enemyShiny ? ' <span style="color:#ffd700">✦ SHINY ✦</span>' : '';
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b>${shinyMsg} faints! You add it to your Pandex.`);
@@ -3469,7 +3646,6 @@ function onEnemyFaint() {
   } else {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It escapes before you can catch it.`);
   }
-  // Track wins for evolution
   const activeId = state.activeAppliance;
   if (activeId) {
     const prevStage = getEvoStage(activeId);
@@ -3497,6 +3673,11 @@ function onEnemyFaint() {
     battleLog(`&#9733; MICHELIN STAR ${state.michelinStars} EARNED!`);
     if (state.michelinStars === 1) battleLog('The forest cave is now open.');
   }
+  // Check if a boss fight is pending
+  const pendingStar = pendingBossStar();
+  if (pendingStar > 0) {
+    battleLog(`<span style="color:#ff6080">A challenger approaches for Michelin Star ${pendingStar}...</span>`);
+  }
   setTimeout(() => { renderBattle(); setBattleMenu('end'); }, 650);
   setTimeout(checkEnding, 900);
 }
@@ -3519,6 +3700,7 @@ function onPlayerFaint() {
 }
 
 function closeBattle() {
+  const wasBoss = state.battle && state.battle.isBoss;
   state.battle = null;
   battleEl.classList.remove('show');
   btEnemySprite.classList.remove('hurt','faint','entering','attacking','shiny');
@@ -3527,6 +3709,15 @@ function closeBattle() {
   audio.stopBattle();
   audio.startArea(state.map);
   saveGame();
+  if (!wasBoss) {
+    const pending = pendingBossStar();
+    if (pending > 0) {
+      setTimeout(() => {
+        showToast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
+        setTimeout(() => startBossBattle(pending), 800);
+      }, 600);
+    }
+  }
 }
 
 function professorTalk() {
@@ -4314,6 +4505,10 @@ function miniResolve(result) {
       if (s === 1) extra += `<div style="color:#7edc8b;font-size:11px;margin-top:4px">The forest cave is now open.</div>`;
       if (s === 3) extra += `<div style="color:#7edc8b;font-size:11px;margin-top:4px">Your cooking is legendary. The shrine grows warmer.</div>`;
     }
+    const pbs = pendingBossStar();
+    if (pbs > 0 && !extra) {
+      extra = `<div style="color:#ff6080;letter-spacing:2px;font-size:11px;margin-top:8px">★ BOSS CHALLENGE READY — Star ${pbs}! Fight to earn it. ★</div>`;
+    }
     const rtitle = `CAUGHT &mdash; ${ent.n.toUpperCase()}!`;
     const body = `<div style="color:${RARITY_COLOR[ent.rarity]};letter-spacing:3px;font-size:11px;margin-bottom:4px">${RARITY_LABEL[ent.rarity]}</div>` +
                  `<div>${ent.dex}</div>${extra}`;
@@ -4347,6 +4542,14 @@ function miniClose() {
     state.battle.pendingMove = null;
     setTimeout(() => enemyTurn(), 500);
     setBattleMenu('none');
+  } else if (!state.battle) {
+    const pending = pendingBossStar();
+    if (pending > 0) {
+      setTimeout(() => {
+        showToast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
+        setTimeout(() => startBossBattle(pending), 800);
+      }, 600);
+    }
   }
 }
 
