@@ -3086,6 +3086,7 @@ function resolveCatchStep(ok) {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> is captured!`);
     audio.catchSuccess();
     b.enemyHp = 0;
+    b.wasCaught = true;
     renderBattle();
     setTimeout(() => onEnemyFaint(), 500);
     return;
@@ -3238,8 +3239,12 @@ function onEnemyFaint() {
   const b = state.battle; if (!b) return;
   b.ended = true;
   audio.victory();
-  battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! You add it to your Pandex.`);
-  state.caught.add(b.enemy.id);
+  if (b.wasCaught) {
+    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! You add it to your Pandex.`);
+    state.caught.add(b.enemy.id);
+  } else {
+    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It escapes before you can catch it.`);
+  }
   const prev = state.michelinStars;
   computeMichelin();
   const growth = Math.max(1, RARITY_TIER[b.enemy.rarity] + 1);
@@ -3864,7 +3869,8 @@ function miniAction(key) {
   const m = state.mini; if (!m || m.done) return;
   if (m.type === 'TIMING') {
     if (key === ' ' || key === 'enter') {
-      const inZone = m.cursor >= m.zx && m.cursor <= m.zx + m.zoneW;
+      const buf = m.zoneW * 0.35;
+      const inZone = m.cursor >= (m.zx - buf) && m.cursor <= (m.zx + m.zoneW + buf);
       miniResolve(inZone ? 'good' : 'bad');
     }
   } else if (m.type === 'MASH') {
@@ -3904,7 +3910,7 @@ function miniAction(key) {
         miniAimLockY.style.top = m.cy + 'px';
         miniAimLockY.style.display = 'block';
         const dx = m.cx - m.aimTx, dy = m.cy - m.aimTy;
-        miniResolve(Math.sqrt(dx*dx + dy*dy) <= m.aimR ? 'good' : 'bad');
+        miniResolve(Math.sqrt(dx*dx + dy*dy) <= m.aimR * 1.8 ? 'good' : 'bad');
       }
     }
   } else if (m.type === 'DODGE') {
@@ -3966,7 +3972,8 @@ function miniHoldUp() {
   const m = state.mini; if (!m || m.done || m.type !== 'HOLD') return;
   if (!m.holdHasPressed) return;
   m.holding = false;
-  const inZone = m.holdFill >= m.holdZx && m.holdFill <= m.holdZx + m.holdZoneW;
+  const hBuf = m.holdZoneW * 0.3;
+  const inZone = m.holdFill >= (m.holdZx - hBuf) && m.holdFill <= (m.holdZx + m.holdZoneW + hBuf);
   miniResolve(inZone ? 'good' : 'bad');
 }
 
