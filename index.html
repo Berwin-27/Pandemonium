@@ -485,6 +485,42 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 #battle.show { display:flex; }
 #battlepanel { width: 780px; max-width: 98%; display:flex; flex-direction:column; gap:0; }
 
+/* === DOT CATCH MINIGAME === */
+.catch-overlay {
+  display:none; position:absolute; inset:0; z-index:90;
+  background:rgba(0,0,0,0.55); cursor:crosshair;
+}
+.catch-overlay.show { display:block; }
+.catch-overlay .catch-title {
+  position:absolute; top:8px; left:50%; transform:translateX(-50%);
+  color:#f4c165; font-size:16px; letter-spacing:3px; text-shadow:0 0 8px #000;
+  pointer-events:none; z-index:2;
+}
+.catch-overlay .catch-score {
+  position:absolute; top:30px; left:50%; transform:translateX(-50%);
+  color:#fff; font-size:12px; letter-spacing:2px; text-shadow:0 0 6px #000;
+  pointer-events:none; z-index:2;
+}
+.catch-dot {
+  position:absolute; width:28px; height:28px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #ffe066, #f4a020);
+  box-shadow:0 0 12px 3px rgba(255,200,40,0.7), inset 0 -3px 6px rgba(0,0,0,0.3);
+  cursor:pointer; transition: transform 0.1s, opacity 0.15s;
+  animation: dotPop 0.2s ease-out;
+}
+.catch-dot:hover { transform:scale(1.15); }
+.catch-dot.caught {
+  background:radial-gradient(circle at 40% 35%, #7edc8b, #3a5);
+  box-shadow:0 0 12px 3px rgba(100,220,140,0.7);
+  pointer-events:none; transform:scale(0.5); opacity:0.4;
+}
+.catch-dot.missed {
+  background:radial-gradient(circle at 40% 35%, #e55, #a22);
+  box-shadow:0 0 8px 2px rgba(220,60,60,0.5);
+  pointer-events:none; opacity:0.3;
+}
+@keyframes dotPop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+
 /* === ARENA === */
 .bt-arena {
   position:relative; width:100%; height: 320px; overflow:hidden;
@@ -873,6 +909,10 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
           <div class="bt-sprite-arena bt-sprite-enemy" id="btEnemySprite">?</div>
           <div class="bt-sprite-arena bt-sprite-player" id="btPlayerSprite">?</div>
           <div class="bt-hit-flash" id="btHitFlash"></div>
+          <div class="catch-overlay" id="catchOverlay">
+            <div class="catch-title">&#9733; CATCH! &#9733;</div>
+            <div class="catch-score" id="catchScoreText"></div>
+          </div>
         </div>
         <div class="bt-bottom">
           <div class="bt-log" id="btLog"></div>
@@ -3049,49 +3089,119 @@ function attemptRun() {
   }
 }
 
+const catchOverlay = document.getElementById('catchOverlay');
+const catchScoreText = document.getElementById('catchScoreText');
+
 function startCatchSequence() {
   const b = state.battle; if (!b) return;
-  b.catchStep = 0;
-  b.catchTotal = 3;
   b.phase = 'catching';
-  battleLog('You wind up a <b style="color:#f4c165">Takeout Box</b>! Hold it steady\u2026');
+  battleLog('You wind up a <b style="color:#f4c165">Takeout Box</b>! Click the dots!');
   setBattleMenu('none');
-  setTimeout(() => launchCatchStep(), 450);
+  setTimeout(() => launchDotCatch(), 350);
 }
 
-function launchCatchStep() {
+function launchDotCatch() {
   const b = state.battle; if (!b || b.ended) return;
-  const pool = ['TIMING','MASH','HOLD','AIM','RHYTHM','VOLLEY'];
-  const mg = pool[Math.floor(Math.random() * pool.length)];
-  startMinigame({
-    mg, n: `CATCH ${b.enemy.n} [${b.catchStep+1}/${b.catchTotal}]`,
-    rarity: b.enemy.rarity, _catchMove: true
-  });
+  const diff = RARITY_TIER[b.enemy.rarity] || 1;
+  const totalDots = Math.min(12, 5 + diff * 2);
+  const dotLife = Math.max(1200, 2200 - diff * 200);
+  const spawnWindow = Math.max(1800, 3200 - diff * 300);
+
+  b.catchDots = { total: totalDots, clicked: 0, spawned: 0, active: 0, done: false, dotLife, spawnWindow };
+  catchOverlay.classList.add('show');
+  catchScoreText.textContent = `0 / ${totalDots}`;
+
+  const ov = catchOverlay;
+  const ovW = ov.clientWidth || 760;
+  const ovH = ov.clientHeight || 300;
+
+  function spawnDot() {
+    const cd = b.catchDots;
+    if (!cd || cd.done || cd.spawned >= cd.total) return;
+    cd.spawned++;
+    cd.active++;
+
+    const dot = document.createElement('div');
+    dot.className = 'catch-dot';
+    const margin = 40;
+    dot.style.left = (margin + Math.random() * (ovW - margin * 2 - 28)) + 'px';
+    dot.style.top = (margin + Math.random() * (ovH - margin * 2 - 28)) + 'px';
+
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dot.classList.contains('caught') || dot.classList.contains('missed')) return;
+      dot.classList.add('caught');
+      cd.clicked++;
+      cd.active--;
+      audio.hit();
+      catchScoreText.textContent = `${cd.clicked} / ${cd.total}`;
+      setTimeout(() => dot.remove(), 200);
+      checkDotCatchEnd();
+    });
+
+    ov.appendChild(dot);
+
+    setTimeout(() => {
+      if (!dot.classList.contains('caught')) {
+        dot.classList.add('missed');
+        cd.active--;
+        setTimeout(() => dot.remove(), 300);
+        checkDotCatchEnd();
+      }
+    }, cd.dotLife);
+
+    if (cd.spawned < cd.total) {
+      const delay = cd.spawnWindow / cd.total;
+      setTimeout(spawnDot, delay + (Math.random() - 0.5) * delay * 0.5);
+    }
+  }
+
+  const burstFirst = Math.min(3, totalDots);
+  for (let i = 0; i < burstFirst; i++) {
+    setTimeout(spawnDot, i * 150);
+  }
+  if (totalDots > burstFirst) {
+    const remaining = totalDots - burstFirst;
+    const delay = spawnWindow / totalDots;
+    for (let i = 0; i < remaining; i++) {
+      setTimeout(() => { if (!b.catchDots.done) spawnDot(); }, 600 + i * (delay + (Math.random() - 0.5) * delay * 0.4));
+    }
+  }
 }
 
-function resolveCatchStep(ok) {
+function checkDotCatchEnd() {
   const b = state.battle; if (!b) return;
-  if (!ok) {
-    audio.catchFail();
-    btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt');
-    battleLog('It thrashes free of the Takeout Box!');
-    setTimeout(() => enemyTurn(), 600);
-    return;
-  }
-  b.catchStep++;
-  audio.hit();
-  battleLog(`Sealed! <b style="color:#f4c165">${b.catchStep}</b> / ${b.catchTotal} locks.`);
-  renderBattle();
-  if (b.catchStep >= b.catchTotal) {
-    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> is captured!`);
+  const cd = b.catchDots; if (!cd || cd.done) return;
+  if (cd.clicked + (cd.total - cd.spawned) + cd.active > 0 && cd.spawned < cd.total) return;
+  if (cd.active > 0) return;
+
+  cd.done = true;
+  const ratio = cd.clicked / cd.total;
+
+  catchOverlay.querySelectorAll('.catch-dot').forEach(d => d.remove());
+  catchOverlay.classList.remove('show');
+
+  if (ratio >= 0.7) {
+    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> is captured! (${cd.clicked}/${cd.total} dots)`);
     audio.catchSuccess();
     b.enemyHp = 0;
     b.wasCaught = true;
     renderBattle();
     setTimeout(() => onEnemyFaint(), 500);
-    return;
+  } else if (ratio >= 0.4) {
+    audio.catchFail();
+    battleLog(`Almost had it! (${cd.clicked}/${cd.total}) — it takes some damage thrashing free!`);
+    const dmg = Math.round(b.enemyMaxHp * 0.15 * ratio);
+    b.enemyHp = Math.max(1, b.enemyHp - dmg);
+    btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt');
+    renderBattle();
+    setTimeout(() => enemyTurn(), 600);
+  } else {
+    audio.catchFail();
+    battleLog(`It thrashes free of the Takeout Box! (${cd.clicked}/${cd.total})`);
+    btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt');
+    setTimeout(() => enemyTurn(), 600);
   }
-  setTimeout(() => launchCatchStep(), 550);
 }
 
 function useMove(idx) {
@@ -3993,17 +4103,6 @@ function miniResolve(result) {
     return;
   }
 
-  // Catch sequence mode: pass/fail one step, hand back to catch flow.
-  if (state.battle && m.entity && m.entity._catchMove) {
-    m.done = true; m.result = result;
-    miniEl.classList.remove('show');
-    hideAllSub();
-    miniPanel.classList.remove('shake','pulseG','pulseB');
-    miniResult.style.display = 'none';
-    state.mini = null;
-    resolveCatchStep(result === 'good');
-    return;
-  }
 
   m.done = true; m.result = result;
   miniPrompt.style.display = 'none';
@@ -4048,18 +4147,12 @@ function miniResolve(result) {
 function miniClose() {
   const m = state.mini;
   const wasBattleMove = state.battle && m && m.entity && m.entity._battleMove && !m.done;
-  const wasCatchMove  = state.battle && m && m.entity && m.entity._catchMove && !m.done;
   state.mini = null;
   miniEl.classList.remove('show');
   hideAllSub();
   if (wasBattleMove) {
     battleLog('You hesitate mid-swing. The attack fizzles.');
     state.battle.pendingMove = null;
-    setTimeout(() => enemyTurn(), 500);
-    setBattleMenu('none');
-  } else if (wasCatchMove) {
-    battleLog('Your grip slips \u2014 the Takeout Box pops open!');
-    audio.catchFail();
     setTimeout(() => enemyTurn(), 500);
     setBattleMenu('none');
   }
