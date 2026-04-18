@@ -633,6 +633,18 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 @keyframes btBobEnemy { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 @keyframes btBobPlayer { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 
+.bt-sprite-arena.shiny {
+  filter: drop-shadow(0 0 12px #ffd700) drop-shadow(0 0 24px #ffaa00);
+}
+.shiny-sparkle {
+  position:absolute; font-size:14px; pointer-events:none; z-index:80;
+  animation: sparkleFloat 1.2s ease-out infinite;
+}
+@keyframes sparkleFloat {
+  0% { opacity:1; transform:translateY(0) scale(1); }
+  100% { opacity:0; transform:translateY(-20px) scale(0.5); }
+}
+
 .bt-sprite-arena.hurt { animation: btArenaShake 0.35s ease-out !important; }
 @keyframes btArenaShake {
   0%{transform:translateX(0)} 15%{transform:translateX(-8px) scale(0.95)}
@@ -1675,7 +1687,8 @@ const state = {
   adminMode: false,         // unlocked via base-bottom-left password
   gadget: false,            // professor's gadget (extends fog-of-war)
   adminPrompt: false,       // text input dialog for admin code
-  applianceWins: {}         // id → battle wins with that appliance active
+  applianceWins: {},        // id → battle wins with that appliance active
+  shinies: {}               // id → true if caught as shiny
 };
 
 function checkAdminTerminal() {
@@ -2590,7 +2603,8 @@ function saveGame() {
     playerMaxHp: state.playerMaxHp, adminMode: state.adminMode,
     gadget: state.gadget, won: state.won, started: state.started,
     screen: state.screen,
-    applianceWins: state.applianceWins
+    applianceWins: state.applianceWins,
+    shinies: state.shinies
   };
   try {
     localStorage.setItem('pandemonium_save', JSON.stringify(data));
@@ -2614,6 +2628,7 @@ function loadGame() {
     state.gadget = d.gadget || false;
     state.won = d.won || false;
     state.applianceWins = d.applianceWins || {};
+    state.shinies = d.shinies || {};
     state.started = true; state.screen = 'world';
     state.moving = false; state.prog = 0;
     document.getElementById('intro').style.display = 'none';
@@ -2868,18 +2883,25 @@ function startBattle(enemyEnt) {
     pendingMove: null,
     turnCount: 0,
     lastMinigame: null,
-    switchList: null
+    switchList: null,
+    enemyShiny: Math.random() < 0.01
   };
+  if (state.battle.enemyShiny) {
+    state.battle.enemyMaxHp = Math.round(state.battle.enemyMaxHp * 1.3);
+  }
   state.battle.enemyHp = state.battle.enemyMaxHp;
   battleEl.classList.add('show');
   populateStands();
-  btEnemySprite.classList.remove('hurt','faint','attacking');
+  btEnemySprite.classList.remove('hurt','faint','attacking','shiny');
   btPlayerSprite.classList.remove('hurt','faint','attacking');
+  if (state.battle.enemyShiny) btEnemySprite.classList.add('shiny');
   btEnemySprite.classList.add('entering');
   btPlayerSprite.classList.add('entering');
   setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
   const eEl = ELEMENTS[getElement(enemyEnt.id)];
-  battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> <span style="color:${eEl.color}">${eEl.icon} ${eEl.label}</span> appears!`);
+  const shinyTag = state.battle.enemyShiny ? ' <span style="color:#ffd700;font-weight:bold">✦ SHINY ✦</span>' : '';
+  battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> <span style="color:${eEl.color}">${eEl.icon} ${eEl.label}</span>${shinyTag} appears!`);
+  if (state.battle.enemyShiny) battleLog('<span style="color:#ffd700">It glitters with a golden sheen!</span>');
   battleLog(`${enemyEnt.dex}`);
   renderBattle();
   setBattleMenu('continue');
@@ -3019,10 +3041,13 @@ function renderBattle() {
   const pElem = p ? ELEMENTS[getElement(p.id)] : ELEMENTS.neutral;
   const pEvo = p ? getEvoStage(p.id) : 0;
   const pName = p ? getEvoName(p.id).toUpperCase() : 'YOU';
+  const isShiny = p && state.shinies[p.id];
+  const shinyTag = isShiny ? ' <span style="color:#ffd700;font-size:9px">✦</span>' : '';
   const evoTag = pEvo > 0 ? ` <span style="font-size:9px;color:${EVO_COLOR[pEvo]}">★${pEvo}</span>` : '';
-  btPlayerName.innerHTML = `${pName} <span style="font-size:11px;color:${pElem.color}">${pElem.icon}</span>${evoTag}`;
+  btPlayerName.innerHTML = `${pName} <span style="font-size:11px;color:${pElem.color}">${pElem.icon}</span>${evoTag}${shinyTag}`;
   btPlayerLvl.textContent = `Lv.${playerLevel()}`;
   btPlayerSprite.textContent = p ? p.e : '?';
+  btPlayerSprite.classList.toggle('shiny', !!isShiny);
   updateHpBar(btPlayerHp, btPlayerHpText, state.playerHp, state.playerMaxHp);
 }
 
@@ -3101,7 +3126,8 @@ function setBattleMenu(kind) {
       const el = ELEMENTS[getElement(e.id)];
       const evo = getEvoStage(e.id);
       const evoMark = evo > 0 ? ` <span style="color:${EVO_COLOR[evo]};font-size:9px">★${evo}</span>` : '';
-      return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${getEvoName(e.id).toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span>${evoMark}</div>`;
+      const shMark = state.shinies[e.id] ? ' <span style="color:#ffd700;font-size:9px">✦SHINY</span>' : '';
+      return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${getEvoName(e.id).toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span>${evoMark}${shMark}</div>`;
     }).join('');
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
       el.addEventListener('click', () => doSwitch(+el.dataset.sw));
@@ -3383,7 +3409,8 @@ function resolveBattleMove(score, gotGood) {
   const base = mv.power + playerAtkBonus();
   const crit = score > 0.92;
   const matchup = elemMatchup(activeElement(), getElement(b.enemy.id));
-  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup);
+  const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode) dmg = b.enemyMaxHp;
   b.enemyHp = Math.max(0, b.enemyHp - dmg);
@@ -3435,8 +3462,10 @@ function onEnemyFaint() {
   b.ended = true;
   audio.victory();
   if (b.wasCaught) {
-    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! You add it to your Pandex.`);
+    const shinyMsg = b.enemyShiny ? ' <span style="color:#ffd700">✦ SHINY ✦</span>' : '';
+    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b>${shinyMsg} faints! You add it to your Pandex.`);
     state.caught.add(b.enemy.id);
+    if (b.enemyShiny) state.shinies[b.enemy.id] = true;
   } else {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It escapes before you can catch it.`);
   }
@@ -3492,8 +3521,8 @@ function onPlayerFaint() {
 function closeBattle() {
   state.battle = null;
   battleEl.classList.remove('show');
-  btEnemySprite.classList.remove('hurt','faint','entering','attacking');
-  btPlayerSprite.classList.remove('hurt','faint','entering','attacking');
+  btEnemySprite.classList.remove('hurt','faint','entering','attacking','shiny');
+  btPlayerSprite.classList.remove('hurt','faint','entering','attacking','shiny');
   btArena.querySelectorAll('.bt-dmg-popup, .bt-atk-fx, .bt-atk-beam, .bt-atk-shield, .bt-atk-wave').forEach(el => el.remove());
   audio.stopBattle();
   audio.startArea(state.map);
@@ -3678,8 +3707,10 @@ function renderInventoryModal() {
       const badge = `<div class="rbadge" style="color:${col}">${badgeCh}</div>`;
       const num = `<div class="plotmark" style="color:${col};font-size:9px;letter-spacing:1px">#${String(it.id).padStart(2,'0')}</div>`;
       const face = reveal ? it.e : '?';
-      const border = admin ? '#f067ff' : (isCaught ? '#7edc8b' : '#2a2e5a');
-      html += `<div class="${cls}" data-idx="${i}" style="border-color:${border}">${face}${num}${badge}</div>`;
+      const isShinySlot = state.shinies[it.id];
+      const border = admin ? '#f067ff' : (isShinySlot ? '#ffd700' : (isCaught ? '#7edc8b' : '#2a2e5a'));
+      const shinyGlow = isShinySlot ? ';box-shadow:0 0 8px #ffd700' : '';
+      html += `<div class="${cls}" data-idx="${i}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}</div>`;
     } else {
       html += `<div class="invslot empty"></div>`;
     }
@@ -3703,12 +3734,14 @@ function renderInventoryModal() {
     invDetail.className = '';
     const evo = getEvoStage(sel.id);
     const evoLabel = evo > 0 ? ` <span style="color:${EVO_COLOR[evo]};font-weight:bold">${EVO_SUFFIX[evo]}</span>` : '';
+    const isShiny = state.shinies[sel.id];
+    const shinyLabel = isShiny ? ' <span style="color:#ffd700;font-weight:bold">✦ SHINY</span>' : '';
     const winsCount = state.applianceWins[sel.id] || 0;
     const nextEvo = getWinsToNextEvo(sel.id);
     const evoProgress = isCaught ? (nextEvo ? ` &nbsp;&bull;&nbsp; WINS: ${winsCount} (${nextEvo.need} to EVO ${nextEvo.next})` : ` &nbsp;&bull;&nbsp; WINS: ${winsCount} (MAX EVO)`) : '';
     const head =
       `<div class="name"><span style="font-size:22px;vertical-align:-2px">${reveal ? sel.e : '\u2753'}</span> ` +
-      `#${String(sel.id).padStart(2,'0')} ${reveal ? getEvoName(sel.id) : '???'}${evoLabel} ` +
+      `#${String(sel.id).padStart(2,'0')} ${reveal ? getEvoName(sel.id) : '???'}${evoLabel}${shinyLabel} ` +
       `<span style="color:${col};letter-spacing:3px;font-size:11px">&bull; ${rarLabel}</span></div>`;
     const body = reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
