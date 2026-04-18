@@ -1337,6 +1337,32 @@ const RARITY_ORDER = ['common','rare','epic','mythic','legendary','ultra'];
 const RARITY_LABEL = { common:'COMMON', rare:'RARE', epic:'EPIC', mythic:'MYTHIC', legendary:'LEGENDARY', ultra:'ULTRA' };
 const RARITY_COLOR = { common:'#9aa0b8', rare:'#4aa0f4', epic:'#b060e8', mythic:'#f48240', legendary:'#f4c165', ultra:'#ff6080' };
 const RARITY_TIER  = { common:0, rare:1, epic:2, mythic:3, legendary:4, ultra:5 };
+// Elements
+const ELEMENTS = {
+  fire:     { icon:'🔥', color:'#ff6b35', label:'FIRE' },
+  ice:      { icon:'❄️', color:'#5bcefa', label:'ICE' },
+  electric: { icon:'⚡', color:'#ffe44d', label:'ELECTRIC' },
+  neutral:  { icon:'⚪', color:'#9aa0b8', label:'NEUTRAL' }
+};
+const ELEM_MAP = {
+  1:'fire', 2:'neutral', 3:'electric', 4:'fire', 5:'neutral', 6:'ice',
+  7:'neutral', 8:'fire', 9:'neutral', 10:'neutral', 11:'ice', 12:'ice',
+  13:'neutral', 14:'neutral', 15:'fire', 16:'fire',
+  17:'fire', 18:'electric', 19:'ice', 20:'neutral', 21:'fire',
+  22:'neutral', 23:'electric', 24:'ice', 25:'neutral', 26:'neutral',
+  27:'fire', 28:'electric', 29:'ice', 30:'fire', 31:'fire', 32:'fire',
+  33:'ice', 34:'ice', 35:'fire', 36:'electric',
+  37:'fire', 38:'electric', 39:'fire',
+  40:'electric', 41:'electric',
+  42:'fire', 43:'neutral', 44:'neutral', 45:'fire',
+  46:'ice', 47:'ice', 48:'ice', 49:'ice',
+  50:'ice', 51:'neutral', 52:'neutral', 53:'neutral',
+  54:'fire', 55:'fire',
+  56:'neutral', 57:'neutral', 58:'electric', 59:'ice',
+  60:'electric', 61:'neutral', 62:'neutral', 63:'electric'
+};
+function getElement(id) { return ELEM_MAP[id] || 'neutral'; }
+
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
 const TOTAL_DEX = 63;
@@ -2805,7 +2831,8 @@ function startBattle(enemyEnt) {
   btEnemySprite.classList.add('entering');
   btPlayerSprite.classList.add('entering');
   setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
-  battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> appears!`);
+  const eEl = ELEMENTS[getElement(enemyEnt.id)];
+  battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> <span style="color:${eEl.color}">${eEl.icon} ${eEl.label}</span> appears!`);
   battleLog(`${enemyEnt.dex}`);
   renderBattle();
   setBattleMenu('continue');
@@ -2935,13 +2962,15 @@ function battleLog(html) {
 function renderBattle() {
   const b = state.battle; if (!b) return;
   const e = b.enemy, p = b.starter;
-  btEnemyName.textContent = e.n.toUpperCase();
+  const eElem = ELEMENTS[getElement(e.id)];
+  btEnemyName.innerHTML = `${e.n.toUpperCase()} <span style="font-size:11px;color:${eElem.color}">${eElem.icon}</span>`;
   btEnemyRarity.textContent = RARITY_LABEL[e.rarity];
   btEnemyRarity.style.color = RARITY_COLOR[e.rarity];
   btEnemySprite.textContent = e.e || '?';
   updateHpBar(btEnemyHp, btEnemyHpText, b.enemyHp, b.enemyMaxHp);
 
-  btPlayerName.textContent = p ? p.n.toUpperCase() : 'YOU';
+  const pElem = p ? ELEMENTS[getElement(p.id)] : ELEMENTS.neutral;
+  btPlayerName.innerHTML = `${p ? p.n.toUpperCase() : 'YOU'} <span style="font-size:11px;color:${pElem.color}">${pElem.icon}</span>`;
   btPlayerLvl.textContent = `Lv.${playerLevel()}`;
   btPlayerSprite.textContent = p ? p.e : '?';
   updateHpBar(btPlayerHp, btPlayerHpText, state.playerHp, state.playerMaxHp);
@@ -3018,9 +3047,10 @@ function setBattleMenu(kind) {
     b.phase = 'switch'; b.moveFocus = 0;
     const caught = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
     b.switchList = caught;
-    btMenu.innerHTML = caught.map((e, i) =>
-      `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${e.n.toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span></div>`
-    ).join('');
+    btMenu.innerHTML = caught.map((e, i) => {
+      const el = ELEMENTS[getElement(e.id)];
+      return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${e.n.toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span></div>`;
+    }).join('');
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
       el.addEventListener('click', () => doSwitch(+el.dataset.sw));
     });
@@ -3300,7 +3330,8 @@ function resolveBattleMove(score, gotGood) {
   b.lastMinigame = mv.mg;
   const base = mv.power + playerAtkBonus();
   const crit = score > 0.92;
-  let dmg = Math.round(base * (0.35 + score * 0.95));
+  const matchup = elemMatchup(activeElement(), getElement(b.enemy.id));
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode) dmg = b.enemyMaxHp;
   b.enemyHp = Math.max(0, b.enemyHp - dmg);
@@ -3316,7 +3347,8 @@ function resolveBattleMove(score, gotGood) {
   else if (score > 0.4) audio.hit();
   else audio.glance();
   const qual = state.adminMode ? 'ADMIN OVERRIDE! ' : (crit ? 'CRITICAL! ' : (score > 0.7 ? 'Clean hit! ' : (score > 0.4 ? '' : 'Glancing blow. ')));
-  battleLog(`${qual}${b.enemy.n} takes <b>${dmg}</b> damage.`);
+  const matchMsg = matchup > 1 ? ' <span style="color:#7edc8b">SUPER EFFECTIVE!</span>' : (matchup < 1 ? ' <span style="color:#e55">Not very effective...</span>' : '');
+  battleLog(`${qual}${b.enemy.n} takes <b>${dmg}</b> damage.${matchMsg}`);
   renderBattle();
   if (b.enemyHp <= 0) { setTimeout(() => { btEnemySprite.classList.add('faint'); }, 350); return onEnemyFaint(); }
   setTimeout(() => enemyTurn(), 850);
@@ -3326,7 +3358,8 @@ function enemyTurn() {
   const b = state.battle; if (!b || b.ended) return;
   b.turnCount++;
   const atk = enemyAttack(b.enemy);
-  const realDmg = state.adminMode ? 0 : atk.dmg;
+  const eMatchup = elemMatchup(getElement(b.enemy.id), activeElement());
+  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
   const eMg = atkTypes[Math.floor(Math.random()*atkTypes.length)];
@@ -3603,7 +3636,7 @@ function renderInventoryModal() {
       `<span style="color:${col};letter-spacing:3px;font-size:11px">&bull; ${rarLabel}</span></div>`;
     const body = reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
-        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg}</div>`
+        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span></div>`
       : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
         `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`;
     invDetail.innerHTML = head + body;
@@ -3697,7 +3730,12 @@ function startMinigame(entity) {
     VOLLEY:   { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}VOLLEY. Press SPACE to return the ball when it reaches your side!` }
   };
   miniTitle.textContent = labels[type].t;
-  miniSub.textContent   = labels[type].s;
+  const el = activeElement();
+  const elInfo = ELEMENTS[el];
+  const elemHint = el === 'fire' ? ' [🔥 FIRE: tighter zones, faster bars]'
+    : el === 'ice' ? ' [❄️ ICE: slower speed, more time]'
+    : el === 'electric' ? ' [⚡ ELECTRIC: +20% DMG, random glitches]' : '';
+  miniSub.textContent   = labels[type].s + elemHint;
 
   state.mini = { entity, type, done:false, result:null, startTs: performance.now() };
 
@@ -3719,18 +3757,51 @@ function rarityDiff() {
   return 1.0 + RARITY_TIER[r] * 0.35;
 }
 
+function activeElement() {
+  return getElement(state.activeAppliance);
+}
+
+function elemZoneMult() {
+  const el = activeElement();
+  if (el === 'fire') return 0.75;
+  return 1;
+}
+function elemSpeedMult() {
+  const el = activeElement();
+  if (el === 'fire') return 1.3;
+  if (el === 'ice') return 0.8;
+  return 1;
+}
+function elemTimeMult() {
+  const el = activeElement();
+  if (el === 'ice') return 1.25;
+  return 1;
+}
+function elemDmgMult() {
+  const el = activeElement();
+  if (el === 'electric') return 1.2;
+  return 1;
+}
+
+const ELEM_ADVANTAGE = { fire:'ice', ice:'electric', electric:'fire' };
+function elemMatchup(atkElem, defElem) {
+  if (ELEM_ADVANTAGE[atkElem] === defElem) return 1.35;
+  if (ELEM_ADVANTAGE[defElem] === atkElem) return 0.7;
+  return 1;
+}
+
 function setupTiming() {
   const m = state.mini;
   miniTimingWrap.style.display = '';
   const diff = rarityDiff();
   const barW = miniBar.clientWidth || 604;
   const baseZone = 92;
-  const zoneW = Math.max(24, Math.floor(baseZone / diff) + Math.floor(Math.random()*10));
+  const zoneW = Math.max(20, Math.floor(baseZone / diff * elemZoneMult()) + Math.floor(Math.random()*10));
   const zx = Math.floor(20 + Math.random() * (barW - zoneW - 40));
   miniZoneEl.style.left = zx + 'px';
   miniZoneEl.style.width = zoneW + 'px';
   miniCursor.style.left = '0px';
-  Object.assign(m, { barW, zx, zoneW, cursor: 0, dir: 1, speed: (340 + Math.random()*120) * diff });
+  Object.assign(m, { barW, zx, zoneW, cursor: 0, dir: 1, speed: (340 + Math.random()*120) * diff * elemSpeedMult() });
   miniPrompt.textContent = '> PRESS SPACE <';
 }
 
@@ -3739,7 +3810,7 @@ function setupMash() {
   miniMash.classList.add('show');
   const diff = rarityDiff();
   const target = Math.floor((8 + Math.random()*3) * diff);
-  const time = Math.max(2.0, 4.2 - (diff - 1) * 0.45);
+  const time = Math.max(2.0, (4.2 - (diff - 1) * 0.45) * elemTimeMult());
   m.mashCount = 0; m.mashTarget = target; m.mashTime = time; m.mashTimeLeft = time;
   miniMashFill.style.width = '0%';
   miniMashTarget.style.left = '85%';
@@ -3752,9 +3823,9 @@ function setupHold() {
   const m = state.mini;
   miniHold.classList.add('show');
   const diff = rarityDiff();
-  const zoneW = Math.max(4.5, (14 - diff * 2.2) + Math.random()*4);
+  const zoneW = Math.max(4.5, ((14 - diff * 2.2) + Math.random()*4) * elemZoneMult());
   const zx = 50 + Math.random()*30;
-  m.holdFill = 0; m.holdSpeed = (50 + Math.random()*18) * diff;
+  m.holdFill = 0; m.holdSpeed = (50 + Math.random()*18) * diff * elemSpeedMult();
   m.holdZx = zx; m.holdZoneW = zoneW; m.holding = false; m.holdHasPressed = false;
   miniHoldFill.style.width = '0%';
   miniHoldZone.style.left = zx + '%';
@@ -3770,7 +3841,7 @@ function setupSequence() {
   const len = Math.min(12, Math.floor(5 + diff * 1.8 + Math.random()*2));
   const seq = [];
   for (let i = 0; i < len; i++) seq.push(dirs[Math.floor(Math.random()*4)]);
-  const time = Math.max(1.4, (1.8 + len * 0.28) / (0.85 + diff * 0.18));
+  const time = Math.max(1.4, ((1.8 + len * 0.28) / (0.85 + diff * 0.18)) * elemTimeMult());
   m.seq = seq; m.seqIdx = 0; m.seqTime = time; m.seqTimeLeft = time;
   miniSeqRow.innerHTML = seq.map((k,i) =>
     `<div class="seqKey${i===0?' active':''}" data-idx="${i}">${ARROW_GLYPH[k]}</div>`
@@ -3796,7 +3867,7 @@ function setupAim() {
   miniAimLockX.style.display = 'none';
   miniAimLockY.style.display = 'none';
   m.cx = 0; m.cy = fh/2;
-  m.cvx = (300 + Math.random()*120) * diff;
+  m.cvx = (300 + Math.random()*120) * diff * elemSpeedMult();
   miniAimCross.style.left = (m.cx - 12) + 'px';
   miniAimCross.style.top  = (m.cy - 12) + 'px';
   miniAimStage.textContent = 'LOCK HORIZONTAL \u2014 SPACE';
@@ -3808,7 +3879,7 @@ function setupDodge() {
   miniDodge.classList.add('show');
   const diff = rarityDiff();
   const total = Math.floor(4 + diff * 1.5);
-  const time = Math.max(3.0, 6.0 - (diff - 1) * 0.6);
+  const time = Math.max(3.0, (6.0 - (diff - 1) * 0.6) * elemTimeMult());
   const dirs = ['up','down','left','right'];
   const attacks = [];
   for (let i = 0; i < total; i++) {
@@ -3831,8 +3902,8 @@ function setupRhythm() {
   const total = Math.floor(4 + diff * 1.5);
   const fieldH = 200;
   const lineY = fieldH - 32;
-  const fallTime = Math.max(1.4, 2.4 - diff * 0.2);
-  const spacing = Math.max(0.4, 0.7 - diff * 0.05);
+  const fallTime = Math.max(1.4, (2.4 - diff * 0.2) / elemSpeedMult());
+  const spacing = Math.max(0.4, (0.7 - diff * 0.05) / elemSpeedMult());
   const notes = [];
   for (let i = 0; i < total; i++) {
     const x = 60 + Math.random() * (Math.max(200, (miniRhythmField.clientWidth || 580) - 120));
@@ -3854,7 +3925,7 @@ function setupVolley() {
   const target = Math.floor(4 + diff * 2);
   const fw = miniVolleyField.clientWidth || 580;
   m.volleyX = fw * 0.82; m.volleyDir = -1;
-  m.volleySpeed = (160 + diff * 50); m.volleySpeedGain = 12;
+  m.volleySpeed = (160 + diff * 50) * elemSpeedMult(); m.volleySpeedGain = 12;
   m.volleyW = fw; m.volleyRallies = 0; m.volleyTarget = target;
   m.volleyPlayerZone = fw * 0.18;
   m.volleyNeedReturn = true;
@@ -3866,6 +3937,18 @@ function setupVolley() {
 function miniTick(dt) {
   const m = state.mini; if (!m || m.done) return;
   const ds = dt / 1000;
+  if (activeElement() === 'electric' && Math.random() < 0.02) {
+    if (m.type === 'TIMING') {
+      m.cursor += (Math.random() - 0.5) * m.barW * 0.12;
+      m.cursor = Math.max(0, Math.min(m.barW, m.cursor));
+    } else if (m.type === 'HOLD' && m.holding) {
+      m.holdFill += (Math.random() - 0.3) * 5;
+      m.holdFill = Math.max(0, Math.min(99, m.holdFill));
+    } else if (m.type === 'AIM') {
+      if (m.aimStage === 'x') m.cx += (Math.random() - 0.5) * 40;
+      else if (m.aimStage === 'y') m.cy += (Math.random() - 0.5) * 25;
+    }
+  }
   if (m.type === 'TIMING') {
     m.cursor += m.dir * m.speed * ds;
     if (m.cursor < 0) { m.cursor = 0; m.dir = 1; }
