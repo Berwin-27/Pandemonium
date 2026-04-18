@@ -759,7 +759,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <div id="stars"><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span></div>
     </div>
     <div id="zone">HOME</div>
-    <div id="hint">P = PANDEX</div>
+    <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE &bull; F9 = LOAD</div>
     <div id="dialogue"></div>
     <div id="invmodal">
       <div id="invpanel">
@@ -890,9 +890,10 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <p>Catching an Appliance requires skill. Time your strikes, hammer buttons, hold your nerve, follow precise sequences, and take careful aim. Rarer Appliances demand sharper technique.</p>
       <div class="keys">
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
-        P &mdash; open PANDEX &nbsp; ESC &mdash; close a menu
+        P &mdash; PANDEX &nbsp; M &mdash; WARP HOME &nbsp; F5 &mdash; SAVE &nbsp; F9 &mdash; LOAD
       </div>
       <div class="press">&gt; PRESS SPACE TO BEGIN &lt;</div>
+      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="loadGame()">&gt; PRESS F9 OR CLICK TO CONTINUE &lt;</div>
     </div>
     <div id="starter">
       <h1>CHOOSE YOUR FIRST</h1>
@@ -2374,6 +2375,9 @@ function onKeyDown(e) {
 
   keys[k] = true;
 
+  if (k === 'f5') { saveGame(); e.preventDefault(); return; }
+  if (k === 'f9') { if (state.battle || state.mini) { showToast('Cannot load during battle!'); } else { loadGame(); } e.preventDefault(); return; }
+
   // intro screen -> starter select
   if (state.screen === 'intro') {
     if (k === ' ' || k === 'enter') {
@@ -2454,7 +2458,62 @@ function onKeyDown(e) {
 
   // world
   if (k === 'p' || k === 'i') { openInventory(); e.preventDefault(); return; }
+  if (k === 'm') { teleportHome(); e.preventDefault(); return; }
   if (k === ' ' || k === 'enter' || k === 'e') { interact(); e.preventDefault(); return; }
+}
+
+function teleportHome() {
+  if (state.moving || state.dialog || state.battle || state.mini) return;
+  state.map = 'town'; state.px = state.tx = 23; state.py = state.ty = 7;
+  state.moving = false; state.prog = 0;
+  audio.startArea('town');
+  showToast('Warped to Professor\'s Kitchen!');
+}
+
+function saveGame() {
+  const data = {
+    map: state.map, px: state.px, py: state.py, dir: state.dir,
+    starter: state.starter, activeAppliance: state.activeAppliance,
+    caught: [...state.caught], encounters: state.encounters,
+    michelinStars: state.michelinStars, playerHp: state.playerHp,
+    playerMaxHp: state.playerMaxHp, adminMode: state.adminMode,
+    gadget: state.gadget, won: state.won, started: state.started,
+    screen: state.screen
+  };
+  try {
+    localStorage.setItem('pandemonium_save', JSON.stringify(data));
+    showToast('Game saved!');
+  } catch(e) { showToast('Save failed!'); }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('pandemonium_save');
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    state.map = d.map; state.px = state.tx = d.px; state.py = state.ty = d.py;
+    state.dir = d.dir || 'up'; state.starter = d.starter;
+    state.activeAppliance = d.activeAppliance || d.starter;
+    state.caught = new Set(d.caught || []);
+    state.encounters = d.encounters || 0;
+    state.michelinStars = d.michelinStars || 0;
+    state.playerHp = d.playerHp || 60; state.playerMaxHp = d.playerMaxHp || 60;
+    state.adminMode = d.adminMode || false;
+    state.gadget = d.gadget || false;
+    state.won = d.won || false;
+    state.started = true; state.screen = 'world';
+    state.moving = false; state.prog = 0;
+    document.getElementById('intro').style.display = 'none';
+    document.getElementById('starter').classList.remove('show');
+    computeMichelin();
+    audio.startArea(state.map);
+    showToast('Game loaded!');
+    return true;
+  } catch(e) { return false; }
+}
+
+function hasSaveData() {
+  return !!localStorage.getItem('pandemonium_save');
 }
 
 function renderStarterFocus() {
@@ -2499,8 +2558,10 @@ function entAt(m, x, y) {
   return entities.find(e => e.m === m && e.x === x && e.y === y
     && !(e.id && state.caught.has(e.id)));
 }
+function isWaterTile(m, x, y) { return tileAt(m, x, y) === '~' && (m === 'lake' || m === 'beach'); }
 function canWalk(m, x, y) {
   const t = tileAt(m, x, y);
+  if (t === '~' && (m === 'lake' || m === 'beach')) return true;
   if (BLOCK.has(t)) return false;
   const e = entAt(m, x, y);
   if (!e) return true;
@@ -2589,6 +2650,8 @@ function transitions(m, x, y) {
       dx = link.spawnX;
       dy = link.spawnY;
     }
+    while (!canWalk(link.to, dx, dy) && dy > 1) dy--;
+    while (!canWalk(link.to, dx, dy) && dx > 1) dx--;
     return { to: link.to, x: dx, y: dy };
   }
   return null;
@@ -3215,6 +3278,7 @@ function closeBattle() {
   btArena.querySelectorAll('.bt-dmg-popup, .bt-atk-fx, .bt-atk-beam, .bt-atk-shield, .bt-atk-wave').forEach(el => el.remove());
   audio.stopBattle();
   audio.startArea(state.map);
+  saveGame();
 }
 
 function professorTalk() {
@@ -4718,7 +4782,8 @@ function tick(now) {
   if (state.mini) miniTick(dt);
   if (state.started && !state.won && !state.dialog && !state.invOpen && !state.mini && !state.battle) {
     if (state.moving) {
-      state.prog += dt / STEP_MS;
+      const swimming = isWaterTile(state.map, state.tx, state.ty);
+      state.prog += dt / (swimming ? STEP_MS * 2.2 : STEP_MS);
       if (state.prog >= 1) { state.px = state.tx; state.py = state.ty; state.moving = false; state.prog = 0; checkAdminTerminal(); }
     }
     if (!state.moving) {
@@ -4755,6 +4820,8 @@ document.querySelectorAll('#starterRow .starterCard').forEach((card, i) => {
   });
   card.addEventListener('mouseenter', () => { state.starterFocus = i; renderStarterFocus(); });
 });
+
+if (hasSaveData()) document.getElementById('introContinue').style.display = '';
 
 requestAnimationFrame(tick);
 })();
