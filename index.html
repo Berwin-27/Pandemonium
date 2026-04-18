@@ -765,6 +765,148 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   0%{opacity:1;transform:scaleX(0.3) translateY(0)} 100%{opacity:0;transform:scaleX(1.2) translateY(-20px)}
 }
 
+/* === BOSS ATTACK ANIMATIONS === */
+.boss-fx-layer {
+  position:absolute; inset:0; z-index:8; pointer-events:none; overflow:hidden;
+}
+
+/* Screen shake for bosses */
+@keyframes bossScreenShake {
+  0%{transform:translate(0,0)} 10%{transform:translate(-6px,4px)}
+  20%{transform:translate(5px,-3px)} 30%{transform:translate(-4px,5px)}
+  40%{transform:translate(6px,-2px)} 50%{transform:translate(-3px,3px)}
+  60%{transform:translate(4px,-4px)} 70%{transform:translate(-5px,2px)}
+  80%{transform:translate(3px,3px)} 90%{transform:translate(-2px,-3px)} 100%{transform:translate(0,0)}
+}
+.bt-arena.boss-shake { animation: bossScreenShake 0.5s ease-out; }
+
+/* Sous Chef Steve — frying pan slam */
+.boss-pan {
+  position:absolute; font-size:64px; z-index:9; pointer-events:none;
+  animation: bossPanSlam 0.7s cubic-bezier(0.2,0,0.8,1) forwards;
+}
+@keyframes bossPanSlam {
+  0%{opacity:1;transform:translate(-80px,-120px) rotate(-60deg) scale(0.5)}
+  35%{opacity:1;transform:translate(0,0) rotate(15deg) scale(1.3)}
+  50%{opacity:1;transform:translate(10px,5px) rotate(0deg) scale(1.4)}
+  100%{opacity:0;transform:translate(20px,20px) rotate(20deg) scale(0.8)}
+}
+.boss-sparks {
+  position:absolute; z-index:9; pointer-events:none;
+}
+.boss-spark {
+  position:absolute; width:4px; height:4px; border-radius:50%;
+  background:#ff8c00;
+  animation: bossSpark 0.5s ease-out forwards;
+}
+@keyframes bossSpark {
+  0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0.3)}
+}
+
+/* Health Inspector — clipboard stamp / red X */
+.boss-stamp {
+  position:absolute; font-size:80px; z-index:9; pointer-events:none;
+  color:#e53e3e; text-shadow:0 0 20px rgba(229,62,62,0.6);
+  animation: bossStamp 0.8s cubic-bezier(0.1,0,0.2,1) forwards;
+}
+@keyframes bossStamp {
+  0%{opacity:0;transform:scale(3) rotate(-15deg)} 25%{opacity:1;transform:scale(1.1) rotate(3deg)}
+  40%{opacity:1;transform:scale(0.95) rotate(-1deg)} 60%{opacity:1;transform:scale(1) rotate(0deg)}
+  100%{opacity:0;transform:scale(1) rotate(0deg)}
+}
+.boss-redtape {
+  position:absolute; height:6px; z-index:8; pointer-events:none;
+  background:linear-gradient(90deg, transparent, #e53e3e, #ff4444, #e53e3e, transparent);
+  animation: bossRedTape 0.6s ease-out forwards;
+}
+@keyframes bossRedTape {
+  0%{opacity:0;transform:scaleX(0)} 30%{opacity:1;transform:scaleX(1.2)} 100%{opacity:0;transform:scaleX(1.5)}
+}
+
+/* Gordon Ramsay — explosive rage / plate throw */
+.boss-plate {
+  position:absolute; font-size:52px; z-index:9; pointer-events:none;
+  animation: bossPlateThrow 0.5s ease-in forwards;
+}
+@keyframes bossPlateThrow {
+  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}
+  60%{opacity:1;transform:translate(var(--px),var(--py)) rotate(720deg) scale(1.2)}
+  100%{opacity:0;transform:translate(var(--px2),var(--py2)) rotate(1080deg) scale(0.3)}
+}
+.boss-rage-ring {
+  position:absolute; z-index:8; pointer-events:none;
+  width:0; height:0; border-radius:50%;
+  border:4px solid rgba(255,80,60,0.8);
+  box-shadow:0 0 20px rgba(255,80,60,0.4);
+  animation: bossRageRing 0.7s ease-out forwards;
+}
+@keyframes bossRageRing {
+  0%{opacity:1;width:0;height:0;border-width:6px}
+  100%{opacity:0;width:200px;height:200px;margin-left:-100px;margin-top:-100px;border-width:1px}
+}
+.boss-flame {
+  position:absolute; font-size:28px; z-index:9; pointer-events:none;
+  animation: bossFlameRise 0.8s ease-out forwards;
+}
+@keyframes bossFlameRise {
+  0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(0.3)}
+}
+
+/* Food Critic — precision strikes / rating stars */
+.boss-pen-slash {
+  position:absolute; z-index:9; pointer-events:none;
+  width:200px; height:3px;
+  background:linear-gradient(90deg, transparent, #ffe44d, #fff, #ffe44d, transparent);
+  box-shadow:0 0 12px rgba(255,228,77,0.6);
+  animation: bossPenSlash 0.4s ease-out forwards;
+}
+@keyframes bossPenSlash {
+  0%{opacity:0;transform:scaleX(0) rotate(var(--angle))} 30%{opacity:1;transform:scaleX(1.2) rotate(var(--angle))}
+  100%{opacity:0;transform:scaleX(1.5) rotate(var(--angle))}
+}
+.boss-bad-star {
+  position:absolute; font-size:36px; z-index:9; pointer-events:none;
+  color:#ff4444; text-shadow:0 0 10px rgba(255,68,68,0.5);
+  animation: bossBadStar 0.6s ease-out forwards;
+}
+@keyframes bossBadStar {
+  0%{opacity:0;transform:scale(0) rotate(-180deg)} 40%{opacity:1;transform:scale(1.3) rotate(0deg)}
+  100%{opacity:0;transform:scale(0.8) translateY(-30px)}
+}
+
+/* Chef Supreme Azurite — cosmic energy / galaxy blast */
+.boss-cosmic-orb {
+  position:absolute; z-index:9; pointer-events:none;
+  width:30px; height:30px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff, #7b68ee, #4a0e8f);
+  box-shadow:0 0 20px #7b68ee, 0 0 40px #4a0e8f;
+  animation: bossCosmicOrb 0.8s ease-in forwards;
+}
+@keyframes bossCosmicOrb {
+  0%{opacity:0;transform:translate(0,0) scale(0.3)}
+  30%{opacity:1;transform:translate(var(--ox1),var(--oy1)) scale(1.2)}
+  70%{opacity:1;transform:translate(var(--ox2),var(--oy2)) scale(0.8)}
+  100%{opacity:0;transform:translate(var(--ox3),var(--oy3)) scale(2)}
+}
+.boss-galaxy-flash {
+  position:absolute; inset:0; z-index:10; pointer-events:none;
+  background:radial-gradient(circle at var(--fx) var(--fy), rgba(123,104,238,0.6), transparent 60%);
+  animation: bossGalaxyFlash 0.5s ease-out forwards;
+}
+@keyframes bossGalaxyFlash {
+  0%{opacity:0} 20%{opacity:1} 100%{opacity:0}
+}
+.boss-lightning-arc {
+  position:absolute; z-index:9; pointer-events:none;
+  width:3px; border-radius:2px;
+  background:linear-gradient(180deg, #ffe44d, #7b68ee, #4a0e8f);
+  box-shadow:0 0 8px #7b68ee;
+  animation: bossLightning 0.35s ease-out forwards;
+}
+@keyframes bossLightning {
+  0%{opacity:1;transform:scaleY(0)} 30%{opacity:1;transform:scaleY(1)} 100%{opacity:0;transform:scaleY(1)}
+}
+
 /* Damage number popup */
 .bt-dmg-popup {
   position:absolute; z-index:6; font-size:22px; font-weight:bold; letter-spacing:2px;
@@ -3085,6 +3227,175 @@ function btAttackEffect(mgType, fromPlayer) {
   }
 }
 
+function bossAttackEffect(bossId) {
+  const tRect = btPlayerSprite.getBoundingClientRect();
+  const sRect = btEnemySprite.getBoundingClientRect();
+  const aRect = btArena.getBoundingClientRect();
+  const tx = tRect.left - aRect.left + tRect.width/2;
+  const ty = tRect.top - aRect.top + tRect.height/2;
+  const sx = sRect.left - aRect.left + sRect.width/2;
+  const sy = sRect.top - aRect.top + sRect.height/2;
+
+  // Screen shake
+  btArena.classList.remove('boss-shake');
+  void btArena.offsetWidth;
+  btArena.classList.add('boss-shake');
+  setTimeout(() => btArena.classList.remove('boss-shake'), 600);
+
+  if (bossId === 'boss1') {
+    // Sous Chef Steve: Frying pan slam + sparks
+    const pan = document.createElement('div');
+    pan.className = 'boss-pan';
+    pan.textContent = '🍳';
+    pan.style.left = tx + 'px'; pan.style.top = ty + 'px';
+    btArena.appendChild(pan);
+    setTimeout(() => {
+      const sparks = document.createElement('div');
+      sparks.className = 'boss-sparks';
+      sparks.style.left = tx + 'px'; sparks.style.top = ty + 'px';
+      for (let i = 0; i < 10; i++) {
+        const s = document.createElement('div');
+        s.className = 'boss-spark';
+        const a = Math.random() * Math.PI * 2;
+        const d = 30 + Math.random() * 50;
+        s.style.setProperty('--sx', Math.cos(a)*d + 'px');
+        s.style.setProperty('--sy', Math.sin(a)*d + 'px');
+        s.style.background = Math.random() > 0.5 ? '#ff8c00' : '#ffe44d';
+        s.style.animationDelay = (Math.random() * 0.1) + 's';
+        sparks.appendChild(s);
+      }
+      btArena.appendChild(sparks);
+      setTimeout(() => sparks.remove(), 600);
+    }, 280);
+    setTimeout(() => pan.remove(), 800);
+
+  } else if (bossId === 'boss2') {
+    // Health Inspector: Red X stamp + red tape lines
+    const stamp = document.createElement('div');
+    stamp.className = 'boss-stamp';
+    stamp.textContent = '✖';
+    stamp.style.left = (tx - 40) + 'px'; stamp.style.top = (ty - 40) + 'px';
+    btArena.appendChild(stamp);
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const tape = document.createElement('div');
+        tape.className = 'boss-redtape';
+        tape.style.left = '0'; tape.style.width = '100%';
+        tape.style.top = (ty - 20 + i * 20) + 'px';
+        tape.style.animationDelay = (i * 0.1) + 's';
+        btArena.appendChild(tape);
+        setTimeout(() => tape.remove(), 700);
+      }, 200 + i * 80);
+    }
+    setTimeout(() => stamp.remove(), 900);
+
+  } else if (bossId === 'boss3') {
+    // Gordon Ramsay: Plate throw + rage rings + rising flames
+    const plates = ['🍽️','🔪','🍴'];
+    for (let i = 0; i < 3; i++) {
+      const p = document.createElement('div');
+      p.className = 'boss-plate';
+      p.textContent = plates[i];
+      p.style.left = sx + 'px'; p.style.top = sy + 'px';
+      const dx = tx - sx + (Math.random()-0.5)*60;
+      const dy = ty - sy + (Math.random()-0.5)*40;
+      p.style.setProperty('--px', (dx*0.7) + 'px');
+      p.style.setProperty('--py', (dy*0.7) + 'px');
+      p.style.setProperty('--px2', dx + 'px');
+      p.style.setProperty('--py2', dy + 'px');
+      p.style.animationDelay = (i * 0.12) + 's';
+      btArena.appendChild(p);
+      setTimeout(() => p.remove(), 700);
+    }
+    setTimeout(() => {
+      const ring = document.createElement('div');
+      ring.className = 'boss-rage-ring';
+      ring.style.left = tx + 'px'; ring.style.top = ty + 'px';
+      btArena.appendChild(ring);
+      setTimeout(() => ring.remove(), 800);
+    }, 300);
+    for (let i = 0; i < 6; i++) {
+      const flame = document.createElement('div');
+      flame.className = 'boss-flame';
+      flame.textContent = '🔥';
+      flame.style.left = (tx - 40 + Math.random() * 80) + 'px';
+      flame.style.top = (ty + 10) + 'px';
+      flame.style.animationDelay = (0.3 + i * 0.08) + 's';
+      btArena.appendChild(flame);
+      setTimeout(() => flame.remove(), 1200);
+    }
+
+  } else if (bossId === 'boss4') {
+    // Food Critic: Precision pen slashes + bad rating stars
+    for (let i = 0; i < 4; i++) {
+      const slash = document.createElement('div');
+      slash.className = 'boss-pen-slash';
+      slash.style.left = (tx - 100) + 'px';
+      slash.style.top = (ty - 20 + i * 15) + 'px';
+      slash.style.setProperty('--angle', (-15 + i * 10) + 'deg');
+      slash.style.transformOrigin = 'center center';
+      slash.style.animationDelay = (i * 0.1) + 's';
+      btArena.appendChild(slash);
+      setTimeout(() => slash.remove(), 600);
+    }
+    setTimeout(() => {
+      for (let i = 0; i < 3; i++) {
+        const star = document.createElement('div');
+        star.className = 'boss-bad-star';
+        star.textContent = '★';
+        star.style.left = (tx - 30 + i * 30) + 'px';
+        star.style.top = (ty - 10) + 'px';
+        star.style.animationDelay = (i * 0.12) + 's';
+        btArena.appendChild(star);
+        setTimeout(() => star.remove(), 800);
+      }
+    }, 350);
+
+  } else if (bossId === 'boss5') {
+    // Chef Supreme Azurite: Cosmic orbs converge + galaxy flash + lightning arcs
+    for (let i = 0; i < 5; i++) {
+      const orb = document.createElement('div');
+      orb.className = 'boss-cosmic-orb';
+      const angle = (i / 5) * Math.PI * 2;
+      const startX = Math.cos(angle) * 120;
+      const startY = Math.sin(angle) * 80;
+      const midX = Math.cos(angle) * 60;
+      const midY = Math.sin(angle) * 40;
+      orb.style.left = (tx + startX) + 'px';
+      orb.style.top = (ty + startY) + 'px';
+      orb.style.setProperty('--ox1', (-startX*0.3) + 'px');
+      orb.style.setProperty('--oy1', (-startY*0.3) + 'px');
+      orb.style.setProperty('--ox2', (-startX*0.7) + 'px');
+      orb.style.setProperty('--oy2', (-startY*0.7) + 'px');
+      orb.style.setProperty('--ox3', (-startX) + 'px');
+      orb.style.setProperty('--oy3', (-startY) + 'px');
+      orb.style.animationDelay = (i * 0.08) + 's';
+      btArena.appendChild(orb);
+      setTimeout(() => orb.remove(), 1000);
+    }
+    setTimeout(() => {
+      const flash = document.createElement('div');
+      flash.className = 'boss-galaxy-flash';
+      flash.style.setProperty('--fx', tx + 'px');
+      flash.style.setProperty('--fy', ty + 'px');
+      btArena.appendChild(flash);
+      setTimeout(() => flash.remove(), 600);
+    }, 500);
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const arc = document.createElement('div');
+        arc.className = 'boss-lightning-arc';
+        arc.style.left = (tx - 30 + Math.random() * 60) + 'px';
+        arc.style.top = (ty - 50) + 'px';
+        arc.style.height = (40 + Math.random() * 40) + 'px';
+        arc.style.transformOrigin = 'top center';
+        btArena.appendChild(arc);
+        setTimeout(() => arc.remove(), 450);
+      }, 550 + i * 80);
+    }
+  }
+}
+
 function btShowDmg(dmg, target, crit) {
   const el = document.createElement('div');
   el.className = 'bt-dmg-popup' + (crit ? ' crit' : '');
@@ -3581,11 +3892,19 @@ function enemyTurn() {
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
   const eMg = atkTypes[Math.floor(Math.random()*atkTypes.length)];
   btAttackAnim(btEnemySprite);
-  setTimeout(() => {
-    btAttackEffect(eMg, false);
-    btPlayerSprite.classList.remove('hurt'); void btPlayerSprite.offsetWidth; btPlayerSprite.classList.add('hurt');
-    if (realDmg > 0) { btFlashHit(); btShowDmg(realDmg, btPlayerSprite, false); }
-  }, 200);
+  if (b.isBoss && b.bossData) {
+    setTimeout(() => {
+      bossAttackEffect(b.bossData.id);
+      btPlayerSprite.classList.remove('hurt'); void btPlayerSprite.offsetWidth; btPlayerSprite.classList.add('hurt');
+      if (realDmg > 0) { btFlashHit(); btShowDmg(realDmg, btPlayerSprite, false); }
+    }, 250);
+  } else {
+    setTimeout(() => {
+      btAttackEffect(eMg, false);
+      btPlayerSprite.classList.remove('hurt'); void btPlayerSprite.offsetWidth; btPlayerSprite.classList.add('hurt');
+      if (realDmg > 0) { btFlashHit(); btShowDmg(realDmg, btPlayerSprite, false); }
+    }, 200);
+  }
   if (state.adminMode) audio.glance();
   else audio.takeDmg();
   if (state.adminMode) battleLog(`${atk.flavor} The blow phases through your <b style="color:#f067ff">ADMIN</b> aura. <b>0</b> HP lost.`);
@@ -3705,7 +4024,8 @@ function closeBattle() {
   battleEl.classList.remove('show');
   btEnemySprite.classList.remove('hurt','faint','entering','attacking','shiny');
   btPlayerSprite.classList.remove('hurt','faint','entering','attacking','shiny');
-  btArena.querySelectorAll('.bt-dmg-popup, .bt-atk-fx, .bt-atk-beam, .bt-atk-shield, .bt-atk-wave').forEach(el => el.remove());
+  btArena.querySelectorAll('.bt-dmg-popup, .bt-atk-fx, .bt-atk-beam, .bt-atk-shield, .bt-atk-wave, .boss-pan, .boss-sparks, .boss-stamp, .boss-redtape, .boss-plate, .boss-rage-ring, .boss-flame, .boss-pen-slash, .boss-bad-star, .boss-cosmic-orb, .boss-galaxy-flash, .boss-lightning-arc').forEach(el => el.remove());
+  btArena.classList.remove('boss-shake');
   audio.stopBattle();
   audio.startArea(state.map);
   saveGame();
