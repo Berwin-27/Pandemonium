@@ -1580,6 +1580,108 @@ const BOSSES = [
     defeat:'"You... you have surpassed even me. The title of Chef Supreme is yours." Azurite bows.' }
 ];
 
+// Daily Challenge system
+const DAILY_CHALLENGES = [
+  { key:'catch_fire',    desc:'Catch 3 Fire-type Appliances',     target:3,  check:'catchElem', elem:'fire',
+    reward:'mystery_meat', rewardDesc:'Mystery Meat (2x damage, 20 min)' },
+  { key:'catch_ice',     desc:'Catch 3 Ice-type Appliances',      target:3,  check:'catchElem', elem:'ice',
+    reward:'frozen_boost', rewardDesc:'Frozen Boost (0.5x enemy damage, 20 min)' },
+  { key:'catch_elec',    desc:'Catch 3 Electric-type Appliances',  target:3,  check:'catchElem', elem:'electric',
+    reward:'shock_charge', rewardDesc:'Shock Charge (30% crit chance, 20 min)' },
+  { key:'win_5',         desc:'Win 5 battles',                     target:5,  check:'winBattle',
+    reward:'mystery_meat', rewardDesc:'Mystery Meat (2x damage, 20 min)' },
+  { key:'win_10',        desc:'Win 10 battles',                    target:10, check:'winBattle',
+    reward:'golden_fork', rewardDesc:'Golden Fork (+25 max HP permanent)' },
+  { key:'catch_rare',    desc:'Catch 2 Rare or higher Appliances', target:2,  check:'catchRare',
+    reward:'mystery_meat', rewardDesc:'Mystery Meat (2x damage, 20 min)' },
+  { key:'catch_any_5',   desc:'Catch 5 Appliances (any type)',     target:5,  check:'catchAny',
+    reward:'frozen_boost', rewardDesc:'Frozen Boost (0.5x enemy damage, 20 min)' },
+  { key:'evolve_1',      desc:'Evolve an Appliance',               target:1,  check:'evolve',
+    reward:'shock_charge', rewardDesc:'Shock Charge (30% crit chance, 20 min)' },
+  { key:'switch_3',      desc:'Switch Appliances 3 times in battle', target:3, check:'switchInBattle',
+    reward:'mystery_meat', rewardDesc:'Mystery Meat (2x damage, 20 min)' },
+  { key:'win_no_dmg',    desc:'Win a battle without taking damage', target:1,  check:'perfectWin',
+    reward:'golden_fork', rewardDesc:'Golden Fork (+25 max HP permanent)' },
+];
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dailySeed(dateStr) {
+  let h = 0;
+  for (let i = 0; i < dateStr.length; i++) { h = ((h << 5) - h + dateStr.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+
+function getDailyChallenges() {
+  const today = getTodayStr();
+  if (state.dailyDate !== today) {
+    state.dailyDate = today;
+    state.dailyProgress = {};
+    state.dailyClaimed = {};
+  }
+  const seed = dailySeed(today);
+  const pool = [...DAILY_CHALLENGES];
+  const picked = [];
+  let s = seed;
+  for (let i = 0; i < 3 && pool.length > 0; i++) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const idx = s % pool.length;
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
+function dailyTrack(type, data) {
+  const today = getTodayStr();
+  if (state.dailyDate !== today) return;
+  const challenges = getDailyChallenges();
+  for (const ch of challenges) {
+    if (state.dailyClaimed[ch.key]) continue;
+    let match = false;
+    if (ch.check === 'catchElem' && type === 'catch' && data.elem === ch.elem) match = true;
+    if (ch.check === 'catchAny' && type === 'catch') match = true;
+    if (ch.check === 'catchRare' && type === 'catch' && ['rare','epic','mythic','legendary','ultra'].includes(data.rarity)) match = true;
+    if (ch.check === 'winBattle' && type === 'win') match = true;
+    if (ch.check === 'evolve' && type === 'evolve') match = true;
+    if (ch.check === 'switchInBattle' && type === 'switch') match = true;
+    if (ch.check === 'perfectWin' && type === 'perfectWin') match = true;
+    if (match) {
+      state.dailyProgress[ch.key] = (state.dailyProgress[ch.key] || 0) + 1;
+      if (state.dailyProgress[ch.key] >= ch.target) {
+        toast(`★ DAILY COMPLETE: ${ch.desc}! Visit the board to claim. ★`);
+      }
+    }
+  }
+}
+
+function claimDailyReward(ch) {
+  if (state.dailyClaimed[ch.key]) return;
+  state.dailyClaimed[ch.key] = true;
+  const BUFF_DURATION = 20 * 60 * 1000;
+  if (ch.reward === 'mystery_meat') {
+    state.activeBuffs.doubleDamage = Date.now() + BUFF_DURATION;
+    toast('Mystery Meat consumed! 2x damage for 20 minutes!');
+  } else if (ch.reward === 'frozen_boost') {
+    state.activeBuffs.halfEnemyDmg = Date.now() + BUFF_DURATION;
+    toast('Frozen Boost activated! Enemies deal 0.5x damage for 20 minutes!');
+  } else if (ch.reward === 'shock_charge') {
+    state.activeBuffs.critBoost = Date.now() + BUFF_DURATION;
+    toast('Shock Charge surging! 30% crit chance for 20 minutes!');
+  } else if (ch.reward === 'golden_fork') {
+    state.playerMaxHp += 25;
+    state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25);
+    toast('Golden Fork absorbed! +25 max HP permanently!');
+  }
+  saveGame();
+}
+
+function isBuffActive(buffName) {
+  return state.activeBuffs[buffName] && Date.now() < state.activeBuffs[buffName];
+}
+
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
 const TOTAL_DEX = 63;
@@ -1754,8 +1856,7 @@ const entities = [
     desc:'PROFESSOR BOUILLABAISSE\u2019S KITCHEN &mdash; A HAVEN FOR APPLIANCES. Enter to rest, polish, and hear what the Professor has to say.' },
   { m:'town', x:17, y:11, n:'Stray Dog', e:'\uD83D\uDC15', npc:true,
     desc:'A scruffy brown dog wags at you. It has, you realize, been following you between zones. It sighs contentedly and curls up.' },
-  { m:'town', x:15, y:12, n:'Notice Board', e:'\uD83D\uDCDC', npc:true,
-    desc:'POSTED: wild Appliances only reveal themselves within 2 paces\u2014walk slow and look carefully. The Professor may have a gadget to help. POSTED: the forest cave hums; 5 common catches might open it. POSTED: trapdoor under YOUR house\u2014may contain MYTHICS. POSTED: the shrine wants the Sacred Five. POSTED: paths west lead to Golden Plains and Frostpeak Mountain. East leads to Stillwater Lake and Sunburn Beach. POSTED: local wardens guard the Fungal Hollow and the Scrapyard\u2014bring the right Appliances to prove your worth.' },
+  { m:'town', x:15, y:12, n:'Daily Challenge Board', e:'📋', npc:true, bulletin:true },
 
   // =================== WILD NPCS ===================
   { m:'wild', x:5, y:5, n:'Retired Chef', e:'👨‍🍳', npc:true,
@@ -1851,7 +1952,11 @@ const state = {
   adminPrompt: false,       // text input dialog for admin code
   applianceWins: {},        // id → battle wins with that appliance active
   shinies: {},              // id → true if caught as shiny
-  bossesDefeated: {}        // boss id → true when beaten
+  bossesDefeated: {},       // boss id → true when beaten
+  dailyDate: null,          // 'YYYY-MM-DD' of current daily challenge
+  dailyProgress: {},        // challenge key → current count
+  dailyClaimed: {},         // challenge key → true when reward claimed
+  activeBuffs: {}           // buffName → expiry timestamp
 };
 
 function checkAdminTerminal() {
@@ -2671,7 +2776,7 @@ function onKeyDown(e) {
   keys[k] = true;
 
   if (k === 'f5') { saveGame(); e.preventDefault(); return; }
-  if (k === 'f9') { if (state.battle || state.mini) { showToast('Cannot load during battle!'); } else { loadGame(); } e.preventDefault(); return; }
+  if (k === 'f9') { if (state.battle || state.mini) { toast('Cannot load during battle!'); } else { loadGame(); } e.preventDefault(); return; }
 
   // intro screen -> starter select
   if (state.screen === 'intro') {
@@ -2726,6 +2831,12 @@ function onKeyDown(e) {
     return;
   }
 
+  // bulletin board
+  if (state._bulletinOpen) {
+    if (k === 'escape' || k === ' ' || k === 'enter') { closeBulletinBoard(); e.preventDefault(); }
+    return;
+  }
+
   // dialog priority
   if (state.dialog) {
     const d = state.dialog;
@@ -2762,7 +2873,7 @@ function teleportHome() {
   state.map = 'town'; state.px = state.tx = 23; state.py = state.ty = 7;
   state.moving = false; state.prog = 0;
   audio.startArea('town');
-  showToast('Warped to Professor\'s Kitchen!');
+  toast('Warped to Professor\'s Kitchen!');
 }
 
 function saveGame() {
@@ -2776,12 +2887,16 @@ function saveGame() {
     screen: state.screen,
     applianceWins: state.applianceWins,
     shinies: state.shinies,
-    bossesDefeated: state.bossesDefeated
+    bossesDefeated: state.bossesDefeated,
+    dailyDate: state.dailyDate,
+    dailyProgress: state.dailyProgress,
+    dailyClaimed: state.dailyClaimed,
+    activeBuffs: state.activeBuffs
   };
   try {
     localStorage.setItem('pandemonium_save', JSON.stringify(data));
-    showToast('Game saved!');
-  } catch(e) { showToast('Save failed!'); }
+    toast('Game saved!');
+  } catch(e) { toast('Save failed!'); }
 }
 
 function loadGame() {
@@ -2802,13 +2917,17 @@ function loadGame() {
     state.applianceWins = d.applianceWins || {};
     state.shinies = d.shinies || {};
     state.bossesDefeated = d.bossesDefeated || {};
+    state.dailyDate = d.dailyDate || null;
+    state.dailyProgress = d.dailyProgress || {};
+    state.dailyClaimed = d.dailyClaimed || {};
+    state.activeBuffs = d.activeBuffs || {};
     state.started = true; state.screen = 'world';
     state.moving = false; state.prog = 0;
     document.getElementById('intro').style.display = 'none';
     document.getElementById('starter').classList.remove('show');
     computeMichelin();
     audio.startArea(state.map);
-    showToast('Game loaded!');
+    toast('Game loaded!');
     return true;
   } catch(e) { return false; }
 }
@@ -2986,6 +3105,7 @@ function interact() {
   if (e.prof)   return professorTalk();
   if (e.heal)   return healStation(e);
   if (e.gate)   return gateNpcTalk(e);
+  if (e.bulletin) return bulletinBoardInteract();
   if (e.npc)    return openDialog(e.n, [e.desc]);
   if (e.id && !state.caught.has(e.id)) return encounter(e);
 }
@@ -3445,6 +3565,23 @@ function renderBattle() {
   btPlayerSprite.textContent = p ? p.e : '?';
   btPlayerSprite.classList.toggle('shiny', !!isShiny);
   updateHpBar(btPlayerHp, btPlayerHpText, state.playerHp, state.playerMaxHp);
+
+  let buffEl = document.getElementById('btBuffs');
+  if (!buffEl) {
+    buffEl = document.createElement('div');
+    buffEl.id = 'btBuffs';
+    buffEl.style.cssText = 'position:absolute;bottom:110px;left:8px;display:flex;gap:4px;z-index:5;';
+    document.querySelector('.bt-scene').appendChild(buffEl);
+  }
+  const buffs = [];
+  if (isBuffActive('doubleDamage')) buffs.push('🥩2x');
+  if (isBuffActive('halfEnemyDmg')) buffs.push('❄️½');
+  if (isBuffActive('critBoost')) buffs.push('⚡crit');
+  buffEl.innerHTML = buffs.map(b =>
+    `<span style="background:rgba(0,0,0,0.7);border:1px solid #f4c165;border-radius:3px;
+      padding:1px 5px;font-size:9px;color:#ffe08a;letter-spacing:1px">${b}</span>`
+  ).join('');
+  buffEl.style.display = buffs.length ? 'flex' : 'none';
 }
 
 function updateHpBar(fillEl, textEl, hp, max) {
@@ -3787,6 +3924,7 @@ function doSwitch(idx) {
     b.starter = target;
   }
   b.lastMinigame = null;
+  dailyTrack('switch', {});
   btPlayerSprite.classList.add('entering');
   setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
   battleLog(`Go, <b style="color:${RARITY_COLOR[target.rarity]}">${getEvoName(target.id).toUpperCase()}</b>!`);
@@ -3843,11 +3981,13 @@ function resolveBattleMove(score, gotGood) {
   const mv = b.pendingMove; b.pendingMove = null;
   b.lastMinigame = mv.mg;
   const base = mv.power + playerAtkBonus();
-  const crit = score > 0.92;
+  const critThreshold = isBuffActive('critBoost') ? 0.7 : 0.92;
+  const crit = score > critThreshold;
   const enemyElem = b.isBoss && b.bossData ? b.bossData.element : getElement(b.enemy.id);
   const matchup = elemMatchup(activeElement(), enemyElem);
   const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
-  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus);
+  const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode) dmg = b.enemyMaxHp;
   b.enemyHp = Math.max(0, b.enemyHp - dmg);
@@ -3886,7 +4026,8 @@ function enemyTurn() {
     atk = enemyAttack(b.enemy);
   }
   const eMatchup = b.isBoss ? elemMatchup(b.bossData.element, activeElement()) : elemMatchup(getElement(b.enemy.id), activeElement());
-  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup);
+  const buffReduce = isBuffActive('halfEnemyDmg') ? 0.5 : 1;
+  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
   if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
@@ -3962,9 +4103,12 @@ function onEnemyFaint() {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b>${shinyMsg} faints! You add it to your Pandex.`);
     state.caught.add(b.enemy.id);
     if (b.enemyShiny) state.shinies[b.enemy.id] = true;
+    dailyTrack('catch', { elem: getElement(b.enemy.id), rarity: b.enemy.rarity });
   } else {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It escapes before you can catch it.`);
   }
+  dailyTrack('win', {});
+  if (b.turnCount > 0 && state.playerHp >= state.playerMaxHp) dailyTrack('perfectWin', {});
   const activeId = state.activeAppliance;
   if (activeId) {
     const prevStage = getEvoStage(activeId);
@@ -3975,6 +4119,7 @@ function onEnemyFaint() {
       const col = EVO_COLOR[newStage];
       audio.catchSuccess();
       battleLog(`<b style="color:${col};font-size:14px">★ EVOLUTION! ★</b> Your appliance evolved into <b style="color:${col}">${evoName.toUpperCase()}</b>!`);
+      dailyTrack('evolve', {});
       const hpGain = newStage === 2 ? 18 : 12;
       state.playerMaxHp += hpGain;
       state.playerHp = Math.min(state.playerMaxHp, state.playerHp + hpGain);
@@ -4033,7 +4178,7 @@ function closeBattle() {
     const pending = pendingBossStar();
     if (pending > 0) {
       setTimeout(() => {
-        showToast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
+        toast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
         setTimeout(() => startBossBattle(pending), 800);
       }, 600);
     }
@@ -4110,6 +4255,94 @@ function checkEnding() {
 // ======================================================================
 // DIALOG
 // ======================================================================
+function bulletinBoardInteract() {
+  const challenges = getDailyChallenges();
+  const today = getTodayStr();
+  if (state.dailyDate !== today) {
+    state.dailyDate = today;
+    state.dailyProgress = {};
+    state.dailyClaimed = {};
+  }
+  const stage = document.getElementById('stage');
+  let existing = document.getElementById('bulletinOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bulletinOverlay';
+  overlay.style.cssText = `position:absolute;inset:0;z-index:60;background:rgba(0,0,0,0.85);
+    display:flex;align-items:center;justify-content:center;`;
+
+  let html = `<div style="background:linear-gradient(180deg,#1a1a3a,#0d0d1e);border:3px solid #f4c165;
+    border-radius:8px;padding:20px 24px;max-width:360px;width:90%;color:#e0d8c8;
+    box-shadow:0 0 30px rgba(244,193,101,0.3);font-family:inherit;">
+    <div style="text-align:center;font-size:16px;letter-spacing:4px;color:#f4c165;margin-bottom:14px;
+      text-shadow:0 0 8px rgba(244,193,101,0.5);">📋 DAILY CHALLENGES</div>
+    <div style="text-align:center;font-size:10px;color:#8888aa;letter-spacing:2px;margin-bottom:16px">${today}</div>`;
+
+  for (const ch of challenges) {
+    const prog = state.dailyProgress[ch.key] || 0;
+    const done = prog >= ch.target;
+    const claimed = !!state.dailyClaimed[ch.key];
+    const pct = Math.min(100, (prog / ch.target) * 100);
+    const barColor = claimed ? '#555' : done ? '#7edc8b' : '#f4c165';
+    const statusText = claimed ? '<span style="color:#555">CLAIMED</span>' :
+                       done ? `<span class="bulletin-claim" data-key="${ch.key}" style="color:#7edc8b;cursor:pointer;text-decoration:underline">CLAIM REWARD</span>` :
+                       `<span style="color:#aaa">${prog}/${ch.target}</span>`;
+
+    html += `<div style="margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);
+      border:1px solid ${claimed ? '#333' : done ? '#7edc8b55' : '#ffffff15'};border-radius:5px;
+      ${claimed ? 'opacity:0.5;' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;letter-spacing:1px;">${ch.desc}</span>
+        ${statusText}
+      </div>
+      <div style="background:#111;height:6px;border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;
+          transition:width 0.3s;"></div>
+      </div>
+      <div style="font-size:9px;color:#8888aa;margin-top:4px;letter-spacing:1px">
+        🎁 ${ch.rewardDesc}</div>
+    </div>`;
+  }
+
+  const activeBuffs = [];
+  if (isBuffActive('doubleDamage')) activeBuffs.push('🥩 2x Damage');
+  if (isBuffActive('halfEnemyDmg')) activeBuffs.push('❄️ 0.5x Enemy Dmg');
+  if (isBuffActive('critBoost')) activeBuffs.push('⚡ 30% Crit');
+  if (activeBuffs.length > 0) {
+    html += `<div style="margin-top:10px;padding:8px;background:rgba(244,193,101,0.1);
+      border:1px solid #f4c16533;border-radius:4px;text-align:center">
+      <div style="font-size:9px;color:#f4c165;letter-spacing:2px;margin-bottom:4px">ACTIVE BUFFS</div>
+      <div style="font-size:11px;color:#ffe08a">${activeBuffs.join(' &nbsp;│&nbsp; ')}</div>
+    </div>`;
+  }
+
+  html += `<div style="text-align:center;margin-top:14px;font-size:10px;color:#666;letter-spacing:2px">
+    ESC / SPACE TO CLOSE</div></div>`;
+
+  overlay.innerHTML = html;
+  stage.appendChild(overlay);
+
+  overlay.querySelectorAll('.bulletin-claim').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.key;
+      const ch = challenges.find(c => c.key === key);
+      if (ch) {
+        claimDailyReward(ch);
+        bulletinBoardInteract();
+      }
+    });
+  });
+
+  state._bulletinOpen = true;
+}
+
+function closeBulletinBoard() {
+  const el = document.getElementById('bulletinOverlay');
+  if (el) el.remove();
+  state._bulletinOpen = false;
+}
+
 const dialogEl = document.getElementById('dialogue');
 function openDialog(name, pages, choices) {
   state.dialog = { name, pages, page: 0, choices: choices || null, finalChoices: null };
@@ -4815,6 +5048,7 @@ function miniResolve(result) {
   const ent = m.entity;
   if (result === 'good' && ent && ent.id) {
     state.caught.add(ent.id);
+    dailyTrack('catch', { elem: getElement(ent.id), rarity: ent.rarity });
     const prev = state.michelinStars;
     computeMichelin();
     audio.catchSuccess();
@@ -4866,7 +5100,7 @@ function miniClose() {
     const pending = pendingBossStar();
     if (pending > 0) {
       setTimeout(() => {
-        showToast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
+        toast(`★ BOSS CHALLENGE: Michelin Star ${pending}! ★`);
         setTimeout(() => startBossBattle(pending), 800);
       }, 600);
     }
