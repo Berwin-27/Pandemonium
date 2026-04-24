@@ -705,7 +705,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   100%{opacity:0; transform:translateY(32px) scale(0.2) rotate(30deg)}
 }
 
-/* Pokéball catch animation keyframes */
+/* Dildo catch animation keyframes */
 @keyframes ballThrow {
   0%{transform:translate(0,0) rotate(0deg); opacity:1}
   30%{transform:translate(60px,-70px) rotate(180deg)}
@@ -724,10 +724,10 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   100%{transform:translate(190px,20px) rotate(0deg)}
 }
 @keyframes ballCapture {
-  0%{box-shadow:0 0 0px 0px rgba(255,215,0,0); background:linear-gradient(180deg,#e00 50%,#fff 50%)}
-  40%{box-shadow:0 0 20px 8px rgba(255,215,0,0.6); background:linear-gradient(180deg,#e00 50%,#fff 50%)}
-  70%{box-shadow:0 0 30px 14px rgba(255,215,0,0.9); background:linear-gradient(180deg,gold 50%,#fff 50%)}
-  100%{box-shadow:0 0 10px 4px rgba(255,215,0,0.3); background:linear-gradient(180deg,gold 50%,#fff 50%)}
+  0%{box-shadow:0 0 0px 0px rgba(255,100,160,0)}
+  40%{box-shadow:0 0 20px 8px rgba(255,100,160,0.6)}
+  70%{box-shadow:0 0 30px 14px rgba(255,100,160,0.9)}
+  100%{box-shadow:0 0 10px 4px rgba(255,100,160,0.3)}
 }
 @keyframes ballFail {
   0%{transform:translate(190px,20px) rotate(0deg); opacity:1}
@@ -739,22 +739,27 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   0%{transform:translate(0,0) scale(1); opacity:1}
   100%{transform:translate(var(--sx,20px),var(--sy,-30px)) scale(0); opacity:0}
 }
-.pokeball-proj {
-  position:absolute; width:32px; height:32px; border-radius:50%;
-  background:linear-gradient(180deg,#e00 50%,#fff 50%);
-  border:3px solid #222; box-sizing:border-box;
+.dildo-proj {
+  position:absolute; width:16px; height:40px;
+  background:linear-gradient(90deg,#e8809a 0%,#ffb8c8 45%,#e8809a 100%);
+  border-radius:50% 50% 25% 25% / 35% 35% 15% 15%;
+  border:2px solid #c05878; box-sizing:border-box;
   z-index:20; pointer-events:none;
-  left:10%; bottom:40%;
 }
-.pokeball-proj::after {
-  content:''; position:absolute; top:50%; left:0; right:0;
-  height:3px; background:#222; transform:translateY(-50%);
+.dildo-proj::before {
+  content:''; position:absolute; top:-9px; left:50%;
+  transform:translateX(-50%);
+  width:22px; height:22px;
+  background:radial-gradient(circle at 40% 38%,#ffd0de,#e8809a);
+  border-radius:50%; border:2px solid #c05878;
 }
-.pokeball-proj::before {
-  content:''; position:absolute; top:50%; left:50%;
-  width:10px; height:10px; background:#fff;
-  border:2px solid #222; border-radius:50%;
-  transform:translate(-50%,-50%);
+.dildo-proj::after {
+  content:''; position:absolute; bottom:-7px; left:50%;
+  transform:translateX(-50%);
+  width:26px; height:13px;
+  background:linear-gradient(180deg,#ffb8c8,#e8809a);
+  border-radius:0 0 50% 50% / 0 0 100% 100%;
+  border:2px solid #c05878;
 }
 .pokeball-star {
   position:absolute; font-size:18px; z-index:21; pointer-events:none;
@@ -2483,6 +2488,74 @@ const audio = (() => {
       g.gain.exponentialRampToValueAtTime(0.001, when + 0.1);
       o.start(when); o.stop(when + 0.12);
     }
+    function strings(freq, when, dur, vol) {
+      const lfo = a.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5.2;
+      const lfoG = a.createGain(); lfoG.gain.value = freq * 0.007; lfo.connect(lfoG);
+      const mg = a.createGain(); mg.connect(master);
+      [[1,0.50],[1.003,0.30],[0.997,0.30],[2,0.12]].forEach(([ratio,blend]) => {
+        const o = a.createOscillator(); o.type = 'sine'; o.frequency.value = freq * ratio;
+        lfoG.connect(o.frequency);
+        const og = a.createGain(); og.gain.value = blend;
+        o.connect(og); og.connect(mg);
+        o.start(when); o.stop(when + dur + 0.02);
+      });
+      const atk = Math.min(dur * 0.2, 0.15);
+      mg.gain.setValueAtTime(0, when);
+      mg.gain.linearRampToValueAtTime(vol, when + atk);
+      mg.gain.setValueAtTime(vol * 0.88, when + dur - 0.06);
+      mg.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      lfo.start(when); lfo.stop(when + dur + 0.02);
+    }
+    function woodwind(freq, when, dur, vol) {
+      const mg = a.createGain(); mg.connect(master);
+      [[1,0.55],[2,0.22],[3,0.10],[4,0.04]].forEach(([harmonic,blend]) => {
+        const o = a.createOscillator(); o.type = 'sine'; o.frequency.value = freq * harmonic;
+        const og = a.createGain(); og.gain.value = blend;
+        o.connect(og); og.connect(mg);
+        o.start(when); o.stop(when + dur + 0.01);
+      });
+      mg.gain.setValueAtTime(0, when);
+      mg.gain.linearRampToValueAtTime(vol, when + 0.03);
+      mg.gain.setValueAtTime(vol * 0.88, when + dur - 0.04);
+      mg.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      const blen = Math.ceil(a.sampleRate * Math.min(0.06, dur));
+      const bbuf = a.createBuffer(1, blen, a.sampleRate);
+      const bdata = bbuf.getChannelData(0); for (let j=0;j<blen;j++) bdata[j]=Math.random()*2-1;
+      const bsrc = a.createBufferSource(); bsrc.buffer = bbuf;
+      const bflt = a.createBiquadFilter(); bflt.type = 'bandpass'; bflt.frequency.value = freq * 3; bflt.Q.value = 2;
+      const bvol = a.createGain(); bsrc.connect(bflt); bflt.connect(bvol); bvol.connect(master);
+      bvol.gain.setValueAtTime(vol * 0.3, when);
+      bvol.gain.exponentialRampToValueAtTime(0.001, when + 0.07);
+      bsrc.start(when); bsrc.stop(when + 0.08);
+    }
+    function brass(freq, when, dur, vol) {
+      const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq;
+      const peak = a.createBiquadFilter(); peak.type = 'peaking'; peak.frequency.value = freq * 3.5; peak.gain.value = 9; peak.Q.value = 1.2;
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = freq * 9;
+      const g = a.createGain();
+      o.connect(peak); peak.connect(lp); lp.connect(g); g.connect(master);
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(vol * 1.15, when + 0.012);
+      g.gain.exponentialRampToValueAtTime(vol * 0.80, when + 0.05);
+      g.gain.setValueAtTime(vol * 0.80, when + dur - 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      o.start(when); o.stop(when + dur + 0.01);
+    }
+    function timpani(when, freqVal) {
+      const f = freqVal || 80;
+      const o = a.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(f * 1.8, when);
+      o.frequency.exponentialRampToValueAtTime(f, when + 0.06);
+      o.frequency.exponentialRampToValueAtTime(f * 0.7, when + 0.28);
+      const o2 = a.createOscillator(); o2.type = 'triangle';
+      o2.frequency.setValueAtTime(f * 3.1, when);
+      o2.frequency.exponentialRampToValueAtTime(f * 1.5, when + 0.08);
+      const g = a.createGain(); o.connect(g); o2.connect(g); g.connect(master);
+      g.gain.setValueAtTime(0.55, when);
+      g.gain.exponentialRampToValueAtTime(0.001, when + 0.50);
+      o.start(when); o.stop(when + 0.55);
+      o2.start(when); o2.stop(when + 0.15);
+    }
 
     function sched() {
       while (t0 + idx * s16 < a.currentTime + 0.25) {
@@ -2499,6 +2572,10 @@ const audio = (() => {
           if (tr.type === 'noise') { noise(w, s16 * 0.5, tr.vol || 0.03); continue; }
           if (tr.type === 'clap') { noise(w, 0.08, tr.vol || 0.12); continue; }
           const dur = tr.sustain ? s16 * tr.sustain : s16 * 0.9;
+          if (tr.type === 'strings') { strings(v, w, dur, tr.vol || 0.10); continue; }
+          if (tr.type === 'woodwind') { woodwind(v, w, dur, tr.vol || 0.09); continue; }
+          if (tr.type === 'brass') { brass(v, w, dur, tr.vol || 0.12); continue; }
+          if (tr.type === 'timpani') { timpani(w, v); continue; }
           note(v, tr.type, tr.vol, w, dur);
         }
         idx++;
@@ -2539,8 +2616,8 @@ const audio = (() => {
         131,131,0,0, 0,131,131,0, 0,131,0,131, 0,0,0,0,
         196,196,0,0, 0,196,196,0, 0,196,0,196, 0,0,0,0
       ]},
-      // mid-bass chord tones sawtooth
-      { type:'sawtooth', vol:0.14, sustain:0.65, notes:[
+      // mid-bass chord tones brass
+      { type:'brass', vol:0.14, sustain:0.65, notes:[
         220,0,0,0, 220,0,262,0, 0,330,0,262, 220,0,0,0,
         175,0,0,0, 175,0,220,0, 0,262,0,220, 175,0,0,0,
         131,0,0,0, 131,0,165,0, 0,196,0,165, 131,0,0,0,
@@ -2563,8 +2640,8 @@ const audio = (() => {
         1047,880,784,659, 784,0,1047,0, 880,784,659,0, 0,0,0,0,
         988,1175,988,784, 880,0,988,0, 784,659,523,0, 0,0,0,0
       ]},
-      // counter-melody sawtooth pads
-      { type:'sawtooth', vol:0.10, sustain:1.3, notes:[
+      // counter-melody strings
+      { type:'strings', vol:0.10, sustain:1.3, notes:[
         0,0,0,0, 880,0,0,784, 0,0,0,0, 659,0,0,587,
         0,0,0,0, 698,0,0,784, 0,0,0,0, 880,0,0,784,
         0,0,0,0, 1047,0,0,880, 0,0,0,0, 784,0,0,659,
@@ -2646,13 +2723,13 @@ const audio = (() => {
           87,0,0,0, 0,87,0,0, 0,0,87,0, 0,0,0,0,
           98,0,0,0, 0,98,0,0, 0,0,98,0, 0,0,0,0
         ]},
-        { type:'triangle', vol:0.18, sustain:0.8, notes:[
+        { type:'woodwind', vol:0.18, sustain:0.8, notes:[
           131,0,0,131, 0,0,0,0, 131,0,0,131, 0,0,0,0,
           220,0,0,220, 0,0,0,0, 220,0,0,220, 0,0,0,0,
           175,0,0,175, 0,0,0,0, 175,0,0,175, 0,0,0,0,
           196,0,0,196, 0,0,0,0, 196,0,0,196, 0,0,0,0
         ]},
-        { type:'triangle', vol:0.15, sustain:0.55, notes:[
+        { type:'woodwind', vol:0.15, sustain:0.55, notes:[
           523,0,659,0, 784,0,659,0, 523,0,0,659, 784,0,0,0,
           880,0,784,0, 659,0,880,0, 784,0,0,659, 523,0,0,0,
           698,0,784,0, 880,0,784,0, 698,0,0,784, 659,0,0,0,
@@ -2812,7 +2889,7 @@ const audio = (() => {
           87,0,0,87, 0,87,0,0, 87,0,87,0, 0,0,0,0,
           82,0,0,82, 0,82,0,0, 82,0,82,0, 0,0,0,0
         ]},
-        { type:'sawtooth', vol:0.13, sustain:0.6, notes:[
+        { type:'brass', vol:0.13, sustain:0.6, notes:[
           220,0,262,0, 0,220,0,294, 0,262,0,220, 0,0,0,0,
           196,0,247,0, 0,196,0,262, 0,247,0,196, 0,0,0,0,
           175,0,220,0, 0,175,0,247, 0,220,0,175, 0,0,0,0,
@@ -2829,7 +2906,7 @@ const audio = (() => {
           349,392,440,349, 523,440,349,0, 523,659,784,659, 523,0,0,0,
           330,392,440,330, 494,440,330,0, 494,587,659,587, 494,0,0,0
         ]},
-        { type:'triangle', vol:0.07, sustain:3.5, notes:[
+        { type:'strings', vol:0.07, sustain:3.5, notes:[
           440,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           392,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           349,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -2877,17 +2954,17 @@ const audio = (() => {
           0,0,0,0, 784,0,0,0, 0,659,0,0, 0,880,0,659,
           0,0,0,0, 523,0,587,0, 0,659,0,0, 0,0,0,0
         ]},
-        { type:'triangle', vol:0.06, sustain:1.5, notes:[
+        { type:'strings', vol:0.06, sustain:1.5, notes:[
           330,0,0,0, 0,0,0,0, 0,0,0,0, 392,0,0,0,
           262,0,0,0, 0,0,0,0, 0,0,0,0, 330,0,0,0,
           392,0,0,0, 0,0,0,0, 0,0,0,0, 440,0,0,0,
           440,0,0,0, 0,0,0,0, 0,0,0,0, 330,0,0,0
         ]},
-        { type:'kick', vol:0.40, notes:[
-          1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0,
-          1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0,
-          1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0,
-          1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0
+        { type:'timpani', vol:0.40, notes:[
+          82,0,0,0, 0,0,0,0, 82,0,0,110, 0,0,0,0,
+          82,0,0,0, 0,0,0,0, 82,0,0,110, 0,0,0,0,
+          82,0,0,0, 0,0,0,0, 82,0,0,110, 0,0,0,0,
+          82,0,0,0, 0,0,0,0, 82,0,0,0, 0,0,0,0
         ]},
         { type:'snare', vol:0.16, notes:[
           0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
@@ -3031,7 +3108,7 @@ const audio = (() => {
           110,0,0,0, 0,110,0,0, 0,0,110,0, 0,0,0,0,
           123,0,0,0, 0,123,0,0, 0,0,123,0, 0,0,0,0
         ]},
-        { type:'sawtooth', vol:0.12, sustain:0.7, notes:[
+        { type:'brass', vol:0.12, sustain:0.7, notes:[
           294,0,0,0, 0,0,294,370, 0,0,440,0, 0,0,0,0,
           392,0,0,0, 0,0,392,440, 0,0,494,0, 0,0,0,0,
           440,0,0,0, 0,0,440,494, 0,0,554,0, 0,0,0,0,
@@ -3048,7 +3125,7 @@ const audio = (() => {
           880,0,1047,0, 1175,0,1319,0, 1175,0,1047,0, 880,0,0,0,
           740,0,880,0, 1047,0,880,0, 740,659,587,0, 0,0,0,0
         ]},
-        { type:'triangle', vol:0.08, sustain:4.0, notes:[
+        { type:'strings', vol:0.08, sustain:4.0, notes:[
           587,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           784,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           880,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -3084,7 +3161,7 @@ const audio = (() => {
           73,0,0,0, 0,0,73,0, 0,0,0,0, 0,0,0,0,
           110,0,0,0, 0,0,110,0, 0,0,0,0, 0,0,0,0
         ]},
-        { type:'sawtooth', vol:0.11, sustain:0.8, notes:[
+        { type:'brass', vol:0.11, sustain:0.8, notes:[
           247,0,0,0, 0,0,0,0, 294,0,0,0, 0,0,0,0,
           196,0,0,0, 0,0,0,0, 247,0,0,0, 0,0,0,0,
           147,0,0,0, 0,0,0,0, 196,0,0,0, 0,0,0,0,
@@ -3102,7 +3179,7 @@ const audio = (() => {
           587,0,0,440, 0,0,0,0, 0,0,392,0, 0,0,294,0,
           740,0,0,587, 0,0,0,0, 0,0,494,0, 0,0,370,0
         ]},
-        { type:'triangle', vol:0.10, sustain:6.0, notes:[
+        { type:'strings', vol:0.10, sustain:6.0, notes:[
           988,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           784,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
           587,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -3144,7 +3221,7 @@ const audio = (() => {
           65,0,0,0, 0,0,0,0, 0,0,65,0, 0,0,0,0,
           73,0,0,0, 0,0,0,0, 0,0,73,0, 0,0,0,0
         ]},
-        { type:'triangle', vol:0.14, sustain:0.4, notes:[
+        { type:'woodwind', vol:0.14, sustain:0.4, notes:[
           784,0,659,0, 523,0,659,0, 784,0,659,0, 523,0,392,0,
           659,0,523,0, 440,0,523,0, 659,0,523,0, 440,0,330,0,
           523,0,440,0, 392,0,440,0, 523,0,440,0, 392,0,294,0,
@@ -4619,7 +4696,7 @@ function startCatchSequence() {
   const b = state.battle; if (!b) return;
   b.phase = 'catching';
   setBattleMenu('none');
-  battleLog('You prepare a <b style="color:#f4c165">Takeout Box</b>!');
+  battleLog('You wind up and hurl a <b style="color:#ff85a8">DILDO</b>!');
 
   // Phase 1: player crouches briefly
   btPlayerSprite.style.transition = 'transform 0.25s ease';
@@ -4639,9 +4716,9 @@ function _launchPokeballAnim(b) {
   const pRect = btPlayerSprite.getBoundingClientRect();
   const eRect = btEnemySprite.getBoundingClientRect();
 
-  // Create pokeball element
+  // Create dildo element
   const ball = document.createElement('div');
-  ball.className = 'pokeball-proj';
+  ball.className = 'dildo-proj';
   // Position it relative to arena
   const startX = pRect.left - aRect.left + pRect.width * 0.5 - 16;
   const startY = pRect.top - aRect.top + pRect.height * 0.3 - 16;
