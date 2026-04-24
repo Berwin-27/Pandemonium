@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PANDEMONIUM — GOTTA COOK 'EM ALL</title>
 <style>
 :root {
@@ -933,6 +934,138 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 .bt-btn .bt-mg { display:block; color:#7edc8b; font-size:8px; letter-spacing:2px; margin-top:3px; }
 .bt-btn:disabled, .bt-btn.dim { opacity: 0.45; cursor: not-allowed; }
 .bt-prompt { color:#888; font-size:10px; letter-spacing:2px; text-align:center; margin-top:2px; }
+
+/* ===== MOBILE TOUCH CONTROLS ===== */
+#mobileControls { display:none; }
+.mobile #mobileControls { display:flex; }
+.mobile #help { display:none; }
+
+#mobileControls {
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  justify-content:space-between; align-items:flex-end;
+  padding:10px 14px 14px; pointer-events:none;
+  -webkit-user-select:none; user-select:none;
+}
+#mobileControls * { pointer-events:auto; }
+
+.touch-dpad {
+  position:relative; width:140px; height:140px; flex-shrink:0;
+}
+.touch-dpad .d-btn {
+  position:absolute; width:44px; height:44px;
+  background:rgba(244,193,101,0.18); border:2px solid rgba(244,193,101,0.45);
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:20px; color:var(--accent); text-shadow:0 0 6px rgba(244,193,101,0.5);
+  -webkit-tap-highlight-color:transparent; touch-action:none;
+}
+.touch-dpad .d-btn:active, .touch-dpad .d-btn.pressed {
+  background:rgba(244,193,101,0.45); border-color:var(--accent);
+  box-shadow:0 0 12px rgba(244,193,101,0.5);
+}
+.touch-dpad .d-up    { top:0;   left:50%; transform:translateX(-50%); }
+.touch-dpad .d-down  { bottom:0;left:50%; transform:translateX(-50%); }
+.touch-dpad .d-left  { left:0;  top:50%;  transform:translateY(-50%); }
+.touch-dpad .d-right { right:0; top:50%;  transform:translateY(-50%); }
+
+.touch-actions {
+  display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;
+}
+.touch-actions .row { display:flex; gap:8px; }
+
+.touch-btn {
+  width:52px; height:52px; border-radius:50%;
+  background:rgba(244,193,101,0.18); border:2px solid rgba(244,193,101,0.45);
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  font-size:10px; letter-spacing:1px; color:var(--accent);
+  text-shadow:0 0 6px rgba(244,193,101,0.4);
+  -webkit-tap-highlight-color:transparent; touch-action:none;
+}
+.touch-btn:active, .touch-btn.pressed {
+  background:rgba(244,193,101,0.45); border-color:var(--accent);
+  box-shadow:0 0 12px rgba(244,193,101,0.5);
+}
+.touch-btn .icon { font-size:18px; line-height:1; }
+.touch-btn .label { font-size:8px; letter-spacing:1px; margin-top:1px; }
+
+.touch-btn.btn-a {
+  width:62px; height:62px; background:rgba(126,220,139,0.2);
+  border-color:rgba(126,220,139,0.5);
+}
+.touch-btn.btn-a:active, .touch-btn.btn-a.pressed {
+  background:rgba(126,220,139,0.45); border-color:#7edc8b;
+  box-shadow:0 0 14px rgba(126,220,139,0.6);
+}
+.touch-btn.btn-b {
+  width:48px; height:48px; background:rgba(240,106,106,0.15);
+  border-color:rgba(240,106,106,0.4);
+}
+.touch-btn.btn-b:active, .touch-btn.btn-b.pressed {
+  background:rgba(240,106,106,0.4); border-color:#f06a6a;
+  box-shadow:0 0 12px rgba(240,106,106,0.5);
+}
+
+.touch-util {
+  position:fixed; top:auto; bottom:160px; right:14px; z-index:201;
+  display:none; flex-direction:column; gap:6px;
+}
+.mobile .touch-util { display:flex; }
+.touch-util .touch-btn {
+  width:42px; height:42px; font-size:9px;
+  background:rgba(138,138,176,0.15); border-color:rgba(138,138,176,0.35);
+}
+.touch-util .touch-btn:active, .touch-util .touch-btn.pressed {
+  background:rgba(138,138,176,0.35); border-color:#8a8ab0;
+}
+
+/* Mobile responsive layout */
+@media (max-width: 960px) {
+  .mobile #wrap { padding:4px; gap:4px; }
+  .mobile #title { font-size:14px; letter-spacing:4px; }
+  .mobile #subtitle { font-size:9px; letter-spacing:2px; }
+  .mobile #stage {
+    width:100vw; height:calc(100vw * 0.625);
+    max-height:calc(100vh - 190px); border-width:2px;
+  }
+  .mobile #hud { top:4px; left:4px; padding:4px 6px; font-size:9px; min-width:auto; }
+  .mobile #zone { top:4px; right:4px; padding:3px 8px; font-size:9px; letter-spacing:2px; }
+  .mobile #hint { bottom:4px; right:4px; padding:2px 6px; font-size:8px; }
+  .mobile #stars { font-size:9px; }
+  .mobile #dialogue { left:6px; right:6px; bottom:6px; min-height:80px; padding:10px 12px; font-size:12px; }
+  .mobile #dialogue .title { font-size:11px; }
+  .mobile #dialogue .choice { font-size:10px; padding:6px 10px; }
+
+  .mobile #invpanel { width:96vw; max-height:60vh; padding:10px 12px; }
+  .mobile #invgrid { grid-template-columns:repeat(6,1fr); gap:4px; }
+  .mobile .invslot { font-size:18px; }
+  .mobile #invdetail { font-size:11px; min-height:70px; padding:8px 10px; }
+  .mobile #invfoot { font-size:8px; }
+
+  .mobile #minipanel { width:94vw; padding:14px 12px; }
+  .mobile #miniTitle { font-size:14px; letter-spacing:4px; }
+  .mobile #miniSub { font-size:10px; }
+  .mobile #miniPrompt { font-size:12px; }
+  .mobile .seqKey { width:40px; height:40px; font-size:22px; }
+  .mobile #miniAimField { height:140px; }
+  .mobile #miniDodgeField { height:140px; }
+  .mobile #miniRhythmField { height:160px; }
+
+  .mobile #battlepanel { width:98vw; }
+  .mobile .bt-arena { height:240px; }
+  .mobile .bt-sprite-enemy { font-size:40px; }
+  .mobile .bt-sprite-player { font-size:56px; }
+  .mobile .bt-info-panel { width:180px; padding:5px 8px; }
+  .mobile .bt-info-panel .bt-name { font-size:10px; }
+  .mobile .bt-log { font-size:10px; }
+  .mobile .bt-btn { padding:10px 8px; font-size:10px; letter-spacing:2px; }
+
+  .mobile #intro h1, .mobile #ending h1 { font-size:22px; letter-spacing:6px; }
+  .mobile #intro p, .mobile #ending p { font-size:12px; }
+  .mobile #intro .keys { font-size:9px; }
+  .mobile .starterCard { width:130px; padding:12px 10px; }
+  .mobile .starterCard .emoji { font-size:34px; }
+  .mobile .starterCard .name { font-size:11px; }
+  .mobile .starterCard .desc { font-size:10px; min-height:40px; }
+}
 </style>
 </head>
 <body>
@@ -959,7 +1092,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
         <div id="invtabs"></div>
         <div id="invgrid"></div>
         <div id="invdetail" class="empty">Select an entry to examine it.</div>
-        <div id="invfoot">ARROWS navigate &nbsp;&bull;&nbsp; TAB filter &nbsp;&bull;&nbsp; P or ESC close</div>
+        <div id="invfoot">ARROWS navigate &nbsp;&bull;&nbsp; TAB filter &nbsp;&bull;&nbsp; <span id="invClose" style="cursor:pointer;color:var(--accent);text-decoration:underline">CLOSE</span></div>
       </div>
     </div>
     <div id="mini">
@@ -1096,8 +1229,8 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
         P &mdash; PANDEX &nbsp; M &mdash; WARP HOME &nbsp; F5 &mdash; SAVE &nbsp; F9 &mdash; LOAD
       </div>
-      <div class="press">&gt; PRESS SPACE TO BEGIN &lt;</div>
-      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="loadGame()">&gt; PRESS F9 OR CLICK TO CONTINUE &lt;</div>
+      <div class="press" style="cursor:pointer" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}))">&gt; TAP or PRESS SPACE TO BEGIN &lt;</div>
+      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="loadGame()">&gt; TAP or F9 TO CONTINUE &lt;</div>
     </div>
     <div id="starter">
       <h1>CHOOSE YOUR FIRST</h1>
@@ -1148,9 +1281,154 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
     <b>ARROWS</b> MOVE &nbsp;&bull;&nbsp; <b>SPACE</b> INTERACT &nbsp;&bull;&nbsp; <b>P</b> PANDEX &nbsp;&bull;&nbsp; <b>ESC</b> CLOSE
   </div>
 </div>
+
+<!-- Mobile Touch Controls -->
+<div id="mobileControls">
+  <div class="touch-dpad">
+    <div class="d-btn d-up" data-key="arrowup">&#9650;</div>
+    <div class="d-btn d-down" data-key="arrowdown">&#9660;</div>
+    <div class="d-btn d-left" data-key="arrowleft">&#9664;</div>
+    <div class="d-btn d-right" data-key="arrowright">&#9654;</div>
+  </div>
+  <div class="touch-actions">
+    <div class="row">
+      <div class="touch-btn btn-b" data-key="escape"><span class="icon">&#10005;</span><span class="label">ESC</span></div>
+      <div class="touch-btn btn-a" data-key=" "><span class="icon">A</span><span class="label">ACT</span></div>
+    </div>
+    <div class="row">
+      <div class="touch-btn" data-key="p" id="touchPandex"><span class="icon">&#128214;</span><span class="label">DEX</span></div>
+      <div class="touch-btn" data-key="m" id="touchWarp"><span class="icon">&#127968;</span><span class="label">WARP</span></div>
+    </div>
+  </div>
+</div>
+<div class="touch-util">
+  <div class="touch-btn" id="touchSave" data-key="f5"><span class="icon">&#128190;</span><span class="label">SAVE</span></div>
+</div>
 <script>
 (() => {
 'use strict';
+
+// ======================================================================
+// MOBILE DETECTION & TOUCH CONTROLS
+// ======================================================================
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+if (isMobile) document.body.classList.add('mobile');
+
+function setupTouchControls() {
+  if (!isMobile) return;
+  const held = {};
+
+  function simKey(key, type) {
+    const ev = new KeyboardEvent(type, { key, bubbles:true, cancelable:true });
+    document.dispatchEvent(ev);
+  }
+
+  document.querySelectorAll('#mobileControls [data-key], .touch-util [data-key]').forEach(btn => {
+    const key = btn.dataset.key;
+
+    btn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      btn.classList.add('pressed');
+      if (key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright') {
+        if (!held[key]) {
+          held[key] = true;
+          simKey(key, 'keydown');
+        }
+      } else {
+        simKey(key, 'keydown');
+      }
+    }, { passive:false });
+
+    btn.addEventListener('touchend', e => {
+      e.preventDefault();
+      btn.classList.remove('pressed');
+      held[key] = false;
+      simKey(key, 'keyup');
+    }, { passive:false });
+
+    btn.addEventListener('touchcancel', e => {
+      btn.classList.remove('pressed');
+      held[key] = false;
+      simKey(key, 'keyup');
+    });
+  });
+
+  // Prevent default touch behavior on game area to avoid scrolling
+  document.getElementById('stage').addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+  document.body.addEventListener('touchmove', e => {
+    if (e.target.closest('#mobileControls,.touch-util,#stage')) e.preventDefault();
+  }, { passive:false });
+
+  // Tap on minigame panel = Space (for timing, mash, hold, rhythm, volley, aim)
+  const mp = document.getElementById('minipanel');
+  mp.addEventListener('touchstart', e => {
+    if (e.target.closest('.seqKey,.catch-dot')) return;
+    e.preventDefault();
+    simKey(' ', 'keydown');
+  }, { passive:false });
+  mp.addEventListener('touchend', e => {
+    if (e.target.closest('.seqKey,.catch-dot')) return;
+    e.preventDefault();
+    simKey(' ', 'keyup');
+  }, { passive:false });
+
+  // Tap on mini result or mini prompt to close
+  document.getElementById('miniResult').addEventListener('click', () => {
+    simKey(' ', 'keydown');
+    setTimeout(() => simKey(' ', 'keyup'), 50);
+  });
+
+  // Tap on the canvas for interact
+  const cvs = document.getElementById('game');
+  cvs.addEventListener('touchstart', e => {
+    e.preventDefault();
+    simKey(' ', 'keydown');
+  }, { passive:false });
+  cvs.addEventListener('touchend', e => {
+    e.preventDefault();
+    simKey(' ', 'keyup');
+  }, { passive:false });
+
+  // Make sequence keys tappable
+  document.getElementById('miniSeqRow').addEventListener('touchstart', e => {
+    const seqKey = e.target.closest('.seqKey');
+    if (!seqKey) return;
+    e.preventDefault();
+    const arrow = seqKey.textContent.trim();
+    const arrowMap = { '\u2191':'arrowup', '\u2193':'arrowdown', '\u2190':'arrowleft', '\u2192':'arrowright',
+                       '▲':'arrowup', '▼':'arrowdown', '◄':'arrowleft', '►':'arrowright' };
+    const k = arrowMap[arrow];
+    if (k) { simKey(k, 'keydown'); setTimeout(() => simKey(k, 'keyup'), 50); }
+  }, { passive:false });
+
+  // Make dodge field tappable with swipe directions
+  const dodgeField = document.getElementById('miniDodgeField');
+  let dodgeTouchStart = null;
+  dodgeField.addEventListener('touchstart', e => {
+    e.preventDefault();
+    dodgeTouchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive:false });
+  dodgeField.addEventListener('touchend', e => {
+    if (!dodgeTouchStart) return;
+    e.preventDefault();
+    const dx = e.changedTouches[0].clientX - dodgeTouchStart.x;
+    const dy = e.changedTouches[0].clientY - dodgeTouchStart.y;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    let dir;
+    if (Math.max(adx, ady) < 15) return;
+    if (adx > ady) dir = dx > 0 ? 'arrowright' : 'arrowleft';
+    else dir = dy > 0 ? 'arrowdown' : 'arrowup';
+    simKey(dir, 'keydown');
+    setTimeout(() => simKey(dir, 'keyup'), 50);
+    dodgeTouchStart = null;
+  }, { passive:false });
+
+  // Also start music on first touch
+  document.addEventListener('touchstart', function _firstTouch() {
+    document.removeEventListener('touchstart', _firstTouch);
+    document.dispatchEvent(new MouseEvent('click', { bubbles:true }));
+  }, { once:true });
+}
 
 // ======================================================================
 // CONSTANTS
@@ -2151,100 +2429,183 @@ const audio = (() => {
     clearInterval(loop.iv);
     const a = ensure();
     if (a) {
-      loop.master.gain.cancelScheduledValues(a.currentTime);
-      loop.master.gain.setValueAtTime(loop.master.gain.value, a.currentTime);
-      loop.master.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.35);
+      try {
+        loop.master.gain.cancelScheduledValues(a.currentTime);
+        loop.master.gain.setValueAtTime(0.0001, a.currentTime);
+        loop.master.gain.linearRampToValueAtTime(0.00001, a.currentTime + 0.06);
+      } catch(_) {}
     }
-    setTimeout(() => { try { loop.master.disconnect(); } catch(_){} }, 450);
+    setTimeout(() => { try { loop.master.disconnect(); } catch(_){} }, 120);
   }
 
-  // ── BATTLE THEME: intense anime/EDM hybrid, 128 steps ──
+  // ── BATTLE THEME: intense anime/EDM boss fight, A minor, 155 BPM ──
   const BATTLE_SONG = {
     bpm: 155, vol: 0.20, len: 128,
     tracks: [
-      { type:'sine', vol:0.38, sustain:1.8, notes:[
-        55,0,55,0, 55,0,55,55, 0,0,55,0, 55,0,73,0,
-        65,0,65,0, 65,0,65,65, 0,0,65,0, 65,0,82,0,
-        73,0,73,0, 73,0,73,73, 0,0,73,0, 73,0,55,0,
-        49,0,49,0, 49,0,55,0, 65,0,73,0, 82,0,55,0,
-        55,0,55,0, 55,0,55,55, 0,0,55,0, 55,0,82,0,
-        65,0,65,0, 65,0,65,65, 0,0,65,0, 65,0,98,0,
-        73,0,73,0, 73,0,73,73, 0,0,73,0, 82,0,98,0,
-        49,0,55,0, 65,0,73,0, 82,0,98,0, 110,0,55,0
+      // sub-bass: A2=110, E2=82, D2=73, C2=65, G2=98
+      { type:'sine', vol:0.40, sustain:1.9, notes:[
+        110,0,110,0, 110,0,0,0, 110,0,110,0, 98,0,0,0,
+        82,0,82,0, 82,0,0,0, 82,0,82,0, 73,0,0,0,
+        73,0,73,0, 73,0,0,0, 73,0,73,0, 82,0,0,0,
+        65,0,65,0, 65,0,73,0, 82,0,98,0, 110,0,0,0,
+        110,0,110,0, 110,0,0,0, 110,0,110,0, 98,0,0,0,
+        82,0,82,0, 82,0,0,0, 82,0,82,0, 73,0,0,0,
+        73,0,73,0, 73,0,0,0, 73,0,73,0, 82,0,0,0,
+        65,0,65,0, 65,0,73,0, 82,0,98,0, 110,0,0,0
+      ], altNotes:[
+        110,0,110,110, 0,110,0,110, 110,0,110,0, 98,0,110,0,
+        82,0,82,82, 0,82,0,82, 82,0,82,0, 73,0,82,0,
+        73,0,73,73, 0,73,0,73, 73,0,73,0, 82,0,73,0,
+        65,65,65,0, 73,0,82,0, 98,0,110,0, 131,0,0,0,
+        110,0,110,110, 0,110,0,110, 110,0,110,0, 98,0,110,0,
+        82,0,82,82, 0,82,0,82, 82,0,82,0, 73,0,82,0,
+        73,0,73,73, 0,73,0,73, 73,0,73,0, 82,0,73,0,
+        65,65,65,0, 73,0,82,0, 98,0,110,0, 131,0,0,0
       ]},
-      { type:'sawtooth', vol:0.10, sustain:0.6, notes:[
-        220,0,0,220, 0,220,0,0, 220,0,0,220, 0,0,293,0,
-        262,0,0,262, 0,262,0,0, 262,0,0,262, 0,0,330,0,
-        293,0,0,293, 0,293,0,0, 293,0,0,293, 0,0,220,0,
-        196,0,0,196, 0,220,0,0, 262,0,0,293, 330,0,220,0,
+      // mid-bass sawtooth: A3=220, E3=165, D3=147, C3=131, G3=196
+      { type:'sawtooth', vol:0.12, sustain:0.7, notes:[
+        220,0,0,220, 0,0,220,0, 196,0,0,196, 0,0,196,0,
+        165,0,0,165, 0,0,165,0, 165,0,0,165, 0,0,147,0,
+        147,0,0,147, 0,0,147,0, 147,0,0,147, 0,0,165,0,
+        131,0,0,131, 0,131,147,0, 165,0,196,0, 220,0,0,0,
+        220,0,0,220, 0,0,220,0, 196,0,0,196, 0,0,196,0,
+        165,0,0,165, 0,0,165,0, 165,0,0,165, 0,0,147,0,
+        147,0,0,147, 0,0,147,0, 147,0,0,147, 0,0,165,0,
+        131,0,0,131, 0,131,147,0, 165,0,196,0, 220,0,0,0
+      ], altNotes:[
         220,0,220,0, 0,220,293,0, 220,0,0,220, 0,293,330,0,
-        262,0,262,0, 0,262,330,0, 262,0,0,262, 0,330,392,0,
-        293,0,293,0, 0,293,330,0, 293,0,0,330, 0,392,440,0,
-        196,0,220,0, 262,0,293,0, 330,0,392,0, 440,0,220,0
+        165,0,165,0, 0,165,220,0, 165,0,0,165, 0,220,262,0,
+        147,0,147,0, 0,147,196,0, 147,0,0,147, 0,196,247,0,
+        131,0,131,165, 0,196,0,220, 262,0,196,0, 220,0,0,0,
+        220,0,220,0, 0,220,293,0, 220,0,0,220, 0,293,330,0,
+        165,0,165,0, 0,165,220,0, 165,0,0,165, 0,220,262,0,
+        147,0,147,0, 0,147,196,0, 147,0,0,147, 0,196,247,0,
+        131,0,131,165, 0,196,0,220, 262,0,196,0, 220,0,0,0
       ]},
-      { type:'square', vol:0.06, sustain:0.4, notes:[
-        660,784,880,784, 660,784,1047,784, 660,784,880,784, 660,587,660,784,
-        523,660,784,660, 523,660,880,660, 523,660,784,660, 523,587,523,660,
-        587,698,784,698, 587,698,880,698, 587,698,784,698, 587,523,587,698,
-        494,587,660,587, 494,523,587,523, 494,587,660,698, 784,880,660,523,
-        880,784,660,784, 880,1047,880,784, 660,784,880,1047, 1175,1047,880,784,
-        784,660,523,660, 784,880,784,660, 523,660,784,880, 1047,880,784,660,
-        698,784,880,784, 698,880,1047,880, 698,784,880,1047, 1175,1047,880,698,
-        587,698,784,880, 1047,880,784,698, 587,698,784,880, 1047,1175,1047,523
+      // lead melody: A minor scale, urgent 16th arp feel
+      { type:'square', vol:0.07, sustain:0.45, notes:[
+        440,0,523,440, 392,0,440,523, 587,0,523,440, 523,0,494,440,
+        392,0,440,494, 523,0,440,392, 349,0,392,440, 494,0,440,392,
+        392,0,440,523, 587,0,698,587, 523,0,440,392, 392,0,349,330,
+        294,0,330,392, 440,0,494,523, 587,0,523,494, 440,0,392,0,
+        523,440,392,440, 523,0,587,523, 659,0,587,523, 587,0,523,494,
+        440,0,494,523, 587,0,659,587, 523,0,440,392, 440,0,523,440,
+        392,0,440,523, 587,0,698,587, 784,0,698,659, 587,0,523,0,
+        440,0,523,587, 659,0,784,659, 587,523,440,392, 440,0,0,0
+      ], altNotes:[
+        880,784,660,784, 880,0,1047,880, 784,0,880,784, 660,0,784,660,
+        587,0,660,784, 880,0,784,660, 523,0,587,660, 784,0,660,523,
+        660,587,523,587, 660,0,784,660, 880,0,784,660, 784,0,660,587,
+        523,0,587,660, 784,0,880,784, 1047,784,660,523, 587,0,0,0,
+        880,784,660,784, 880,0,1047,880, 784,0,880,784, 660,0,784,660,
+        587,0,660,784, 880,0,784,660, 523,0,587,660, 784,0,660,523,
+        660,587,523,587, 660,0,784,660, 880,0,784,660, 784,0,660,587,
+        523,0,587,660, 784,0,880,784, 1047,784,660,523, 587,0,0,0
       ]},
-      { type:'sawtooth', vol:0.12, sustain:1.5, notes:[
+      // counter-melody sawtooth
+      { type:'sawtooth', vol:0.09, sustain:1.4, notes:[
         0,0,0,0, 880,0,784,0, 0,0,0,0, 660,0,587,0,
-        0,0,0,0, 784,0,880,0, 1047,0,0,0, 880,0,784,0,
-        0,0,0,0, 698,0,784,0, 0,0,0,0, 880,0,1047,0,
-        0,0,0,0, 660,0,784,0, 880,784,660,0, 587,0,0,0,
-        0,0,1047,0, 1175,0,1047,0, 880,0,0,0, 784,0,880,0,
-        0,0,880,0, 1047,0,1175,0, 1319,0,0,0, 1175,0,1047,0,
-        0,0,880,0, 1047,0,880,0, 784,0,0,0, 880,0,1047,0,
-        1175,0,1319,0, 1047,0,880,0, 784,0,660,0, 587,0,0,0
+        0,0,0,0, 784,0,660,0, 0,0,0,0, 523,0,587,0,
+        0,0,0,0, 698,0,784,0, 0,0,0,0, 880,0,784,0,
+        0,0,0,0, 660,0,587,0, 523,0,440,0, 392,0,0,0,
+        0,0,0,0, 880,0,784,0, 0,0,0,0, 660,0,587,0,
+        0,0,0,0, 784,0,660,0, 0,0,0,0, 523,0,587,0,
+        0,0,0,0, 698,0,784,0, 0,0,0,0, 880,0,784,0,
+        0,0,0,0, 660,0,587,0, 523,0,440,0, 392,0,0,0
+      ], altNotes:[
+        0,0,1047,0, 0,1175,0,1047, 0,0,880,0, 0,784,0,880,
+        0,0,1047,0, 0,880,0,784, 0,0,660,0, 0,784,0,660,
+        0,0,784,0, 0,880,0,784, 0,0,880,0, 0,1047,0,880,
+        0,0,784,0, 0,660,587,0, 523,0,440,0, 392,0,0,0,
+        0,0,1047,0, 0,1175,0,1047, 0,0,880,0, 0,784,0,880,
+        0,0,1047,0, 0,880,0,784, 0,0,660,0, 0,784,0,660,
+        0,0,784,0, 0,880,0,784, 0,0,880,0, 0,1047,0,880,
+        0,0,784,0, 0,660,587,0, 523,0,440,0, 392,0,0,0
       ]},
+      // high arp accent
       { type:'square', vol:0.04, sustain:0.3, notes:[
-        1319,0,0,1319, 0,0,1568,0, 0,0,0,0, 1319,0,0,0,
-        1047,0,0,1047, 0,0,1319,0, 0,0,0,0, 1047,0,0,0,
-        1175,0,0,1175, 0,0,1397,0, 0,0,0,0, 1175,0,0,0,
-        0,0,0,0, 0,0,0,0, 1319,0,1568,0, 1760,0,0,0,
-        1568,0,0,1568, 0,0,1760,0, 0,0,0,0, 1568,0,0,0,
-        1319,0,0,1319, 0,0,1568,0, 0,0,0,0, 1319,0,0,0,
-        1397,0,0,1397, 0,0,1568,0, 0,0,0,0, 1397,0,0,0,
-        1760,0,1568,0, 1319,0,1175,0, 1047,0,1175,0, 1319,0,0,0
+        0,0,0,0, 0,0,1760,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1319,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1397,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,0,0, 0,0,1568,0, 1760,0,0,0,
+        0,0,0,0, 0,0,1760,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1568,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1760,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 1760,0,1568,0, 1319,0,1175,0, 1047,0,0,0
+      ], altNotes:[
+        1760,0,0,1760, 0,0,2093,0, 1760,0,0,0, 0,0,0,0,
+        1319,0,0,1319, 0,0,1568,0, 1319,0,0,0, 0,0,0,0,
+        1397,0,0,1397, 0,0,1568,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,0,0, 1568,0,1760,0, 2093,0,0,0,
+        1760,0,0,1760, 0,0,2093,0, 1760,0,0,0, 0,0,0,0,
+        1568,0,0,1568, 0,0,1760,0, 1568,0,0,0, 0,0,0,0,
+        1760,0,0,1760, 0,0,2093,0, 0,0,0,0, 0,0,0,0,
+        0,0,0,0, 1760,0,1568,0, 1319,0,1175,0, 1047,0,0,0
       ]},
+      // kick: four-on-the-floor + fills
       { type:'kick', vol:0.45, notes:[
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
-        1,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0,
-        1,0,0,0, 1,0,0,1, 1,0,0,0, 1,0,0,0,
-        1,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,0,0,
+        1,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,0,0,
+        1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0,
-        1,0,1,0, 1,0,1,0, 1,0,1,0, 1,1,1,0
+        1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
+        1,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,0,0
+      ], altNotes:[
+        1,0,0,0, 1,0,0,1, 1,0,0,0, 1,0,0,0,
+        1,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0,
+        1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
+        1,0,0,1, 1,0,0,0, 1,0,1,0, 1,1,1,0,
+        1,0,0,0, 1,0,0,1, 1,0,0,0, 1,0,0,0,
+        1,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0,
+        1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
+        1,0,0,1, 1,0,0,0, 1,0,1,0, 1,1,1,0
       ]},
-      { type:'snare', vol:0.18, notes:[
+      // snare: 2 and 4 + ghost notes
+      { type:'snare', vol:0.20, notes:[
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
-        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,1,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0,
-        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0,
-        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,1,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
-        0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0
+      ], altNotes:[
+        0,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,1,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,1,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0,
+        0,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,1,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,1,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0
       ]},
-      { type:'hat', vol:0.07, notes:[
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,1,1,0,
+      // hat: driving 8ths escalating to 16ths
+      { type:'hat', vol:0.08, notes:[
         1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0,
-        1,0,1,0, 1,0,1,0, 1,1,1,0, 1,0,1,1,
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,
-        1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0,
         1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0,
-        1,1,1,0, 1,0,1,1, 1,1,1,0, 1,1,1,1
+        1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0,
+        1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1,
+        1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0,
+        1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0,
+        1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0,
+        1,1,1,0, 1,1,1,0, 1,1,1,1, 1,1,1,1
+      ], altNotes:[
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1
       ]},
-      { type:'clap', vol:0.10, notes:[
-        0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-        0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+      // clap layered on snare for power
+      { type:'clap', vol:0.12, notes:[
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
+        0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
         0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0,
@@ -2264,7 +2625,7 @@ const audio = (() => {
 
   const AREA_SONGS = {
     house: {
-      bpm: 108, vol: 0.14, len: 128,
+      bpm: 108, vol: 0.15, len: 128,
       tracks: [
         { type:'triangle', vol:0.22, sustain:1.2, notes:[
           262,0,330,0, 392,0,330,0, 294,0,349,0, 392,0,349,0,
@@ -4092,7 +4453,8 @@ function renderBattle() {
     buffEl = document.createElement('div');
     buffEl.id = 'btBuffs';
     buffEl.style.cssText = 'position:absolute;bottom:110px;left:8px;display:flex;gap:4px;z-index:5;';
-    document.querySelector('.bt-scene').appendChild(buffEl);
+    const arena = document.querySelector('.bt-arena');
+    if (arena) arena.appendChild(buffEl);
   }
   const buffs = [];
   if (isBuffActive('doubleDamage')) buffs.push('🥩2x');
@@ -4183,6 +4545,8 @@ function setBattleMenu(kind) {
       if (firstAvail >= 0) b.moveFocus = firstAvail;
       const btns = btMenu.querySelectorAll('.bt-btn');
       btns.forEach((el, i) => el.classList.toggle('focus', i === b.moveFocus));
+    } else {
+      b.moveFocus = moves.length;
     }
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
       el.addEventListener('click', () => {
@@ -4884,14 +5248,27 @@ function renderDialog() {
   const body = d.pages[d.page] || "";
   let html = `<div class="title">&gt; ${d.name}</div><div class="body">${body}</div>`;
   if (d.choices && d.choices.length) {
-    html += `<div class="choices">` + d.choices.map(c => `<span class="choice">${c.label}</span>`).join('') + `</div>`;
+    html += `<div class="choices">` + d.choices.map((c, i) => `<span class="choice" data-ci="${i}">${c.label}</span>`).join('') + `</div>`;
   } else if (d.page < d.pages.length - 1 || d.finalChoices) {
-    html += `<div class="prompt">&#9660; SPACE</div>`;
+    html += `<div class="prompt">&#9660; TAP or SPACE</div>`;
   } else {
-    html += `<div class="prompt">&#10005; SPACE or ESC TO CLOSE</div>`;
+    html += `<div class="prompt">&#10005; TAP or SPACE TO CLOSE</div>`;
   }
   dialogEl.innerHTML = html;
   dialogEl.classList.add('show');
+  dialogEl.querySelectorAll('.choice[data-ci]').forEach(el => {
+    el.addEventListener('click', () => {
+      const c = d.choices[+el.dataset.ci];
+      if (c && c.onPick) c.onPick();
+    });
+  });
+  if (!d.choices || !d.choices.length) {
+    dialogEl.addEventListener('click', function _tapDialog() {
+      dialogEl.removeEventListener('click', _tapDialog);
+      if (d.page < d.pages.length - 1 || d.finalChoices) advanceDialog();
+      else closeDialog();
+    });
+  }
 }
 function toast(msg) {
   const t = document.createElement('div');
@@ -4914,6 +5291,7 @@ const invDetail = document.getElementById('invdetail');
 
 function openInventory() { state.invOpen = true; state.invSel = 0; renderInventoryModal(); invModal.classList.add('show'); }
 function closeInventory() { state.invOpen = false; invModal.classList.remove('show'); }
+document.getElementById('invClose').addEventListener('click', closeInventory);
 
 function pandexList() {
   const all = entities.filter(e => e.id).sort((a,b) => a.id - b.id);
@@ -6449,6 +6827,7 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
   }, 150);
 })();
 
+setupTouchControls();
 requestAnimationFrame(tick);
 })();
 </script>
