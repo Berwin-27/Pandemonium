@@ -855,6 +855,98 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   0%{opacity:1;transform:scaleX(0.3) translateY(0)} 100%{opacity:0;transform:scaleX(1.2) translateY(-20px)}
 }
 
+/* === CUTSCENE ATTACK ANIMATIONS === */
+.bt-sword-reveal {
+  position:absolute; pointer-events:none; z-index:20;
+  font-size:38px; line-height:1;
+  filter: drop-shadow(0 0 8px #ffe060) drop-shadow(0 0 20px #ffa820);
+  transform-origin: 50% 70%;
+  animation: btSwordReveal 0.38s cubic-bezier(0.2,0.8,0.3,1.15) forwards;
+}
+@keyframes btSwordReveal {
+  0%  { opacity:0; transform:scale(0.05) rotate(-90deg); }
+  55% { opacity:1; transform:scale(1.35) rotate(22deg); }
+  100%{ opacity:1; transform:scale(1.0) rotate(0deg); }
+}
+.bt-sword-glow {
+  position:absolute; pointer-events:none; z-index:19;
+  width:64px; height:64px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,220,80,0.6) 0%, rgba(255,160,30,0.18) 55%, transparent 75%);
+  animation: btSwordGlow 0.52s ease-out forwards;
+}
+@keyframes btSwordGlow {
+  0%  { opacity:0; transform:scale(0.2); }
+  38% { opacity:1; transform:scale(1.15); }
+  100%{ opacity:0; transform:scale(2.2); }
+}
+.bt-slash-trail {
+  position:absolute; height:3px; pointer-events:none; z-index:20;
+  border-radius:2px;
+  background:linear-gradient(90deg, rgba(255,248,160,0.95), rgba(255,255,255,0.85), rgba(255,220,100,0.35), transparent);
+  box-shadow: 0 0 6px rgba(255,220,80,0.7);
+  transform-origin: left center;
+  animation: btSlashTrail 0.3s ease-in forwards;
+}
+@keyframes btSlashTrail {
+  0%  { opacity:1; transform:scaleX(0); }
+  62% { opacity:1; transform:scaleX(1); }
+  100%{ opacity:0; transform:scaleX(1.06); }
+}
+.bt-impact-ring {
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  pointer-events:none; z-index:20;
+  border:2.5px solid rgba(255,220,80,0.9);
+  box-shadow: 0 0 8px rgba(255,200,50,0.6);
+  animation: btImpactRing 0.52s ease-out forwards;
+}
+@keyframes btImpactRing {
+  0%  { opacity:1; transform:translate(-5px,-5px) scale(1); }
+  100%{ opacity:0; transform:translate(-38px,-38px) scale(8); }
+}
+.bt-slash-cross {
+  position:absolute; width:50px; height:50px;
+  pointer-events:none; z-index:20;
+  animation: btSlashCross 0.5s ease-out forwards;
+}
+.bt-slash-cross::before, .bt-slash-cross::after {
+  content:''; position:absolute;
+  width:100%; height:2.5px; top:50%; left:0;
+  background:linear-gradient(90deg, transparent, rgba(255,232,100,0.95), transparent);
+  box-shadow: 0 0 5px rgba(255,200,50,0.8);
+  border-radius:2px;
+}
+.bt-slash-cross::before { transform:translateY(-50%) rotate(40deg); }
+.bt-slash-cross::after  { transform:translateY(-50%) rotate(-40deg); }
+@keyframes btSlashCross {
+  0%  { opacity:0; transform:scale(0.2); }
+  30% { opacity:1; transform:scale(1.6); }
+  100%{ opacity:0; transform:scale(2.4); }
+}
+.bt-strike-flash {
+  position:absolute; width:42px; height:42px; border-radius:50%;
+  pointer-events:none; z-index:20;
+  background:radial-gradient(circle, rgba(255,255,220,0.9) 0%, rgba(255,200,80,0.5) 40%, transparent 75%);
+  animation: btStrikeFlash 0.36s ease-out forwards;
+}
+@keyframes btStrikeFlash {
+  0%  { opacity:0; transform:scale(0.3); }
+  24% { opacity:1; transform:scale(1.35); }
+  100%{ opacity:0; transform:scale(1.9); }
+}
+.bt-energy-bolt {
+  position:absolute; height:5px; border-radius:3px;
+  pointer-events:none; z-index:20;
+  background:linear-gradient(90deg, rgba(200,240,255,0.1), rgba(160,220,255,0.9), rgba(255,255,255,1), rgba(120,200,255,0.6), transparent);
+  box-shadow: 0 0 8px rgba(140,220,255,0.8), 0 0 18px rgba(100,180,255,0.4);
+  transform-origin: left center;
+  animation: btEnergyBolt 0.38s ease-in forwards;
+}
+@keyframes btEnergyBolt {
+  0%  { opacity:1; transform:scaleX(0); }
+  52% { opacity:1; transform:scaleX(1); }
+  100%{ opacity:0; transform:scaleX(1.05); }
+}
+
 /* === BOSS ATTACK ANIMATIONS === */
 .boss-fx-layer {
   position:absolute; inset:0; z-index:8; pointer-events:none; overflow:hidden;
@@ -3921,16 +4013,19 @@ function btAttackEffect(mgType, fromPlayer) {
   const ty = tRect.top - aRect.top + tRect.height/2;
   const sx = sRect.left - aRect.left + sRect.width/2;
   const sy = sRect.top - aRect.top + sRect.height/2;
+  const ddx = tx - sx, ddy = ty - sy;
+  const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+  const angle = Math.atan2(ddy, ddx) * 180 / Math.PI;
 
   const fxMap = {
-    TIMING:   { emoji:'⚔️', type:'slash' },
-    MASH:     { emoji:'💥', type:'multi', items:['💢','💥','✊','💫'] },
-    HOLD:     { emoji:'🌊', type:'beam', color:'rgba(112,176,244,0.7)' },
-    SEQUENCE: { emoji:'⚡', type:'multi', items:['⚡','✨','💫','🌟'] },
-    AIM:      { emoji:'🎯', type:'projectile' },
-    DODGE:    { emoji:'💨', type:'shield' },
-    RHYTHM:   { emoji:'🎵', type:'multi', items:['🎵','🎶','♪','♫'] },
-    VOLLEY:   { emoji:'🏐', type:'projectile' }
+    TIMING:   { type:'sword' },
+    MASH:     { type:'combo' },
+    HOLD:     { type:'beam', color:'rgba(112,176,244,0.7)' },
+    SEQUENCE: { type:'combo' },
+    AIM:      { type:'bolt' },
+    DODGE:    { type:'shield' },
+    RHYTHM:   { type:'combo' },
+    VOLLEY:   { type:'bolt' }
   };
   const fx = fxMap[mgType] || fxMap.TIMING;
 
@@ -3956,39 +4051,108 @@ function btAttackEffect(mgType, fromPlayer) {
     }, delay);
   }
 
-  if (fx.type === 'slash') {
-    const el = document.createElement('div');
-    el.className = 'bt-atk-fx bt-atk-slash';
-    el.textContent = fx.emoji;
-    el.style.left = (tx - 24) + 'px'; el.style.top = (ty - 24) + 'px';
-    btArena.appendChild(el);
-    spawnImpactBurst(tx, ty, 380);
-    setTimeout(() => el.remove(), 850);
-  } else if (fx.type === 'multi') {
-    const wrap = document.createElement('div');
-    wrap.className = 'bt-atk-fx bt-atk-multi';
-    wrap.style.left = tx + 'px'; wrap.style.top = ty + 'px';
-    for (let i = 0; i < fx.items.length; i++) {
-      const s = document.createElement('span');
-      s.textContent = fx.items[i];
-      const angle = (i / fx.items.length) * Math.PI * 2 + Math.random() * 0.5;
-      const dist = 35 + Math.random() * 40;
-      s.style.setProperty('--mx', Math.cos(angle) * dist + 'px');
-      s.style.setProperty('--my', Math.sin(angle) * dist + 'px');
-      s.style.animationDelay = (i * 0.10) + 's';
-      wrap.appendChild(s);
+  if (fx.type === 'sword') {
+    // Stage 1: Sword reveals — scales up from inside the appliance body with golden glow
+    const sword = document.createElement('div');
+    sword.className = 'bt-sword-reveal';
+    sword.textContent = '⚔️';
+    sword.style.left = (sx - 19) + 'px';
+    sword.style.top  = (sy - 32) + 'px';
+    btArena.appendChild(sword);
+
+    const glow = document.createElement('div');
+    glow.className = 'bt-sword-glow';
+    glow.style.left = (sx - 32) + 'px';
+    glow.style.top  = (sy - 32) + 'px';
+    btArena.appendChild(glow);
+    setTimeout(() => glow.remove(), 620);
+
+    // Stage 2: Two slash trails shoot toward the target; sword lunges along with them
+    setTimeout(() => {
+      for (let i = 0; i < 2; i++) {
+        const trail = document.createElement('div');
+        trail.className = 'bt-slash-trail';
+        trail.style.width = dist + 'px';
+        trail.style.left  = sx + 'px';
+        trail.style.top   = (sy - 1.5 + (i === 0 ? -6 : 6)) + 'px';
+        trail.style.transform = `rotate(${angle + (i === 0 ? -5 : 5)}deg)`;
+        trail.style.animationDelay = (i * 0.055) + 's';
+        btArena.appendChild(trail);
+        setTimeout(() => trail.remove(), 480);
+      }
+      sword.style.transition = 'left 0.21s ease-in, top 0.21s ease-in, filter 0.1s, transform 0.21s';
+      sword.style.left      = (tx - 19) + 'px';
+      sword.style.top       = (ty - 32) + 'px';
+      sword.style.transform = `rotate(${angle - 45}deg) scale(0.92)`;
+      sword.style.filter    = 'drop-shadow(0 0 14px #fff) drop-shadow(0 0 28px #ffe060) brightness(1.6)';
+    }, 330);
+
+    // Stage 3: Impact — ring, cross-slash marks, burst
+    setTimeout(() => {
+      const ring = document.createElement('div');
+      ring.className = 'bt-impact-ring';
+      ring.style.left = tx + 'px'; ring.style.top = ty + 'px';
+      btArena.appendChild(ring);
+
+      const ring2 = document.createElement('div');
+      ring2.className = 'bt-impact-ring';
+      ring2.style.left = tx + 'px'; ring2.style.top = ty + 'px';
+      ring2.style.animationDelay = '0.13s';
+      ring2.style.borderColor = 'rgba(255,255,255,0.65)';
+      btArena.appendChild(ring2);
+
+      const cross = document.createElement('div');
+      cross.className = 'bt-slash-cross';
+      cross.style.left = (tx - 25) + 'px'; cross.style.top = (ty - 25) + 'px';
+      btArena.appendChild(cross);
+
+      spawnImpactBurst(tx, ty, 0);
+      setTimeout(() => { ring.remove(); ring2.remove(); cross.remove(); sword.remove(); }, 720);
+    }, 528);
+
+  } else if (fx.type === 'combo') {
+    // 3 rapid strike flashes + short slash trails closing in on target
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const flash = document.createElement('div');
+        flash.className = 'bt-strike-flash';
+        flash.style.left = (tx - 21 + (Math.random()-0.5)*38) + 'px';
+        flash.style.top  = (ty - 21 + (Math.random()-0.5)*30) + 'px';
+        btArena.appendChild(flash);
+        setTimeout(() => flash.remove(), 420);
+
+        const trail = document.createElement('div');
+        trail.className = 'bt-slash-trail';
+        trail.style.width = (dist * 0.62) + 'px';
+        trail.style.left  = (sx + ddx * 0.38) + 'px';
+        trail.style.top   = (sy + ddy * 0.38 + (Math.random()-0.5)*18 - 1.5) + 'px';
+        trail.style.transform = `rotate(${angle + (Math.random()-0.5)*26}deg)`;
+        btArena.appendChild(trail);
+        setTimeout(() => trail.remove(), 420);
+      }, i * 125 + 55);
     }
-    btArena.appendChild(wrap);
-    spawnImpactBurst(tx, ty, 420);
-    setTimeout(() => wrap.remove(), 1000);
-  } else if (fx.type === 'projectile') {
-    const el = document.createElement('div');
-    el.className = 'bt-atk-fx bt-atk-projectile' + (fromPlayer ? '' : ' from-enemy');
-    el.textContent = fx.emoji;
-    el.style.left = (sx - 16) + 'px'; el.style.top = (sy - 16) + 'px';
-    btArena.appendChild(el);
-    spawnImpactBurst(tx, ty, 500);
-    setTimeout(() => el.remove(), 750);
+    spawnImpactBurst(tx, ty, 410);
+
+  } else if (fx.type === 'bolt') {
+    // Energy bolt — geometric tracer line that scales out, plus impact ring
+    const bolt = document.createElement('div');
+    bolt.className = 'bt-energy-bolt';
+    bolt.style.width     = dist + 'px';
+    bolt.style.left      = sx + 'px';
+    bolt.style.top       = (sy - 2.5) + 'px';
+    bolt.style.transform = `rotate(${angle}deg)`;
+    btArena.appendChild(bolt);
+
+    const ring = document.createElement('div');
+    ring.className = 'bt-impact-ring';
+    ring.style.left = tx + 'px'; ring.style.top = ty + 'px';
+    ring.style.animationDelay = '0.22s';
+    ring.style.borderColor = 'rgba(150,230,255,0.9)';
+    btArena.appendChild(ring);
+
+    spawnImpactBurst(tx, ty, 280);
+    setTimeout(() => { bolt.remove(); ring.remove(); }, 820);
+
   } else if (fx.type === 'beam') {
     const el = document.createElement('div');
     el.className = 'bt-atk-beam';
@@ -4000,6 +4164,7 @@ function btAttackEffect(mgType, fromPlayer) {
     btArena.appendChild(el);
     spawnImpactBurst(tx, ty, 380);
     setTimeout(() => el.remove(), 900);
+
   } else if (fx.type === 'shield') {
     const el = document.createElement('div');
     el.className = 'bt-atk-shield';
@@ -5456,7 +5621,7 @@ function startMinigame(entity) {
 function rarityDiff() {
   const r = (state.mini && state.mini.entity && state.mini.entity.rarity) || 'common';
   const tier = RARITY_TIER[r] || 0;
-  return 1.0 + tier * 0.30 + tier * tier * 0.08;
+  return 1.0 + tier * 0.35;
 }
 
 function activeElement() {
@@ -5497,8 +5662,8 @@ function setupTiming() {
   miniTimingWrap.style.display = '';
   const diff = rarityDiff();
   const barW = miniBar.clientWidth || 604;
-  const baseZone = 110;
-  const zoneW = Math.max(18, Math.floor(baseZone / diff * elemZoneMult()) + Math.floor(Math.random()*10));
+  const baseZone = 92;
+  const zoneW = Math.max(24, Math.floor(baseZone / diff * elemZoneMult()) + Math.floor(Math.random()*10));
   const zx = Math.floor(20 + Math.random() * (barW - zoneW - 40));
   miniZoneEl.style.left = zx + 'px';
   miniZoneEl.style.width = zoneW + 'px';
@@ -5525,7 +5690,7 @@ function setupHold() {
   const m = state.mini;
   miniHold.classList.add('show');
   const diff = rarityDiff();
-  const zoneW = Math.max(4.5, ((16 - diff * 2.6) + Math.random()*4) * elemZoneMult());
+  const zoneW = Math.max(4.5, ((14 - diff * 2.2) + Math.random()*4) * elemZoneMult());
   const zx = 50 + Math.random()*30;
   m.holdFill = 0; m.holdSpeed = (50 + Math.random()*18) * diff * elemSpeedMult();
   m.holdZx = zx; m.holdZoneW = zoneW; m.holding = false; m.holdHasPressed = false;
