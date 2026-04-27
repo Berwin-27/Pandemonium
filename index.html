@@ -1346,7 +1346,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
     <div id="loadingScreen" style="position:absolute;inset:0;z-index:100;background:linear-gradient(180deg,#07070f 0%,#0d0d24 50%,#07070f 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;">
       <div style="font-size:28px;letter-spacing:10px;color:#f4c165;text-shadow:0 0 20px rgba(244,193,101,0.5);">PANDEMONIUM</div>
       <div style="font-size:11px;letter-spacing:5px;color:#ffe08a;">GOTTA COOK 'EM ALL</div>
-      <div style="margin-top:20px;width:280px;height:8px;background:#111;border-radius:4px;border:1px solid #333;overflow:hidden;">
+      <div style="margin-top:20px;width:min(480px,88vw);height:8px;background:#111;border-radius:4px;border:1px solid #333;overflow:hidden;">
         <div id="loadBar" style="width:0%;height:100%;background:linear-gradient(90deg,#f4c165,#ffe08a,#f4c165);border-radius:4px;transition:width 0.15s;box-shadow:0 0 8px rgba(244,193,101,0.6);"></div>
       </div>
       <div id="loadText" style="font-size:10px;letter-spacing:3px;color:#666;margin-top:4px;">INITIALIZING...</div>
@@ -1356,7 +1356,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <h1>PANDEMONIUM</h1>
       <p style="color:#f4c165;letter-spacing:3px;font-size:13px;">&mdash; GOTTA COOK 'EM ALL &mdash;</p>
       <p>For as long as anyone remembers, the world has been home to wild, living kitchenware &mdash; mischievous <b>Appliances</b> that roam the homes, markets, caves, and crystal dimensions of the realm.</p>
-      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>41 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And two ULTRA entities whispered about only in chef's lore.</p>
+      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>63 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And two ULTRA entities whispered about only in chef's lore.</p>
       <p>Catching an Appliance requires skill. Time your strikes, hammer buttons, hold your nerve, follow precise sequences, and take careful aim. Rarer Appliances demand sharper technique.</p>
       <div class="keys">
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
@@ -3210,51 +3210,59 @@ const audio = (() => {
     }
   };
 
-  // -- LOADING SCREEN SONG: chill build-up, C major 120 BPM --
+  // -- LOADING SCREEN SONG: catchy G major adventure theme, 130 BPM --
+  // I - vi - IV - V (G Em C D), woodwind lead melody + strings pad + bass + triangle arp + drums
   const LOADING_SONG = {
-    bpm: 120, vol: 0.14, len: 64,
+    bpm: 130, vol: 0.14, len: 64,
     tracks: [
-      { type:'sine', vol:0.26, sustain:3.0, notes:[
-        65,0,0,0, 0,0,0,0, 0,0,65,0, 0,0,0,0,
-        82,0,0,0, 0,0,0,0, 0,0,82,0, 0,0,0,0,
-        87,0,0,0, 0,0,0,0, 0,0,87,0, 0,0,0,0,
-        73,0,0,0, 0,0,0,0, 0,0,73,0, 0,0,0,0
+      // Lead melody — bright woodwind hook, 4-bar phrase
+      { type:'woodwind', vol:0.12, sustain:1.5, notes:[
+        587,659,784,0, 659,587,494,0, 587,0,659,0, 784,0,0,0,
+        659,0,0,0,     587,0,494,0,   440,0,392,0, 440,0,0,0,
+        523,587,659,0, 784,659,587,0, 523,0,494,0, 440,0,392,0,
+        587,740,880,0, 784,659,587,0, 659,587,784,0, 587,0,0,0
       ]},
-      { type:'triangle', vol:0.13, sustain:0.4, notes:[
-        523,0,659,0, 784,0,1047,0, 0,784,0,659, 0,523,0,0,
-        659,0,784,0, 880,0,1047,0, 0,880,0,784, 0,659,0,0,
-        698,0,880,0, 1047,0,1319,0, 0,1047,0,880, 0,698,0,0,
-        587,0,784,0, 988,0,1175,0, 0,988,0,784, 0,587,0,0
+      // Strings chord pad (warm, long sustain per bar)
+      { type:'strings', vol:0.09, sustain:14.0, notes:[
+        392,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        330,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        262,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        294,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
       ]},
-      { type:'sine', vol:0.12, sustain:1.2, notes:[
-        0,0,0,0, 523,0,0,0, 0,0,659,0, 0,0,0,0,
-        0,0,0,0, 659,0,0,0, 0,0,784,0, 0,0,0,0,
-        0,0,0,0, 698,0,0,0, 0,0,880,0, 0,0,0,0,
-        0,0,0,0, 587,0,0,0, 0,0,784,0, 0,0,0,0
+      // Bass strings — root on 1 and 3
+      { type:'strings', vol:0.09, sustain:3.5, notes:[
+        98,0,0,0, 0,0,0,0, 98,0,0,0, 0,0,0,0,
+        82,0,0,0, 0,0,0,0, 82,0,0,0, 0,0,0,0,
+        65,0,0,0, 0,0,0,0, 65,0,0,0, 0,0,0,0,
+        73,0,0,0, 0,0,0,0, 73,0,0,0, 0,0,0,0
       ]},
-      { type:'triangle', vol:0.08, sustain:5.0, notes:[
-        523,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-        659,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-        698,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-        587,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+      // Triangle sparkle — chord arpeggios
+      { type:'triangle', vol:0.055, sustain:0.5, notes:[
+        784,0,988,0, 1175,0,988,0, 784,0,988,0, 1175,0,988,0,
+        659,0,784,0,  988,0,784,0, 659,0,784,0,  988,0,784,0,
+        523,0,659,0,  784,0,659,0, 523,0,659,0,  784,0,659,0,
+        587,0,740,0,  880,0,740,0, 587,0,740,0,  880,0,740,0
       ]},
-      { type:'kick', vol:0.32, notes:[
+      // Kick — four on the floor
+      { type:'kick', vol:0.28, notes:[
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
         1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0
       ]},
-      { type:'hat', vol:0.05, notes:[
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,
-        0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0
-      ]},
-      { type:'snare', vol:0.14, notes:[
+      // Snare — beats 2 and 4
+      { type:'snare', vol:0.13, notes:[
         0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,
         0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,
         0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,
         0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0
+      ]},
+      // Hi-hat — offbeat 8ths
+      { type:'hat', vol:0.055, notes:[
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1
       ]}
     ]
   };
@@ -8039,7 +8047,7 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
   document.addEventListener('keydown', startLoadMusic, { once: true });
 
   const loadInterval = setInterval(() => {
-    progress += 2 + Math.random() * 5;
+    progress += 1 + Math.random() * 2.5;
     if (progress > 100) progress = 100;
     loadBar.style.width = progress + '%';
 
