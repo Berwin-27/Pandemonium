@@ -2403,7 +2403,7 @@ function closeAdminPrompt() {
 
 function submitAdminCode() {
   const inp = document.getElementById('adminInput');
-  if (inp.value === 'BrendonMarks') {
+  if (inp.value === 'CutieJulia') {
     closeAdminPrompt();
     activateAdminMode();
   } else {
@@ -5636,8 +5636,121 @@ function playKillCutscene(onDone) {
     }, 75);
   }
 
-  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 4050);
-  setTimeout(()=>{ cleanup(); onDone(); }, 4580);
+  // === VICTORY SEQUENCE ===
+  // t=4100: ambient golden wash rises over the battlefield
+  setTimeout(()=>{
+    const amb=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9002',
+      background:'radial-gradient(ellipse at 50% 55%, rgba(255,200,40,0.20) 0%, transparent 60%)',
+      opacity:'0',transition:'opacity 1.4s ease-in'});
+    fl(amb); requestAnimationFrame(()=>{ amb.style.opacity='1'; });
+  }, 4100);
+  // t=4200: 18 golden dust motes drift upward
+  setTimeout(()=>{
+    for (let i=0;i<18;i++) setTimeout(()=>{
+      const mx=W*(0.15+Math.random()*0.7), my=H*(0.55+Math.random()*0.35);
+      const m=sd({position:'absolute',left:mx+'px',top:my+'px',fontSize:(5+Math.random()*9)+'px',
+        lineHeight:'1',opacity:'0',transform:'translate(-50%,-50%)',zIndex:'9003',pointerEvents:'none',
+        transition:`top ${1.4+Math.random()*1.1}s ease-out, opacity 0.4s ease-out`});
+      m.textContent=['✦','✧','·','∗'][Math.floor(Math.random()*4)]; fl(m);
+      requestAnimationFrame(()=>{ m.style.opacity=(0.4+Math.random()*0.6).toFixed(2); m.style.top=(my-H*0.28-Math.random()*H*0.12)+'px'; });
+      setTimeout(()=>{ m.style.opacity='0'; }, 900+Math.random()*500);
+    }, i*90);
+  }, 4200);
+  // t=4500: player slides to center triumphantly, glows gold
+  setTimeout(()=>{
+    if (pSpr) {
+      pSpr.style.transition='left 0.65s cubic-bezier(0.18,0,0.08,1), top 0.65s cubic-bezier(0.18,0,0.08,1), font-size 0.65s ease-out, filter 0.65s ease-out, transform 0.65s cubic-bezier(0.18,0,0.1,1.35)';
+      pSpr.style.left=(W*0.5)+'px'; pSpr.style.top=(H*0.46)+'px';
+      pSpr.style.fontSize='100px';
+      pSpr.style.filter='drop-shadow(0 0 28px #ffd700) drop-shadow(0 0 55px #ff8800) brightness(1.35)';
+      pSpr.style.transform='translate(-50%,-50%) scale(1.45)';
+    }
+  }, 4500);
+  // t=4900: 8 golden manga rays burst from player center
+  setTimeout(()=>{
+    for (let i=0;i<8;i++) {
+      const ang=(i/8)*360;
+      const ray=sd({position:'absolute',left:(W*0.5)+'px',top:(H*0.46)+'px',
+        width:'0',height:'3px',borderRadius:'2px',
+        background:'linear-gradient(90deg, rgba(255,215,0,0.9), rgba(255,180,0,0))',
+        transform:`rotate(${ang}deg)`,transformOrigin:'0 50%',marginTop:'-1.5px',
+        opacity:'0.9',zIndex:'9005',pointerEvents:'none',transition:'width 0.3s ease-out'});
+      fl(ray); requestAnimationFrame(()=>{ ray.style.width=(100+Math.random()*80)+'px'; });
+      setTimeout(()=>{ ray.style.transition='width 0.25s ease-in, opacity 0.25s ease-in'; ray.style.width='0'; ray.style.opacity='0'; }, 420);
+    }
+  }, 4900);
+  // t=5100: 5 golden rings pulse outward from player
+  setTimeout(()=>{
+    for (let i=0;i<5;i++) setTimeout(()=>{
+      const ring=sd({position:'absolute',left:(W*0.5)+'px',top:(H*0.46)+'px',
+        width:'80px',height:'80px',borderRadius:'50%',
+        border:`3px solid rgba(255,215,0,${(0.9-i*0.12).toFixed(2)})`,
+        boxShadow:'0 0 16px rgba(255,180,0,0.55)',
+        transform:'translate(-50%,-50%) scale(0.1)',opacity:'1',zIndex:'9005',pointerEvents:'none',
+        transition:`transform ${0.65+i*0.07}s ease-out, opacity ${0.45+i*0.07}s ease-out ${0.28+i*0.05}s`});
+      fl(ring);
+      requestAnimationFrame(()=>{ ring.style.transform='translate(-50%,-50%) scale(9)'; ring.style.opacity='0'; });
+    }, i*150);
+  }, 5100);
+  // t=5350: "VICTORY!" slams in from top with screen shake
+  setTimeout(()=>{
+    stage.style.animation='btFcsShake 0.38s ease-out';
+    setTimeout(()=>{ stage.style.animation=''; }, 380);
+    const vic=bd({position:'fixed',left:'50%',top:'28%',
+      fontSize:'clamp(44px,9.5vw,84px)',fontWeight:'900',color:'#ffd700',
+      textShadow:'0 0 22px #ff8800, 0 0 55px #ffcc00, 4px 4px 0px #7a3800, 7px 7px 0px #2a1000',
+      letterSpacing:'10px',fontFamily:'monospace',whiteSpace:'nowrap',
+      zIndex:'9013',pointerEvents:'none',
+      transform:'translate(-50%,-350%) scale(2)',opacity:'0',
+      transition:'transform 0.3s cubic-bezier(0.15,0,0.2,1.45), opacity 0.15s ease-out'});
+    vic.textContent='VICTORY!'; fl(vic);
+    requestAnimationFrame(()=>{ vic.style.transform='translate(-50%,-50%) scale(1)'; vic.style.opacity='1'; });
+  }, 5350);
+  // t=5550: 36 colored confetti rain from top
+  setTimeout(()=>{
+    const cC=['#ff3030','#ff9020','#ffd700','#30ff70','#30cfff','#c060ff','#ff60b0','#fff'];
+    const cS=['■','▲','●','◆','★','♦'];
+    for (let i=0;i<36;i++) setTimeout(()=>{
+      const sx=W*(0.08+Math.random()*0.84);
+      const conf=sd({position:'absolute',left:sx+'px',top:'-20px',
+        fontSize:(7+Math.random()*10)+'px',lineHeight:'1',color:cC[Math.floor(Math.random()*cC.length)],
+        transform:`translate(-50%,-50%) rotate(${Math.random()*360}deg)`,opacity:'1',
+        zIndex:'9006',pointerEvents:'none',
+        transition:`top ${0.85+Math.random()*0.7}s ease-in, opacity 0.25s ease-out ${0.75+Math.random()*0.4}s, transform ${0.85+Math.random()*0.7}s linear`});
+      conf.textContent=cS[Math.floor(Math.random()*cS.length)]; fl(conf);
+      requestAnimationFrame(()=>{
+        conf.style.top=(H*(0.72+Math.random()*0.26))+'px';
+        conf.style.transform=`translate(-50%,-50%) rotate(${Math.random()*900-450}deg)`;
+        conf.style.opacity='0';
+      });
+    }, i*52);
+  }, 5550);
+  // t=5850: gold bloom pulse
+  setTimeout(()=>{
+    const gbl=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9003',
+      background:'radial-gradient(ellipse at 50% 46%, rgba(255,215,0,0.42) 0%, rgba(255,100,0,0.15) 50%, transparent 72%)',
+      opacity:'0',transition:'opacity 0.14s ease-in'});
+    fl(gbl); requestAnimationFrame(()=>{ gbl.style.opacity='1'; });
+    setTimeout(()=>{ gbl.style.transition='opacity 0.65s ease-out'; gbl.style.opacity='0'; }, 145);
+  }, 5850);
+  // t=6050: 10 twinkling gold stars orbit the VICTORY text
+  setTimeout(()=>{
+    for (let i=0;i<10;i++) setTimeout(()=>{
+      const a=(i/10)*360+Math.random()*16;
+      const r=90+Math.random()*55;
+      const sx=W*0.5+Math.cos(a*Math.PI/180)*r, sy=H*0.28+Math.sin(a*Math.PI/180)*r*0.5;
+      const st=sd({position:'absolute',left:sx+'px',top:sy+'px',
+        fontSize:(12+Math.random()*14)+'px',lineHeight:'1',
+        color:['#ffd700','#fff','#ffcc44','#ffe090'][Math.floor(Math.random()*4)],
+        filter:'drop-shadow(0 0 6px #ffd700)',transform:'translate(-50%,-50%) scale(0)',opacity:'0',
+        zIndex:'9007',pointerEvents:'none',transition:'transform 0.28s ease-out, opacity 0.28s ease-out'});
+      st.textContent=['✦','★','✨','⭐'][Math.floor(Math.random()*4)]; fl(st);
+      requestAnimationFrame(()=>{ st.style.transform='translate(-50%,-50%) scale(1)'; st.style.opacity='1'; });
+      setTimeout(()=>{ st.style.opacity='0'; st.style.transform='translate(-50%,-50%) scale(0.3)'; }, 550+Math.random()*350);
+    }, i*115);
+  }, 6050);
+  setTimeout(()=>{ overlay.style.transition='opacity 0.75s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.75s ease'; stage.style.opacity='0'; }, 6600);
+  setTimeout(()=>{ cleanup(); onDone(); }, 7500);
 }
 
 function playCatchCutscene(onDone) {
@@ -5851,8 +5964,85 @@ function playCatchCutscene(onDone) {
     }, 1500);
   }, 300);
 
-  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 2500);
-  setTimeout(()=>{ cleanup(); onDone(); }, 3200);
+  // === PANDEX REGISTRATION SEQUENCE ===
+  // t=2700: mini enemy badge materializes at center then slides to bottom-right corner
+  setTimeout(()=>{
+    const badge=sd({position:'absolute',left:(W*0.5)+'px',top:cy+'px',
+      fontSize:'22px',lineHeight:'1',textAlign:'center',
+      background:`radial-gradient(circle, ${rarCol}22 0%, transparent 70%)`,
+      border:`2px solid ${rarCol}`,borderRadius:'50%',
+      width:'44px',height:'44px',display:'flex',alignItems:'center',justifyContent:'center',
+      boxShadow:`0 0 16px ${rarCol}, 0 0 32px ${rarCol}66`,
+      transform:'translate(-50%,-50%) scale(0)',opacity:'1',zIndex:'9009',pointerEvents:'none',
+      transition:'transform 0.3s ease-out, left 0.7s cubic-bezier(0.2,0,0.1,1), top 0.7s cubic-bezier(0.2,0,0.1,1)'});
+    badge.textContent=eE; fl(badge);
+    requestAnimationFrame(()=>{ badge.style.transform='translate(-50%,-50%) scale(1)'; });
+    setTimeout(()=>{ badge.style.left=(W*0.87)+'px'; badge.style.top=(H*0.82)+'px'; }, 100);
+  }, 2700);
+  // t=3050: scan line sweeps top to bottom like a Pokédex registering
+  setTimeout(()=>{
+    const scan=bd({position:'fixed',left:'0',top:'0',width:'100%',height:'3px',
+      background:`linear-gradient(90deg, transparent 0%, ${rarCol} 30%, #fff 50%, ${rarCol} 70%, transparent 100%)`,
+      boxShadow:`0 0 12px ${rarCol}, 0 0 24px ${rarCol}88`,
+      opacity:'0.95',zIndex:'9009',pointerEvents:'none',
+      transition:'top 0.75s linear, opacity 0.2s ease-out 0.7s'});
+    fl(scan);
+    requestAnimationFrame(()=>{ scan.style.top=H+'px'; });
+    setTimeout(()=>{ scan.style.opacity='0'; }, 750);
+  }, 3050);
+  // t=3300: rarity label slams in at center
+  setTimeout(()=>{
+    const rarLabel=bd({position:'fixed',left:'50%',top:'58%',
+      fontSize:'clamp(13px,2.8vw,22px)',fontWeight:'900',color:rarCol,
+      textShadow:`0 0 14px ${rarCol}, 0 0 28px ${rarCol}88, 2px 2px 4px #000`,
+      letterSpacing:'6px',fontFamily:'monospace',whiteSpace:'nowrap',
+      zIndex:'9012',pointerEvents:'none',opacity:'0',
+      transform:'translate(-50%,-50%) scale(0.8)',
+      transition:'opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.15,0,0.3,1.4)'});
+    rarLabel.textContent=`★  ${rar.toUpperCase()}  ★`; fl(rarLabel);
+    requestAnimationFrame(()=>{ rarLabel.style.opacity='1'; rarLabel.style.transform='translate(-50%,-50%) scale(1)'; });
+  }, 3300);
+  // t=3600: 8 stars float upward from the badge corner
+  setTimeout(()=>{
+    const starChars=['★','✦','✧','✨','⭐'];
+    for (let i=0;i<8;i++) setTimeout(()=>{
+      const bx=W*0.87+(-20+Math.random()*40), by=H*0.82;
+      const st=sd({position:'absolute',left:bx+'px',top:by+'px',
+        fontSize:(10+Math.random()*12)+'px',lineHeight:'1',color:rarCol,
+        transform:'translate(-50%,-50%)',opacity:'0',zIndex:'9008',pointerEvents:'none',
+        transition:`top ${0.9+Math.random()*0.6}s ease-out, opacity 0.3s ease-out`});
+      st.textContent=starChars[Math.floor(Math.random()*5)]; fl(st);
+      requestAnimationFrame(()=>{ st.style.opacity='0.9'; st.style.top=(by-H*0.22-Math.random()*H*0.10)+'px'; });
+      setTimeout(()=>{ st.style.opacity='0'; }, 700+Math.random()*350);
+    }, i*140);
+  }, 3600);
+  // t=3900: large rarity ring expands from center
+  setTimeout(()=>{
+    const bigRing=sd({position:'absolute',left:(W*0.5)+'px',top:(H*0.46)+'px',
+      width:'60px',height:'60px',borderRadius:'50%',
+      border:`4px solid ${rarCol}`,
+      boxShadow:`0 0 20px ${rarCol}, 0 0 40px ${rarCol}55`,
+      transform:'translate(-50%,-50%) scale(0.1)',opacity:'0.85',
+      zIndex:'9005',pointerEvents:'none',
+      transition:'transform 0.9s ease-out, opacity 0.6s ease-out 0.4s'});
+    fl(bigRing);
+    requestAnimationFrame(()=>{ bigRing.style.transform='translate(-50%,-50%) scale(12)'; bigRing.style.opacity='0'; });
+  }, 3900);
+  // t=4200: "PANDEX UPDATED" notification slides in from right
+  setTimeout(()=>{
+    const pNotif=bd({position:'fixed',right:'-300px',top:'20%',
+      fontSize:'clamp(11px,2vw,16px)',fontWeight:'700',color:'#ccc',
+      background:'rgba(0,0,0,0.75)',border:`1px solid ${rarCol}88`,borderRadius:'6px',
+      padding:'8px 16px',letterSpacing:'2px',fontFamily:'monospace',
+      boxShadow:`0 0 12px ${rarCol}44`,
+      zIndex:'9012',pointerEvents:'none',
+      transition:'right 0.45s cubic-bezier(0.15,0,0.25,1.3)'});
+    pNotif.textContent='✦ PANDEX UPDATED'; fl(pNotif);
+    requestAnimationFrame(()=>{ pNotif.style.right='20px'; });
+    setTimeout(()=>{ pNotif.style.transition='right 0.4s ease-in, opacity 0.4s ease-in'; pNotif.style.right='-300px'; pNotif.style.opacity='0'; }, 1100);
+  }, 4200);
+  setTimeout(()=>{ overlay.style.transition='opacity 0.65s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.65s ease'; stage.style.opacity='0'; }, 5000);
+  setTimeout(()=>{ cleanup(); onDone(); }, 6200);
 }
 
 function onEnemyFaint() {
