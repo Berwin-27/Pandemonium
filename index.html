@@ -3492,6 +3492,11 @@ function onKeyDown(e) {
         e.preventDefault();
         return;
       }
+      // MASH: block key repeat so holding space doesn't count as mashing
+      if (state.mini.type === 'MASH' && (k === ' ' || k === 'enter') && e.repeat) {
+        e.preventDefault();
+        return;
+      }
       miniAction(k);
       if (k === ' ' || k === 'enter' || k.startsWith('arrow')) e.preventDefault();
     } else {
@@ -5659,7 +5664,7 @@ function playCatchCutscene(onDone) {
   requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
   const cx=W*0.50, cy=H*0.46;
 
-  // 14 gravity particles converge from random positions toward enemy center
+  // 14 gravity particles converge from random screen positions
   setTimeout(()=>{
     for (let i=0;i<14;i++) {
       const startX=Math.random()*W, startY=Math.random()*H;
@@ -5682,29 +5687,50 @@ function playCatchCutscene(onDone) {
     eSpr.textContent=eE; fl(eSpr);
     requestAnimationFrame(()=>{ eSpr.style.transform='translate(-50%,-50%) scale(1)'; eSpr.style.opacity='1'; });
 
-    // enemy struggles: 9 shakes at 65ms intervals
+    // escape attempt: enemy lunges sideways, restraint ring pulses, yanked back
+    setTimeout(()=>{
+      eSpr.style.transition='left 0.15s ease-out, top 0.15s ease-out, transform 0.15s ease-out';
+      eSpr.style.left=(cx+W*0.16)+'px'; eSpr.style.top=(cy-32)+'px';
+      eSpr.style.transform='translate(-50%,-50%) scale(1.12) rotate(28deg)';
+
+      const rRing=sd({position:'absolute',left:cx+'px',top:cy+'px',
+        width:'100px',height:'100px',borderRadius:'50%',
+        border:`3px solid ${rarCol}`,boxShadow:`0 0 22px ${rarCol}, inset 0 0 16px ${rarCol}44`,
+        transform:'translate(-50%,-50%) scale(0.4)',opacity:'0',zIndex:'9009',pointerEvents:'none',
+        transition:'transform 0.12s ease-out, opacity 0.12s ease-out'});
+      fl(rRing); requestAnimationFrame(()=>{ rRing.style.transform='translate(-50%,-50%) scale(1.7)'; rRing.style.opacity='0.9'; });
+      setTimeout(()=>{ rRing.style.transition='transform 0.18s ease-in, opacity 0.22s ease-in'; rRing.style.transform='translate(-50%,-50%) scale(0.2)'; rRing.style.opacity='0'; }, 170);
+
+      setTimeout(()=>{
+        eSpr.style.transition='left 0.18s cubic-bezier(0.3,0,0.4,1.9), top 0.18s cubic-bezier(0.3,0,0.4,1.9), transform 0.18s ease-out';
+        eSpr.style.left=cx+'px'; eSpr.style.top=cy+'px';
+        eSpr.style.transform='translate(-50%,-50%) scale(1) rotate(0deg)';
+      }, 200);
+    }, 560);
+
+    // enemy struggle: 14 intense shakes with slight rotation
     let shakeIv;
     setTimeout(()=>{
       let sc=0;
       shakeIv=setInterval(()=>{
-        if (sc>=9) { clearInterval(shakeIv); eSpr.style.transition='transform 0.1s ease-out'; eSpr.style.transform='translate(-50%,-50%) scale(1)'; return; }
-        const dx=(Math.random()-0.5)*18, dy=(Math.random()-0.5)*12;
+        if (sc>=14) { clearInterval(shakeIv); eSpr.style.transition='transform 0.1s ease-out'; eSpr.style.transform='translate(-50%,-50%) scale(1)'; return; }
+        const dx=(Math.random()-0.5)*24, dy=(Math.random()-0.5)*18;
         eSpr.style.transition='transform 0.04s ease-out';
-        eSpr.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${(0.92+Math.random()*0.12).toFixed(2)})`;
+        eSpr.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${(0.88+Math.random()*0.18).toFixed(2)}) rotate(${((Math.random()-0.5)*15).toFixed(1)}deg)`;
         sc++;
-      }, 65);
-    }, 280);
+      }, 52);
+    }, 780);
 
-    // 6 catch rings close INWARD with rarity color
+    // 8 catch rings close INWARD with rarity color
     setTimeout(()=>{
-      for (let i=0;i<6;i++) setTimeout(()=>{
+      for (let i=0;i<8;i++) setTimeout(()=>{
         const ring=sd({position:'absolute',left:cx+'px',top:cy+'px',width:'120px',height:'120px',borderRadius:'50%',
-          border:`3px solid ${i%2===0?rarCol:'#fff'}`,boxShadow:`0 0 12px ${rarCol}`,
-          transform:'translate(-50%,-50%) scale(3.5)',opacity:'0.85',zIndex:'9007',pointerEvents:'none',
-          transition:`transform ${0.55+i*0.04}s ease-in, opacity ${0.55+i*0.04}s ease-in`});
-        fl(ring); requestAnimationFrame(()=>{ ring.style.transform='translate(-50%,-50%) scale(0.15)'; ring.style.opacity='0.1'; });
-      }, i*85);
-    }, 220);
+          border:`3px solid ${i%2===0?rarCol:'#fff'}`,boxShadow:`0 0 14px ${rarCol}`,
+          transform:'translate(-50%,-50%) scale(3.8)',opacity:'0.85',zIndex:'9007',pointerEvents:'none',
+          transition:`transform ${0.52+i*0.04}s ease-in, opacity ${0.52+i*0.04}s ease-in`});
+        fl(ring); requestAnimationFrame(()=>{ ring.style.transform='translate(-50%,-50%) scale(0.12)'; ring.style.opacity='0.1'; });
+      }, i*75);
+    }, 800);
 
     // dimensional vortex expands from enemy center
     setTimeout(()=>{
@@ -5712,60 +5738,96 @@ function playCatchCutscene(onDone) {
         width:'200px',height:'200px',borderRadius:'50%',
         background:`radial-gradient(circle, transparent 30%, ${rarCol}44 55%, transparent 70%)`,
         transform:'translate(-50%,-50%) scale(0)',opacity:'0.9',zIndex:'9005',pointerEvents:'none',
-        transition:'transform 0.7s ease-out, opacity 0.7s ease-out'});
-      fl(vortex); requestAnimationFrame(()=>{ vortex.style.transform='translate(-50%,-50%) scale(4.0)'; vortex.style.opacity='0'; });
-    }, 350);
+        transition:'transform 0.75s ease-out, opacity 0.75s ease-out'});
+      fl(vortex); requestAnimationFrame(()=>{ vortex.style.transform='translate(-50%,-50%) scale(4.5)'; vortex.style.opacity='0'; });
+    }, 840);
 
-    // 10 sparkles orbit and spiral inward
+    // 12 sparkles orbit then spiral inward
     const sparkE=['✨','⭐','💫','🌟'];
     setTimeout(()=>{
-      for (let i=0;i<10;i++) {
-        const ang=(i/10)*360, r=115;
+      for (let i=0;i<12;i++) {
+        const ang=(i/12)*360, r=125;
         const spx=cx+Math.cos(ang*Math.PI/180)*r, spy=cy+Math.sin(ang*Math.PI/180)*r;
-        const sp=sd({position:'absolute',left:spx+'px',top:spy+'px',fontSize:(18+Math.random()*12)+'px',lineHeight:'1',
+        const sp=sd({position:'absolute',left:spx+'px',top:spy+'px',fontSize:(16+Math.random()*14)+'px',lineHeight:'1',
           transform:'translate(-50%,-50%)',opacity:'0',zIndex:'9007',pointerEvents:'none',
           transition:'opacity 0.2s ease'});
         sp.textContent=sparkE[i%4]; fl(sp);
         requestAnimationFrame(()=>{
           sp.style.opacity='0.9';
           setTimeout(()=>{
-            sp.style.transition=`left ${0.5+Math.random()*0.1}s ease-in, top ${0.5+Math.random()*0.1}s ease-in, opacity 0.5s ease-in, font-size 0.5s ease-in`;
-            sp.style.left=(cx+Math.cos(ang*Math.PI/180)*22)+'px';
-            sp.style.top=(cy+Math.sin(ang*Math.PI/180)*22)+'px';
-            sp.style.fontSize='8px'; sp.style.opacity='0';
+            sp.style.transition=`left ${0.55+Math.random()*0.1}s ease-in, top ${0.55+Math.random()*0.1}s ease-in, opacity 0.55s ease-in, font-size 0.55s ease-in`;
+            sp.style.left=(cx+Math.cos(ang*Math.PI/180)*20)+'px';
+            sp.style.top=(cy+Math.sin(ang*Math.PI/180)*20)+'px';
+            sp.style.fontSize='7px'; sp.style.opacity='0';
           }, 80);
         });
       }
-    }, 320);
+    }, 860);
 
-    // enemy absorbs: 1080deg spin + rarity flash + 18 star burst + CAUGHT text + PANDEX subtitle
+    // 8 energy tendrils snap outward then retract — catch energy converging on enemy
+    setTimeout(()=>{
+      for (let i=0;i<8;i++) {
+        const ang2=(i/8)*360;
+        const tend=sd({position:'absolute',left:cx+'px',top:cy+'px',
+          width:'0',height:'2px',borderRadius:'1px',
+          background:`linear-gradient(90deg, ${rarCol}, #fff)`,
+          boxShadow:`0 0 8px ${rarCol}`,
+          transform:`rotate(${ang2}deg)`,transformOrigin:'0 50%',
+          marginTop:'-1px',opacity:'0.95',zIndex:'9009',pointerEvents:'none',
+          transition:'width 0.12s ease-out'});
+        fl(tend);
+        requestAnimationFrame(()=>{ tend.style.width='72px'; });
+        setTimeout(()=>{
+          tend.style.transition='width 0.12s ease-in, opacity 0.12s ease-in';
+          tend.style.width='0'; tend.style.opacity='0';
+        }, 130);
+      }
+    }, 1440);
+
+    // pre-absorb surge: vignette + enemy brightness spike, then 1440deg spin absorb
     setTimeout(()=>{
       if (shakeIv) clearInterval(shakeIv);
-      eSpr.style.filter=`drop-shadow(0 0 60px ${rarCol}) drop-shadow(0 0 30px #fff) brightness(3)`;
+
+      const vig=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9003',
+        background:`radial-gradient(circle at 50% 46%, transparent 14%, #000000b0 100%)`,
+        opacity:'0',transition:'opacity 0.2s ease-in'});
+      fl(vig); requestAnimationFrame(()=>{ vig.style.opacity='1'; });
+      setTimeout(()=>{ vig.style.transition='opacity 0.3s ease-out'; vig.style.opacity='0'; }, 260);
+
+      eSpr.style.transition='filter 0.18s ease-in';
+      eSpr.style.filter=`drop-shadow(0 0 50px ${rarCol}) drop-shadow(0 0 25px #fff) brightness(4.5)`;
+
       setTimeout(()=>{
-        eSpr.style.transition='transform 0.7s cubic-bezier(0.4,0,1,0.6), opacity 0.7s ease-in';
-        eSpr.style.transform='translate(-50%,-50%) scale(0) rotate(1080deg)';
+        eSpr.style.transition='transform 0.65s cubic-bezier(0.3,0,0.8,0.5), opacity 0.65s ease-in';
+        eSpr.style.transform='translate(-50%,-50%) scale(0) rotate(1440deg)';
         eSpr.style.opacity='0';
-      }, 90);
+      }, 190);
 
+      // rarity flash + white flash
       setTimeout(()=>{
-        const gf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9010',background:rarCol,opacity:'0.8',transition:'opacity 0.42s ease-out'});
+        const gf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9010',background:rarCol,opacity:'0.85',transition:'opacity 0.4s ease-out'});
         fl(gf); requestAnimationFrame(()=>{ gf.style.opacity='0'; });
+        setTimeout(()=>{
+          const wf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9010',background:'#fff',opacity:'0.5',transition:'opacity 0.32s ease-out'});
+          fl(wf); requestAnimationFrame(()=>{ wf.style.opacity='0'; });
+        }, 120);
 
+        // 24 star burst
         const burstE=['⭐','✨','🌟','💫'];
-        for (let i=0;i<18;i++) {
-          const ang=(i/18)*360, dist=100+Math.random()*140;
+        for (let i=0;i<24;i++) {
+          const ang=(i/24)*360, dist=110+Math.random()*150;
           const bx=cx+Math.cos(ang*Math.PI/180)*dist, by2=cy+Math.sin(ang*Math.PI/180)*dist;
-          const bu=sd({position:'absolute',left:cx+'px',top:cy+'px',fontSize:(16+Math.random()*16)+'px',lineHeight:'1',
+          const bu=sd({position:'absolute',left:cx+'px',top:cy+'px',fontSize:(14+Math.random()*18)+'px',lineHeight:'1',
             transform:'translate(-50%,-50%)',opacity:'0',zIndex:'9008',pointerEvents:'none',
-            transition:`left ${0.38+Math.random()*0.22}s ease-out, top ${0.38+Math.random()*0.22}s ease-out, opacity 0.3s ease-out`});
+            transition:`left ${0.35+Math.random()*0.25}s ease-out, top ${0.35+Math.random()*0.25}s ease-out, opacity 0.28s ease-out`});
           bu.textContent=burstE[i%4]; fl(bu);
           setTimeout(()=>{
             bu.style.opacity='0.95'; bu.style.left=bx+'px'; bu.style.top=by2+'px';
-            setTimeout(()=>{ bu.style.opacity='0'; },380);
-          }, 20+i*15);
+            setTimeout(()=>{ bu.style.opacity='0'; }, 380);
+          }, 15+i*14);
         }
 
+        // "★ CAUGHT! ★" slams in
         setTimeout(()=>{
           const txt=bd({position:'fixed',left:'50%',top:'38%',
             fontSize:'clamp(22px,5vw,42px)',fontWeight:'900',color:rarCol,
@@ -5774,6 +5836,7 @@ function playCatchCutscene(onDone) {
             zIndex:'9012',pointerEvents:'none',
             animation:'btFcsCaughtText 0.52s cubic-bezier(0.15,0,0.4,1.6) forwards'});
           txt.textContent='★  CAUGHT!  ★';
+          // "— ADDED TO PANDEX —" fades in below
           setTimeout(()=>{
             const sub=bd({position:'fixed',left:'50%',top:'47%',
               fontSize:'clamp(11px,2vw,16px)',fontWeight:'700',color:'#ccc',
@@ -5785,11 +5848,11 @@ function playCatchCutscene(onDone) {
           }, 260);
         }, 200);
       }, 360);
-    }, 850);
+    }, 1500);
   }, 300);
 
-  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 2200);
-  setTimeout(()=>{ cleanup(); onDone(); }, 3060);
+  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 2500);
+  setTimeout(()=>{ cleanup(); onDone(); }, 3200);
 }
 
 function onEnemyFaint() {
@@ -6392,7 +6455,7 @@ function setupMash() {
   const m = state.mini;
   miniMash.classList.add('show');
   const diff = rarityDiff();
-  const target = Math.floor((6 + Math.random()*2) * diff);
+  const target = Math.floor((16 + Math.random()*5) * diff);
   const time = Math.max(2.5, (5.5 - (diff - 1) * 0.5) * elemTimeMult());
   m.mashCount = 0; m.mashTarget = target; m.mashTime = time; m.mashTimeLeft = time;
   miniMashFill.style.width = '0%';
@@ -6539,7 +6602,7 @@ function miniTick(dt) {
     miniCursor.style.left = m.cursor + 'px';
   } else if (m.type === 'MASH') {
     m.mashTimeLeft -= ds;
-    m.mashCount = Math.max(0, m.mashCount - ds * 0.5);
+    m.mashCount = Math.max(0, m.mashCount - ds * 1.2);
     const pct = Math.min(100, (m.mashCount / m.mashTarget) * 85);
     miniMashFill.style.width = pct + '%';
     miniMashCount.textContent = `${Math.floor(m.mashCount)} / ${m.mashTarget}`;
