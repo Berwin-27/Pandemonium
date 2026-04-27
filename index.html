@@ -5301,6 +5301,10 @@ function playKillCutscene(onDone) {
   function bd(s) { return div(document.body, s); }
   function fl(el) { void el.offsetWidth; }
   const cleanup = () => toClean.forEach(n => { try { n.parentNode && n.parentNode.removeChild(n); } catch(_){} });
+  const makeFlash = (col, op, delay) => setTimeout(() => {
+    const f = bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9010',background:col,opacity:op,transition:'opacity 0.35s ease-out'});
+    fl(f); requestAnimationFrame(() => { f.style.opacity = '0'; });
+  }, delay);
 
   requestAnimationFrame(() => { overlay.style.opacity = '1'; });
 
@@ -5372,7 +5376,7 @@ function playKillCutscene(onDone) {
     }, 280);
   }, 850);
 
-  // Phase 4 — weapon erupts + 18 speed lines + 8 afterimages, then FREEZE + IMPACT
+  // Phase 4 — weapon fires, then RAPID SLASH BARRAGE with combo counter
   setTimeout(() => {
     for (let i=0;i<18;i++) setTimeout(()=>{
       const yOff=(Math.random()-0.5)*H*0.5, len=100+Math.random()*120;
@@ -5390,90 +5394,222 @@ function playKillCutscene(onDone) {
       transform:'translate(-50%,-50%) rotate(-45deg) scale(1.2)',opacity:'1',
       filter:'drop-shadow(0 0 18px #fff) drop-shadow(0 0 8px #ffe060)',
       zIndex:'9009',pointerEvents:'none',
-      transition:'left 0.14s cubic-bezier(0.5,0,0.8,0.4), top 0.14s, transform 0.14s ease-in'});
+      transition:'left 0.1s cubic-bezier(0.5,0,0.8,0.4), top 0.1s'});
     weaponEl.textContent=wE; fl(weaponEl);
-    requestAnimationFrame(()=>{
-      weaponEl.style.left=ex+'px'; weaponEl.style.top=ey+'px';
-      weaponEl.style.transform='translate(-50%,-50%) rotate(-15deg) scale(1.4)';
-    });
+    requestAnimationFrame(()=>{ weaponEl.style.left=ex+'px'; weaponEl.style.top=ey+'px'; });
 
-    for (let i=0;i<8;i++) {
-      const ax=px+(ex-px)*(i+1)/10;
-      const aft=sd({position:'absolute',left:ax+'px',top:py+'px',fontSize:'60px',lineHeight:'1',
-        transform:'translate(-50%,-50%) rotate(-45deg)',
-        opacity:(0.6-i*0.07).toFixed(2),filter:`brightness(${0.5+i*0.06}) saturate(0.4)`,
-        zIndex:'9008',pointerEvents:'none',transition:'opacity 0.2s ease'});
-      aft.textContent=wE; setTimeout(()=>{ aft.style.opacity='0'; }, 180+i*25);
+    // slash barrage starts after weapon arrives
+    setTimeout(() => {
+      const hitCounts = [1,3,7,14,22,33,49,70,99,135,182,242,317,413,535,693,888,999,'∞','∞','∞','∞','∞','∞'];
+      let hit = 0; const maxHits = 24;
+
+      const counter = bd({position:'fixed',right:'14%',top:'26%',
+        fontSize:'clamp(20px,4vw,36px)',fontWeight:'900',color:'#fff',
+        textShadow:'0 0 12px #ffe060, 0 0 24px #ffa020, 2px 2px 4px #000',
+        letterSpacing:'2px',fontFamily:'monospace',whiteSpace:'nowrap',
+        zIndex:'9012',pointerEvents:'none',opacity:'0',
+        transition:'opacity 0.15s ease-out, transform 0.06s ease-out',transform:'translateY(0)'});
+      counter.textContent='× 1'; fl(counter);
+      requestAnimationFrame(()=>{ counter.style.opacity='1'; });
+
+      const slashIv = setInterval(() => {
+        if (hit >= maxHits) {
+          clearInterval(slashIv);
+          counter.textContent='× ∞ !!';
+          counter.style.fontSize='clamp(28px,5.5vw,50px)';
+          counter.style.color='#ff6060';
+          counter.style.textShadow='0 0 20px #ff3030, 0 0 40px #ff0000, 2px 2px 4px #000';
+          setTimeout(() => launchSequence(), 220);
+          return;
+        }
+        hit++;
+        counter.textContent='× '+hitCounts[hit-1];
+        counter.style.transform=hit%2===0?'translateY(-4px)':'translateY(0)';
+
+        // weapon jitters frantically around enemy
+        const jx=ex+(Math.random()-0.5)*44, jy=ey+(Math.random()-0.5)*36;
+        weaponEl.style.transition='left 0.018s, top 0.018s, transform 0.018s';
+        weaponEl.style.left=jx+'px'; weaponEl.style.top=jy+'px';
+        weaponEl.style.transform=`translate(-50%,-50%) rotate(${Math.random()*360}deg) scale(${(0.85+Math.random()*0.5).toFixed(2)})`;
+
+        // slash mark at enemy
+        const slAng=Math.random()*180, slLen=38+Math.random()*55;
+        const slM=sd({position:'absolute',
+          left:(ex+(Math.random()-0.5)*30)+'px',top:(ey+(Math.random()-0.5)*25)+'px',
+          width:'0',height:(Math.random()>0.4?'2px':'3px'),
+          background:hit%3===0?'#fff':hit%3===1?'#ffe060':'#ff9060',
+          transform:`translate(-50%,-50%) rotate(${slAng}deg)`,
+          opacity:'0.95',zIndex:'9009',pointerEvents:'none',
+          transition:'width 0.025s ease-out, opacity 0.065s ease-out 0.025s'});
+        fl(slM); requestAnimationFrame(()=>{ slM.style.width=slLen+'px'; });
+        setTimeout(()=>{ slM.style.opacity='0'; }, 75);
+
+        // enemy flickers rapidly
+        if (eSpr) eSpr.style.filter=hit%2===0?'brightness(3.5) saturate(0)':'brightness(0.35) saturate(0)';
+
+        // micro screen flash every 4th hit
+        if (hit%4===0) {
+          const mf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9008',background:'#fff',opacity:'0.18',transition:'opacity 0.04s ease-out'});
+          fl(mf); requestAnimationFrame(()=>{ mf.style.opacity='0'; });
+        }
+
+        // spark burst every 5th hit
+        if (hit%5===0) {
+          for (let s=0;s<5;s++) {
+            const sAng=Math.random()*360, sDist=22+Math.random()*38;
+            const spk=sd({position:'absolute',left:ex+'px',top:ey+'px',
+              width:(2+Math.random()*4)+'px',height:(2+Math.random()*4)+'px',
+              borderRadius:'50%',background:hit%10<5?'#fff':'#ffe060',
+              transform:'translate(-50%,-50%)',opacity:'1',zIndex:'9009',pointerEvents:'none',
+              transition:'transform 0.1s ease-out, opacity 0.1s ease-out'});
+            fl(spk); requestAnimationFrame(()=>{
+              spk.style.transform=`translate(calc(-50% + ${Math.cos(sAng*Math.PI/180)*sDist}px),calc(-50% + ${Math.sin(sAng*Math.PI/180)*sDist}px)) scale(0.1)`;
+              spk.style.opacity='0';
+            });
+          }
+        }
+      }, 30);
+    }, 120);
+  }, 1100);
+
+  // Phase 5 — wind-back, big upswing, enemy launches into air
+  function launchSequence() {
+    if (weaponEl) {
+      weaponEl.style.transition='left 0.07s ease-out, top 0.07s ease-out, transform 0.07s ease-out';
+      weaponEl.style.left=(ex-28)+'px'; weaponEl.style.top=(ey+88)+'px';
+      weaponEl.style.transform='translate(-50%,-50%) rotate(-80deg) scale(2.2)';
     }
-
-    // 180ms freeze frame, then impact
     setTimeout(()=>{
-      if (weaponEl) { weaponEl.style.transition='opacity 0.04s'; weaponEl.style.opacity='0'; }
+      if (weaponEl) {
+        weaponEl.style.transition='left 0.14s ease-out, top 0.13s ease-in, transform 0.12s ease-in';
+        weaponEl.style.left=(ex+15)+'px'; weaponEl.style.top=(ey-H*0.64)+'px';
+        weaponEl.style.transform='translate(-50%,-50%) rotate(15deg) scale(1.7)';
+      }
+      if (eSpr) {
+        eSpr.style.transition='top 0.38s cubic-bezier(0.2,0,0.3,0.85), transform 0.38s ease-out, filter 0.08s';
+        eSpr.style.top=(ey-H*0.62)+'px';
+        eSpr.style.transform='translate(-50%,-50%) rotate(210deg) scale(1.08)';
+        eSpr.style.filter='brightness(2.5) saturate(0.3)';
+      }
 
-      // triple flash: white → red → white
-      const makeFlash=(col,op,delay)=>setTimeout(()=>{
-        const f=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9010',background:col,opacity:op,transition:'opacity 0.35s ease-out'});
-        fl(f); requestAnimationFrame(()=>{ f.style.opacity='0'; });
-      }, delay);
+      // launch shockwave at original enemy position
+      const lRing=sd({position:'absolute',left:ex+'px',top:ey+'px',
+        width:'70px',height:'70px',borderRadius:'50%',border:'3px solid #fff',
+        transform:'translate(-50%,-50%) scale(0.1)',opacity:'0.9',zIndex:'9008',pointerEvents:'none',
+        transition:'transform 0.28s ease-out, opacity 0.28s ease-out'});
+      fl(lRing); requestAnimationFrame(()=>{ lRing.style.transform='translate(-50%,-50%) scale(5.5)'; lRing.style.opacity='0'; });
+
+      // upward afterimages
+      for (let a=0;a<5;a++) setTimeout(()=>{
+        const aImg=sd({position:'absolute',left:ex+'px',top:(ey-H*0.10*(a+1))+'px',
+          fontSize:'75px',lineHeight:'1',transform:'translate(-50%,-50%) rotate(210deg)',
+          opacity:(0.5-a*0.08).toFixed(2),filter:'brightness(0.35) saturate(0)',
+          zIndex:'9005',pointerEvents:'none',transition:'opacity 0.18s ease-out'});
+        aImg.textContent=eE; setTimeout(()=>{ aImg.style.opacity='0'; }, 70);
+      }, a*55);
+
+      // freeze frame at peak
+      setTimeout(()=>{
+        if (eSpr) { eSpr.style.transition='filter 0.05s'; eSpr.style.filter='brightness(6) saturate(0)'; }
+        setTimeout(()=>{ slamDown(); }, 230);
+      }, 380);
+    }, 70);
+  }
+
+  // Phase 6 — slam down, ground shockwave, massive explosion, KO
+  function slamDown() {
+    const landY = ey + 55;
+    if (weaponEl) {
+      weaponEl.style.transition='left 0.07s ease-in, top 0.07s ease-in, transform 0.07s';
+      weaponEl.style.left=ex+'px'; weaponEl.style.top=landY+'px';
+      weaponEl.style.transform='translate(-50%,-50%) rotate(90deg) scale(3.0)';
+    }
+    if (eSpr) {
+      eSpr.style.transition='top 0.07s ease-in, transform 0.07s ease-in';
+      eSpr.style.top=landY+'px';
+      eSpr.style.transform='translate(-50%,-50%) rotate(570deg) scale(1.3)';
+    }
+    setTimeout(()=>{
+      if (weaponEl) { weaponEl.style.transition='opacity 0.03s'; weaponEl.style.opacity='0'; }
+
       makeFlash('#fff','1.0',0);
       makeFlash('#ff3030','0.65',110);
-      makeFlash('#fff','0.8',220);
+      makeFlash('#fff','0.85',220);
 
-      // screen shake
-      stage.style.animation='btFcsShake 0.4s ease-out';
-      setTimeout(()=>{ stage.style.animation=''; }, 420);
+      stage.style.animation='btFcsShake 0.5s ease-out';
+      setTimeout(()=>{ stage.style.animation=''; }, 520);
 
-      // 4 expanding impact rings
+      // flat ground shockwave ovals
+      const gShock=sd({position:'absolute',left:ex+'px',top:landY+'px',
+        width:'160px',height:'18px',borderRadius:'50%',border:'3px solid #ffe060',
+        transform:'translate(-50%,-50%) scale(0.1)',opacity:'0.95',zIndex:'9008',pointerEvents:'none',
+        transition:'transform 0.5s ease-out, opacity 0.5s ease-out'});
+      fl(gShock); requestAnimationFrame(()=>{ gShock.style.transform='translate(-50%,-50%) scale(6.5)'; gShock.style.opacity='0'; });
+      const gShock2=sd({position:'absolute',left:ex+'px',top:landY+'px',
+        width:'200px',height:'12px',borderRadius:'50%',border:'2px solid #fff',
+        transform:'translate(-50%,-50%) scale(0.1)',opacity:'0.7',zIndex:'9008',pointerEvents:'none',
+        transition:'transform 0.65s ease-out 0.07s, opacity 0.65s ease-out 0.07s'});
+      fl(gShock2); requestAnimationFrame(()=>{ gShock2.style.transform='translate(-50%,-50%) scale(8)'; gShock2.style.opacity='0'; });
+
+      // 4 impact rings from landing
       for (let r=0;r<4;r++) setTimeout(()=>{
-        const ir=sd({position:'absolute',left:ex+'px',top:ey+'px',width:'70px',height:'70px',borderRadius:'50%',
+        const ir=sd({position:'absolute',left:ex+'px',top:landY+'px',width:'70px',height:'70px',borderRadius:'50%',
           border:(3.5-r*0.5)+'px solid '+(r<2?'#fff':'#ffe060'),
           transform:'translate(-50%,-50%) scale(0.04)',opacity:'0.95',zIndex:'9008',pointerEvents:'none',
           transition:`transform ${0.38+r*0.08}s ease-out, opacity ${0.38+r*0.08}s ease-out`});
         fl(ir); requestAnimationFrame(()=>{ ir.style.transform='translate(-50%,-50%) scale(4.8)'; ir.style.opacity='0'; });
       }, r*55);
 
-      // 26 radial manga lines
-      for (let m=0;m<26;m++) {
-        const ang=(m/26)*360, mlen=70+Math.random()*150;
-        const ml=sd({position:'absolute',left:ex+'px',top:ey+'px',width:'0',height:(Math.random()>0.5?'3.5px':'1.5px'),
+      // 32 manga lines from landing
+      for (let m=0;m<32;m++) {
+        const ang=(m/32)*360, mlen=80+Math.random()*160;
+        const ml=sd({position:'absolute',left:ex+'px',top:landY+'px',width:'0',height:(Math.random()>0.5?'3.5px':'1.5px'),
           background:m%3===0?'#fff':(m%3===1?'#ffe060':'#ff6860'),
           transform:`rotate(${ang}deg)`,transformOrigin:'0 50%',
           marginTop:'-1px',opacity:'0.9',zIndex:'9008',pointerEvents:'none',
-          transition:`width 0.16s ease-out ${(m*0.006).toFixed(3)}s`});
+          transition:`width 0.16s ease-out ${(m*0.005).toFixed(3)}s`});
         fl(ml); requestAnimationFrame(()=>{ ml.style.width=mlen+'px'; });
-        setTimeout(()=>{ ml.style.opacity='0'; ml.style.transition='opacity 0.09s'; },180+m*7);
+        setTimeout(()=>{ ml.style.opacity='0'; ml.style.transition='opacity 0.09s'; },180+m*6);
       }
 
-      // 32 particle shards
+      // 40 particle shards
       const shardCols=['#ffe060','#fff','#ff9020','#ff6060','#fffbe0','#88ccff'];
-      for (let i=0;i<32;i++) {
-        const ang=Math.random()*360, dist=80+Math.random()*200;
+      for (let i=0;i<40;i++) {
+        const ang=Math.random()*360, dist=90+Math.random()*220;
         const sx=Math.round(Math.cos(ang*Math.PI/180)*dist), sy2=Math.round(Math.sin(ang*Math.PI/180)*dist);
-        const sh=sd({position:'absolute',left:ex+'px',top:ey+'px',
+        const sh=sd({position:'absolute',left:ex+'px',top:landY+'px',
           width:(2+Math.random()*9)+'px',height:(2+Math.random()*9)+'px',
           borderRadius:'50%',background:shardCols[Math.floor(Math.random()*6)],
           transform:'translate(-50%,-50%)',opacity:'1',zIndex:'9009',pointerEvents:'none',
           transition:`transform ${0.45+Math.random()*0.35}s ease-out ${(Math.random()*0.07).toFixed(3)}s, opacity ${0.45+Math.random()*0.35}s ease-out`});
         fl(sh); requestAnimationFrame(()=>{
-          sh.style.transform=`translate(calc(-50% + ${sx}px), calc(-50% + ${sy2}px)) scale(0.1)`;
+          sh.style.transform=`translate(calc(-50% + ${sx}px),calc(-50% + ${sy2}px)) scale(0.1)`;
           sh.style.opacity='0';
         });
       }
+
+      // 💥 explosion blooms from landing point
+      const boom=sd({position:'absolute',left:ex+'px',top:landY+'px',
+        fontSize:'0px',lineHeight:'1',transform:'translate(-50%,-50%)',opacity:'1',
+        zIndex:'9010',pointerEvents:'none',
+        transition:'font-size 0.28s cubic-bezier(0.15,0,0.3,1.4), opacity 0.4s ease-out 0.32s'});
+      boom.textContent='💥'; fl(boom);
+      requestAnimationFrame(()=>{ boom.style.fontSize='180px'; });
 
       // enemy shatters into 6 flying chunks
       setTimeout(()=>{
         if (eSpr) { eSpr.style.transition='opacity 0.05s'; eSpr.style.opacity='0'; }
         for (let i=0;i<6;i++) {
-          const ang2=(i/6)*360+Math.random()*30, dist2=90+Math.random()*120;
-          const cx2=ex+Math.cos(ang2*Math.PI/180)*dist2, cy2=ey+Math.sin(ang2*Math.PI/180)*dist2;
-          const chunk=sd({position:'absolute',left:ex+'px',top:ey+'px',fontSize:(35+Math.random()*30)+'px',
+          const ang2=(i/6)*360+Math.random()*30, dist2=95+Math.random()*130;
+          const cx2=ex+Math.cos(ang2*Math.PI/180)*dist2, cy2=landY+Math.sin(ang2*Math.PI/180)*dist2;
+          const chunk=sd({position:'absolute',left:ex+'px',top:landY+'px',fontSize:(32+Math.random()*32)+'px',
             lineHeight:'1',transform:'translate(-50%,-50%) rotate(0deg)',opacity:'0.9',
             filter:'brightness(0.6) saturate(0.3)',zIndex:'9007',pointerEvents:'none',
-            transition:`left ${0.5+Math.random()*0.25}s ease-out, top ${0.5+Math.random()*0.25}s ease-out, opacity ${0.4+Math.random()*0.2}s ease-out 0.1s, transform ${0.5+Math.random()*0.25}s ease-out`});
+            transition:`left ${0.52+Math.random()*0.28}s ease-out, top ${0.52+Math.random()*0.28}s ease-out, opacity ${0.4+Math.random()*0.22}s ease-out 0.1s, transform ${0.52+Math.random()*0.28}s ease-out`});
           chunk.textContent=eE; fl(chunk);
           requestAnimationFrame(()=>{
             chunk.style.left=cx2+'px'; chunk.style.top=cy2+'px';
-            chunk.style.transform=`translate(-50%,-50%) rotate(${(Math.random()-0.5)*300}deg) scale(0.3)`;
+            chunk.style.transform=`translate(-50%,-50%) rotate(${(Math.random()-0.5)*320}deg) scale(0.3)`;
             chunk.style.opacity='0';
           });
         }
@@ -5481,7 +5617,7 @@ function playKillCutscene(onDone) {
 
       // "K O !" slams in then fades
       setTimeout(()=>{
-        const ko=bd({position:'fixed',left:'50%',top:'42%',
+        const ko=bd({position:'fixed',left:'50%',top:'44%',
           fontSize:'clamp(36px,7vw,64px)',fontWeight:'900',color:'#fff',
           textShadow:'0 0 30px #ff3030, 0 0 60px #ff0000, 3px 3px 6px #000',
           letterSpacing:'12px',fontFamily:'monospace',whiteSpace:'nowrap',
@@ -5490,14 +5626,13 @@ function playKillCutscene(onDone) {
           transition:'transform 0.22s cubic-bezier(0.1,0,0.3,1.5), opacity 0.12s ease-out'});
         ko.textContent='K  O  !'; fl(ko);
         requestAnimationFrame(()=>{ ko.style.transform='translate(-50%,-50%) scale(1)'; ko.style.opacity='1'; });
-        setTimeout(()=>{ ko.style.transition='opacity 0.35s ease-out'; ko.style.opacity='0'; }, 750);
-      }, 200);
+        setTimeout(()=>{ ko.style.transition='opacity 0.38s ease-out'; ko.style.opacity='0'; }, 820);
+      }, 230);
+    }, 75);
+  }
 
-    }, 180);
-  }, 1180);
-
-  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 2450);
-  setTimeout(()=>{ cleanup(); onDone(); }, 2960);
+  setTimeout(()=>{ overlay.style.transition='opacity 0.55s ease'; overlay.style.opacity='0'; stage.style.transition='opacity 0.55s ease'; stage.style.opacity='0'; }, 4050);
+  setTimeout(()=>{ cleanup(); onDone(); }, 4580);
 }
 
 function playCatchCutscene(onDone) {
