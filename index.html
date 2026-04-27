@@ -5200,7 +5200,7 @@ function resolveBattleMove(score, gotGood) {
   const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
   let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg);
   if (crit) dmg = Math.round(dmg * 1.35);
-  if (state.adminMode) b.enemyHp = 1;
+  if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
   else b.enemyHp = Math.max(0, b.enemyHp - dmg);
   btAttackAnim(btPlayerSprite);
   setTimeout(() => {
