@@ -2632,11 +2632,10 @@ const audio = (() => {
     if (a) {
       try {
         loop.master.gain.cancelScheduledValues(a.currentTime);
-        loop.master.gain.setValueAtTime(0.0001, a.currentTime);
-        loop.master.gain.linearRampToValueAtTime(0.00001, a.currentTime + 0.06);
+        loop.master.gain.setValueAtTime(0, a.currentTime);
       } catch(_) {}
     }
-    setTimeout(() => { try { loop.master.disconnect(); } catch(_){} }, 120);
+    setTimeout(() => { try { loop.master.disconnect(); } catch(_){} }, 50);
   }
 
   // ── BATTLE THEME: Frieren orchestral battle, D minor, 112 BPM ──
@@ -3261,6 +3260,7 @@ const audio = (() => {
   function stopLoading() { stopLoop(loadingLoop); loadingLoop = null; }
 
   function startArea(mapName) {
+    if (loadingLoop) { stopLoop(loadingLoop); loadingLoop = null; }
     if (battleLoop) { stopLoop(battleLoop); battleLoop = null; }
     if (mapName === currentArea && areaLoop) return;
     stopArea();
@@ -5820,11 +5820,11 @@ function startMinigame(entity) {
   miniEl.classList.add('show');
 }
 
-// Rarity difficulty scalar — quadratic curve: common=1.0 rare=1.38 epic=1.92 mythic=2.62 legendary=3.48 ultra=4.50
+// Rarity difficulty scalar — gentle curve: common=1.0 rare=1.20 epic=1.40 mythic=1.60 legendary=1.80 ultra=2.00
 function rarityDiff() {
   const r = (state.mini && state.mini.entity && state.mini.entity.rarity) || 'common';
   const tier = RARITY_TIER[r] || 0;
-  return 1.0 + tier * 0.35;
+  return 1.0 + tier * 0.20;
 }
 
 function activeElement() {
@@ -5865,13 +5865,13 @@ function setupTiming() {
   miniTimingWrap.style.display = '';
   const diff = rarityDiff();
   const barW = miniBar.clientWidth || 604;
-  const baseZone = 92;
-  const zoneW = Math.max(24, Math.floor(baseZone / diff * elemZoneMult()) + Math.floor(Math.random()*10));
+  const baseZone = 120;
+  const zoneW = Math.max(30, Math.floor(baseZone / diff * elemZoneMult()) + Math.floor(Math.random()*14));
   const zx = Math.floor(20 + Math.random() * (barW - zoneW - 40));
   miniZoneEl.style.left = zx + 'px';
   miniZoneEl.style.width = zoneW + 'px';
   miniCursor.style.left = '0px';
-  Object.assign(m, { barW, zx, zoneW, cursor: 0, dir: 1, speed: (340 + Math.random()*120) * diff * elemSpeedMult() });
+  Object.assign(m, { barW, zx, zoneW, cursor: 0, dir: 1, speed: (220 + Math.random()*80) * diff * elemSpeedMult() });
   miniPrompt.textContent = '> PRESS SPACE <';
 }
 
@@ -5879,8 +5879,8 @@ function setupMash() {
   const m = state.mini;
   miniMash.classList.add('show');
   const diff = rarityDiff();
-  const target = Math.floor((8 + Math.random()*3) * diff);
-  const time = Math.max(2.0, (4.2 - (diff - 1) * 0.45) * elemTimeMult());
+  const target = Math.floor((6 + Math.random()*2) * diff);
+  const time = Math.max(2.5, (5.5 - (diff - 1) * 0.5) * elemTimeMult());
   m.mashCount = 0; m.mashTarget = target; m.mashTime = time; m.mashTimeLeft = time;
   miniMashFill.style.width = '0%';
   miniMashTarget.style.left = '85%';
@@ -5893,9 +5893,9 @@ function setupHold() {
   const m = state.mini;
   miniHold.classList.add('show');
   const diff = rarityDiff();
-  const zoneW = Math.max(4.5, ((14 - diff * 2.2) + Math.random()*4) * elemZoneMult());
-  const zx = 50 + Math.random()*30;
-  m.holdFill = 0; m.holdSpeed = (50 + Math.random()*18) * diff * elemSpeedMult();
+  const zoneW = Math.max(6, ((20 - diff * 2.0) + Math.random()*5) * elemZoneMult());
+  const zx = 45 + Math.random()*25;
+  m.holdFill = 0; m.holdSpeed = (32 + Math.random()*12) * diff * elemSpeedMult();
   m.holdZx = zx; m.holdZoneW = zoneW; m.holding = false; m.holdHasPressed = false;
   miniHoldFill.style.width = '0%';
   miniHoldZone.style.left = zx + '%';
@@ -5908,10 +5908,10 @@ function setupSequence() {
   miniSeq.classList.add('show');
   const diff = rarityDiff();
   const dirs = ['up','down','left','right'];
-  const len = Math.min(12, Math.floor(5 + diff * 1.8 + Math.random()*2));
+  const len = Math.min(10, Math.floor(4 + diff * 1.2 + Math.random()*2));
   const seq = [];
   for (let i = 0; i < len; i++) seq.push(dirs[Math.floor(Math.random()*4)]);
-  const time = Math.max(1.4, ((1.8 + len * 0.28) / (0.85 + diff * 0.18)) * elemTimeMult());
+  const time = Math.max(2.0, ((2.5 + len * 0.32) / (0.75 + diff * 0.12)) * elemTimeMult());
   m.seq = seq; m.seqIdx = 0; m.seqTime = time; m.seqTimeLeft = time;
   miniSeqRow.innerHTML = seq.map((k,i) =>
     `<div class="seqKey${i===0?' active':''}" data-idx="${i}">${ARROW_GLYPH[k]}</div>`
@@ -5930,14 +5930,14 @@ function setupAim() {
   const tx = fw/2 + (Math.random()-0.5) * (fw*0.45);
   const ty = fh/2 + (Math.random()-0.5) * (fh*0.45);
   m.aimTx = tx; m.aimTy = ty;
-  m.aimR = Math.max(12, Math.floor(36 / diff));
+  m.aimR = Math.max(16, Math.floor(50 / diff));
   miniAimTarget.style.left = (tx - 40) + 'px';
   miniAimTarget.style.top  = (ty - 40) + 'px';
   miniAimTarget.style.transform = 'none';
   miniAimLockX.style.display = 'none';
   miniAimLockY.style.display = 'none';
   m.cx = 0; m.cy = fh/2;
-  m.cvx = (300 + Math.random()*120) * diff * elemSpeedMult();
+  m.cvx = (190 + Math.random()*70) * diff * elemSpeedMult();
   miniAimCross.style.left = (m.cx - 12) + 'px';
   miniAimCross.style.top  = (m.cy - 12) + 'px';
   miniAimStage.textContent = 'LOCK HORIZONTAL \u2014 SPACE';
@@ -5948,8 +5948,8 @@ function setupDodge() {
   const m = state.mini;
   miniDodge.classList.add('show');
   const diff = rarityDiff();
-  const total = Math.floor(4 + diff * 1.5);
-  const time = Math.max(3.0, (6.0 - (diff - 1) * 0.6) * elemTimeMult());
+  const total = Math.floor(3 + diff * 1.0);
+  const time = Math.max(3.5, (7.0 - (diff - 1) * 0.5) * elemTimeMult());
   const dirs = ['up','down','left','right'];
   const attacks = [];
   for (let i = 0; i < total; i++) {
@@ -5957,7 +5957,7 @@ function setupDodge() {
   }
   m.dodgeAttacks = attacks; m.dodgeIdx = 0; m.dodgeTotal = total; m.dodgeDodged = 0;
   m.dodgeTime = time; m.dodgeTimeLeft = time; m.dodgePlayerPos = 'center';
-  m.dodgeActive = null; m.dodgeWindow = 0.6 / diff;
+  m.dodgeActive = null; m.dodgeWindow = 0.85 / diff;
   miniDodgeField.querySelectorAll('.dodgeObj').forEach(el => el.remove());
   miniDodgePlayer.style.transform = 'translateX(-50%)';
   miniDodgeCount.textContent = `0 / ${total}`;
@@ -5969,11 +5969,11 @@ function setupRhythm() {
   const m = state.mini;
   miniRhythm.classList.add('show');
   const diff = rarityDiff();
-  const total = Math.floor(4 + diff * 1.5);
+  const total = Math.floor(4 + diff * 1.0);
   const fieldH = 200;
   const lineY = fieldH - 32;
-  const fallTime = Math.max(1.4, (2.4 - diff * 0.2) / elemSpeedMult());
-  const spacing = Math.max(0.4, (0.7 - diff * 0.05) / elemSpeedMult());
+  const fallTime = Math.max(1.6, (3.2 - diff * 0.2) / elemSpeedMult());
+  const spacing = Math.max(0.5, (0.9 - diff * 0.04) / elemSpeedMult());
   const notes = [];
   for (let i = 0; i < total; i++) {
     const x = 60 + Math.random() * (Math.max(200, (miniRhythmField.clientWidth || 580) - 120));
@@ -5982,7 +5982,7 @@ function setupRhythm() {
   }
   m.rhythmNotes = notes; m.rhythmTotal = total; m.rhythmHits = 0;
   m.rhythmFallTime = fallTime; m.rhythmLineY = lineY; m.rhythmFieldH = fieldH;
-  m.rhythmHitWindow = Math.max(22, 36 / diff);
+  m.rhythmHitWindow = Math.max(26, 50 / diff);
   miniRhythmField.querySelectorAll('.rhythmNote').forEach(el => el.remove());
   miniRhythmScore.textContent = `0 / ${total} HITS`;
   miniPrompt.textContent = '> PRESS SPACE ON THE LINE <';
@@ -5995,7 +5995,7 @@ function setupVolley() {
   const target = Math.floor(4 + diff * 2);
   const fw = miniVolleyField.clientWidth || 580;
   m.volleyX = fw * 0.82; m.volleyDir = -1;
-  m.volleySpeed = (160 + diff * 50) * elemSpeedMult(); m.volleySpeedGain = 12;
+  m.volleySpeed = (110 + diff * 30) * elemSpeedMult(); m.volleySpeedGain = 8;
   m.volleyW = fw; m.volleyRallies = 0; m.volleyTarget = target;
   m.volleyPlayerZone = fw * 0.18;
   m.volleyNeedReturn = true;
@@ -6026,7 +6026,7 @@ function miniTick(dt) {
     miniCursor.style.left = m.cursor + 'px';
   } else if (m.type === 'MASH') {
     m.mashTimeLeft -= ds;
-    m.mashCount = Math.max(0, m.mashCount - ds * 1.4);
+    m.mashCount = Math.max(0, m.mashCount - ds * 0.5);
     const pct = Math.min(100, (m.mashCount / m.mashTarget) * 85);
     miniMashFill.style.width = pct + '%';
     miniMashCount.textContent = `${Math.floor(m.mashCount)} / ${m.mashTarget}`;
