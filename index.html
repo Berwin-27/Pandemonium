@@ -856,96 +856,60 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 }
 
 /* === CUTSCENE ATTACK ANIMATIONS === */
-.bt-sword-reveal {
-  position:absolute; pointer-events:none; z-index:20;
-  font-size:38px; line-height:1;
-  filter: drop-shadow(0 0 8px #ffe060) drop-shadow(0 0 20px #ffa820);
-  transform-origin: 50% 70%;
-  animation: btSwordReveal 0.38s cubic-bezier(0.2,0.8,0.3,1.15) forwards;
-}
-@keyframes btSwordReveal {
-  0%  { opacity:0; transform:scale(0.05) rotate(-90deg); }
-  55% { opacity:1; transform:scale(1.35) rotate(22deg); }
-  100%{ opacity:1; transform:scale(1.0) rotate(0deg); }
-}
-.bt-sword-glow {
-  position:absolute; pointer-events:none; z-index:19;
-  width:64px; height:64px; border-radius:50%;
-  background:radial-gradient(circle, rgba(255,220,80,0.6) 0%, rgba(255,160,30,0.18) 55%, transparent 75%);
-  animation: btSwordGlow 0.52s ease-out forwards;
-}
-@keyframes btSwordGlow {
-  0%  { opacity:0; transform:scale(0.2); }
-  38% { opacity:1; transform:scale(1.15); }
-  100%{ opacity:0; transform:scale(2.2); }
-}
-.bt-slash-trail {
-  position:absolute; height:3px; pointer-events:none; z-index:20;
-  border-radius:2px;
-  background:linear-gradient(90deg, rgba(255,248,160,0.95), rgba(255,255,255,0.85), rgba(255,220,100,0.35), transparent);
-  box-shadow: 0 0 6px rgba(255,220,80,0.7);
-  transform-origin: left center;
-  animation: btSlashTrail 0.3s ease-in forwards;
-}
-@keyframes btSlashTrail {
-  0%  { opacity:1; transform:scaleX(0); }
-  62% { opacity:1; transform:scaleX(1); }
-  100%{ opacity:0; transform:scaleX(1.06); }
-}
-.bt-impact-ring {
-  position:absolute; width:10px; height:10px; border-radius:50%;
-  pointer-events:none; z-index:20;
-  border:2.5px solid rgba(255,220,80,0.9);
-  box-shadow: 0 0 8px rgba(255,200,50,0.6);
-  animation: btImpactRing 0.52s ease-out forwards;
-}
-@keyframes btImpactRing {
-  0%  { opacity:1; transform:translate(-5px,-5px) scale(1); }
-  100%{ opacity:0; transform:translate(-38px,-38px) scale(8); }
-}
-.bt-slash-cross {
-  position:absolute; width:50px; height:50px;
-  pointer-events:none; z-index:20;
-  animation: btSlashCross 0.5s ease-out forwards;
-}
-.bt-slash-cross::before, .bt-slash-cross::after {
-  content:''; position:absolute;
-  width:100%; height:2.5px; top:50%; left:0;
-  background:linear-gradient(90deg, transparent, rgba(255,232,100,0.95), transparent);
-  box-shadow: 0 0 5px rgba(255,200,50,0.8);
-  border-radius:2px;
-}
-.bt-slash-cross::before { transform:translateY(-50%) rotate(40deg); }
-.bt-slash-cross::after  { transform:translateY(-50%) rotate(-40deg); }
-@keyframes btSlashCross {
-  0%  { opacity:0; transform:scale(0.2); }
-  30% { opacity:1; transform:scale(1.6); }
-  100%{ opacity:0; transform:scale(2.4); }
-}
-.bt-strike-flash {
-  position:absolute; width:42px; height:42px; border-radius:50%;
-  pointer-events:none; z-index:20;
-  background:radial-gradient(circle, rgba(255,255,220,0.9) 0%, rgba(255,200,80,0.5) 40%, transparent 75%);
-  animation: btStrikeFlash 0.36s ease-out forwards;
-}
-@keyframes btStrikeFlash {
-  0%  { opacity:0; transform:scale(0.3); }
-  24% { opacity:1; transform:scale(1.35); }
-  100%{ opacity:0; transform:scale(1.9); }
-}
-.bt-energy-bolt {
-  position:absolute; height:5px; border-radius:3px;
-  pointer-events:none; z-index:20;
-  background:linear-gradient(90deg, rgba(200,240,255,0.1), rgba(160,220,255,0.9), rgba(255,255,255,1), rgba(120,200,255,0.6), transparent);
-  box-shadow: 0 0 8px rgba(140,220,255,0.8), 0 0 18px rgba(100,180,255,0.4);
-  transform-origin: left center;
-  animation: btEnergyBolt 0.38s ease-in forwards;
-}
-@keyframes btEnergyBolt {
-  0%  { opacity:1; transform:scaleX(0); }
-  52% { opacity:1; transform:scaleX(1); }
-  100%{ opacity:0; transform:scaleX(1.05); }
-}
+.bt-arena-flash{position:absolute;inset:0;pointer-events:none;z-index:30;border-radius:inherit;animation:btArenaFlash 0.38s ease-out forwards}
+@keyframes btArenaFlash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.bt-veil{position:absolute;inset:0;pointer-events:none;z-index:18;border-radius:inherit;background:#000;animation:btVeil 0.7s ease-out forwards}
+@keyframes btVeil{0%{opacity:0}30%{opacity:0.52}100%{opacity:0}}
+.bt-speed-line{position:absolute;height:2px;pointer-events:none;z-index:19;transform-origin:left center;animation:btSpeedLine 0.22s ease-in forwards}
+@keyframes btSpeedLine{0%{opacity:0.9;transform:scaleX(0)}60%{opacity:0.7;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.1)}}
+.bt-aura-ring{position:absolute;border-radius:50%;pointer-events:none;z-index:19;border:2px solid;animation:btAuraRing 0.44s ease-out forwards}
+@keyframes btAuraRing{0%{opacity:1;transform:scale(0.2)}100%{opacity:0;transform:scale(3.2)}}
+.bt-charge-ring{position:absolute;border-radius:50%;pointer-events:none;z-index:20;border:2px solid;animation:btChargeRing 0.55s ease-out forwards}
+@keyframes btChargeRing{0%{opacity:0.85;transform:scale(2.4)}100%{opacity:0;transform:scale(0.5)}}
+.bt-spark{position:absolute;width:4px;height:4px;border-radius:50%;pointer-events:none;z-index:22;animation:btSpark 0.5s ease-out forwards}
+@keyframes btSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0.1)}}
+.bt-afterimage{position:absolute;pointer-events:none;z-index:17;line-height:1;animation:btAfterimage 0.38s ease-out forwards}
+@keyframes btAfterimage{0%{opacity:0.6}100%{opacity:0;transform:translate(var(--dx,0px),var(--dy,0px)) scale(0.82)}}
+.bt-sword-reveal{position:absolute;pointer-events:none;z-index:20;font-size:40px;line-height:1;transform-origin:50% 70%;animation:btSwordReveal 0.44s cubic-bezier(0.2,0.8,0.3,1.2) forwards}
+@keyframes btSwordReveal{0%{opacity:0;transform:scale(0.05) rotate(-90deg)}55%{opacity:1;transform:scale(1.55) rotate(28deg)}100%{opacity:1;transform:scale(1.0) rotate(0deg)}}
+.bt-sword-glow{position:absolute;border-radius:50%;pointer-events:none;z-index:19;animation:btSwordGlow 0.56s ease-out forwards}
+@keyframes btSwordGlow{0%{opacity:0;transform:scale(0.2)}38%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(2.8)}}
+.bt-slash-trail{position:absolute;height:3px;pointer-events:none;z-index:20;border-radius:2px;transform-origin:left center;animation:btSlashTrail 0.28s ease-in forwards}
+@keyframes btSlashTrail{0%{opacity:1;transform:scaleX(0)}62%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.08)}}
+.bt-impact-ring{position:absolute;border-radius:50%;pointer-events:none;z-index:20;border:2.5px solid;animation:btImpactRing 0.58s ease-out forwards}
+@keyframes btImpactRing{0%{opacity:1;transform:scale(0.12)}100%{opacity:0;transform:scale(5.0)}}
+.bt-slash-cross{position:absolute;width:60px;height:60px;pointer-events:none;z-index:20;animation:btSlashCross 0.56s ease-out forwards}
+.bt-slash-cross::before,.bt-slash-cross::after{content:'';position:absolute;width:100%;height:2.5px;top:50%;left:0;border-radius:2px;background:var(--slash-col,#ffe060)}
+.bt-slash-cross::before{transform:translateY(-50%) rotate(42deg)}.bt-slash-cross::after{transform:translateY(-50%) rotate(-42deg)}
+@keyframes btSlashCross{0%{opacity:0;transform:scale(0.2)}30%{opacity:1;transform:scale(1.9)}100%{opacity:0;transform:scale(3.0)}}
+.bt-strike-flash{position:absolute;border-radius:50%;pointer-events:none;z-index:20;animation:btStrikeFlash 0.38s ease-out forwards}
+@keyframes btStrikeFlash{0%{opacity:0;transform:scale(0.3)}24%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(2.2)}}
+.bt-shockwave{position:absolute;border-radius:50%;pointer-events:none;z-index:21;border:4px solid;animation:btShockwave 0.65s ease-out forwards}
+@keyframes btShockwave{0%{opacity:0.9;transform:scale(0.1)}55%{opacity:0.55;transform:scale(2.8)}100%{opacity:0;transform:scale(4.5)}}
+.bt-charge-orb{position:absolute;border-radius:50%;pointer-events:none;z-index:20;animation:btChargeOrb 0.65s ease-out forwards}
+@keyframes btChargeOrb{0%{opacity:0;transform:scale(0.1)}55%{opacity:1;transform:scale(1.0)}80%{opacity:1;transform:scale(1.12)}100%{opacity:0;transform:scale(0.3)}}
+.bt-beam-glow{position:absolute;pointer-events:none;z-index:19;height:22px;border-radius:11px;transform-origin:left center;animation:btBeamGlow 0.68s ease-out forwards}
+@keyframes btBeamGlow{0%{opacity:0;transform:scaleX(0)}22%{opacity:0.55;transform:scaleX(1)}70%{opacity:0.4;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.03)}}
+.bt-beam-core{position:absolute;pointer-events:none;z-index:20;height:6px;border-radius:3px;transform-origin:left center;animation:btBeamCore 0.58s ease-out forwards}
+@keyframes btBeamCore{0%{opacity:0;transform:scaleX(0) scaleY(0.5)}22%{opacity:1;transform:scaleX(1) scaleY(1.3)}70%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.04) scaleY(0.2)}}
+.bt-lightning{position:absolute;pointer-events:none;z-index:22;width:4px;border-radius:2px;transform-origin:top center;animation:btLightning 0.22s ease-in forwards}
+@keyframes btLightning{0%{opacity:1;transform:scaleY(0)}45%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1)}}
+.bt-lightning-flash{position:absolute;border-radius:50%;pointer-events:none;z-index:22;animation:btLightningFlash 0.26s ease-out forwards}
+@keyframes btLightningFlash{0%{opacity:1;transform:scale(0.2)}40%{opacity:0.9;transform:scale(1.6)}100%{opacity:0;transform:scale(2.8)}}
+.bt-lock-ring{position:absolute;border-radius:50%;pointer-events:none;z-index:20;border:2px solid;animation:btLockRing 0.52s ease-out forwards}
+@keyframes btLockRing{0%{opacity:0;transform:scale(3.2)}55%{opacity:1;transform:scale(1.1)}100%{opacity:1;transform:scale(1.0)}}
+.bt-energy-bolt{position:absolute;height:5px;border-radius:3px;pointer-events:none;z-index:20;transform-origin:left center;animation:btEnergyBolt 0.34s ease-in forwards}
+@keyframes btEnergyBolt{0%{opacity:1;transform:scaleX(0)}52%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.05)}}
+.bt-energy-sphere{position:absolute;border-radius:50%;pointer-events:none;z-index:20;animation:btEnergySphere 0.4s ease-out both}
+@keyframes btEnergySphere{0%{opacity:0;transform:scale(0.3)}50%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1.0)}}
+.bt-sphere-trail{position:absolute;border-radius:50%;pointer-events:none;z-index:19;animation:btSphereTrail 0.32s ease-out forwards}
+@keyframes btSphereTrail{0%{opacity:0.65;transform:scale(1.0)}100%{opacity:0;transform:scale(2.2)}}
+.bt-rhythm-wave{position:absolute;border-radius:50%;pointer-events:none;z-index:19;border:2px solid;animation:btRhythmWave 0.58s ease-out forwards}
+@keyframes btRhythmWave{0%{opacity:0.9;transform:scale(0.3)}100%{opacity:0;transform:scale(4.0)}}
+.bt-counter-flash{position:absolute;border-radius:50%;pointer-events:none;z-index:22;animation:btCounterFlash 0.3s ease-out forwards}
+@keyframes btCounterFlash{0%{opacity:1;transform:scale(0.2)}38%{opacity:1;transform:scale(1.7)}100%{opacity:0;transform:scale(3.0)}}
+.bt-reflect-arc{position:absolute;height:3px;border-radius:2px;pointer-events:none;z-index:20;transform-origin:left center;animation:btReflectArc 0.32s ease-in forwards}
+@keyframes btReflectArc{0%{opacity:1;transform:scaleX(0)}60%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.05)}}
 
 /* === BOSS ATTACK ANIMATIONS === */
 .boss-fx-layer {
@@ -4017,160 +3981,413 @@ function btAttackEffect(mgType, fromPlayer) {
   const dist = Math.sqrt(ddx*ddx + ddy*ddy);
   const angle = Math.atan2(ddy, ddx) * 180 / Math.PI;
 
-  const fxMap = {
-    TIMING:   { type:'sword' },
-    MASH:     { type:'combo' },
-    HOLD:     { type:'beam', color:'rgba(112,176,244,0.7)' },
-    SEQUENCE: { type:'combo' },
-    AIM:      { type:'bolt' },
-    DODGE:    { type:'shield' },
-    RHYTHM:   { type:'combo' },
-    VOLLEY:   { type:'bolt' }
-  };
-  const fx = fxMap[mgType] || fxMap.TIMING;
+  // Player palette: gold/white. Enemy palette: crimson/purple.
+  const C = fromPlayer
+    ? { main:'#ffe060', alt:'#ffffff', glow:'rgba(255,220,80,', beam:'rgba(140,210,255,', ring:'rgba(255,220,80,0.9)', cross:'rgba(255,232,100,0.95)', sw:'rgba(255,200,80,', spark:'#ffe060' }
+    : { main:'#ff4466', alt:'#aa44ff', glow:'rgba(255,60,80,',  beam:'rgba(180,80,255,',  ring:'rgba(255,60,80,0.9)',  cross:'rgba(255,80,100,0.95)', sw:'rgba(200,50,80,',  spark:'#ff4466' };
 
-  function spawnImpactBurst(bx, by, delay) {
+  function mk(cls, styles) {
+    const el = document.createElement('div');
+    el.className = cls;
+    Object.assign(el.style, styles);
+    btArena.appendChild(el);
+    return el;
+  }
+  function rm(el, ms) { setTimeout(() => el && el.remove(), ms); }
+  function arenaFlash(color, ms) {
     setTimeout(() => {
-      const burst = document.createElement('div');
-      burst.style.cssText = `position:absolute;left:${bx}px;top:${by}px;pointer-events:none;z-index:15`;
-      const parts = ['💥','✨','⚡','💫'];
-      for (let i = 0; i < 7; i++) {
-        const p = document.createElement('span');
-        p.style.cssText = 'position:absolute;font-size:14px';
-        p.textContent = parts[i % parts.length];
-        const a = (i / 7) * Math.PI * 2;
-        const d = 18 + Math.random() * 24;
-        p.style.setProperty('--sx', Math.cos(a)*d + 'px');
-        p.style.setProperty('--sy', Math.sin(a)*d + 'px');
-        p.style.animation = 'starBurst 0.55s ease-out forwards';
-        p.style.animationDelay = (Math.random() * 0.08) + 's';
-        burst.appendChild(p);
+      const f = mk('bt-arena-flash', { background: color });
+      rm(f, 500);
+    }, ms);
+  }
+  function spawnSparks(bx, by, n, color, delay) {
+    setTimeout(() => {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+        const d = 20 + Math.random() * 32;
+        const sp = mk('bt-spark', {
+          left: bx + 'px', top: by + 'px',
+          background: color,
+          boxShadow: `0 0 5px ${color}`
+        });
+        sp.style.setProperty('--sx', Math.cos(a)*d + 'px');
+        sp.style.setProperty('--sy', Math.sin(a)*d + 'px');
+        sp.style.animationDelay = (Math.random() * 0.06) + 's';
+        rm(sp, 600);
       }
-      btArena.appendChild(burst);
-      setTimeout(() => burst.remove(), 700);
+    }, delay);
+  }
+  function spawnRing(bx, by, color, delay, extraStyle) {
+    setTimeout(() => {
+      const r = mk('bt-impact-ring', Object.assign({ left: bx+'px', top: by+'px', borderColor: color }, extraStyle||{}));
+      rm(r, 700);
+    }, delay);
+  }
+  function spawnImpactBurst(bx, by, delay) {
+    spawnRing(bx, by, C.ring, delay);
+    spawnRing(bx, by, 'rgba(255,255,255,0.6)', delay + 80, { animationDelay:'0.1s' });
+    spawnSparks(bx, by, 12, C.spark, delay);
+    setTimeout(() => {
+      const sw = mk('bt-shockwave', { left:(bx-20)+'px', top:(by-20)+'px', width:'40px', height:'40px', borderColor: C.ring });
+      rm(sw, 800);
     }, delay);
   }
 
-  if (fx.type === 'sword') {
-    // Stage 1: Sword reveals — scales up from inside the appliance body with golden glow
-    const sword = document.createElement('div');
-    sword.className = 'bt-sword-reveal';
-    sword.textContent = '⚔️';
-    sword.style.left = (sx - 19) + 'px';
-    sword.style.top  = (sy - 32) + 'px';
-    btArena.appendChild(sword);
-
-    const glow = document.createElement('div');
-    glow.className = 'bt-sword-glow';
-    glow.style.left = (sx - 32) + 'px';
-    glow.style.top  = (sy - 32) + 'px';
-    btArena.appendChild(glow);
-    setTimeout(() => glow.remove(), 620);
-
-    // Stage 2: Two slash trails shoot toward the target; sword lunges along with them
-    setTimeout(() => {
-      for (let i = 0; i < 2; i++) {
-        const trail = document.createElement('div');
-        trail.className = 'bt-slash-trail';
-        trail.style.width = dist + 'px';
-        trail.style.left  = sx + 'px';
-        trail.style.top   = (sy - 1.5 + (i === 0 ? -6 : 6)) + 'px';
-        trail.style.transform = `rotate(${angle + (i === 0 ? -5 : 5)}deg)`;
-        trail.style.animationDelay = (i * 0.055) + 's';
-        btArena.appendChild(trail);
-        setTimeout(() => trail.remove(), 480);
-      }
-      sword.style.transition = 'left 0.21s ease-in, top 0.21s ease-in, filter 0.1s, transform 0.21s';
-      sword.style.left      = (tx - 19) + 'px';
-      sword.style.top       = (ty - 32) + 'px';
-      sword.style.transform = `rotate(${angle - 45}deg) scale(0.92)`;
-      sword.style.filter    = 'drop-shadow(0 0 14px #fff) drop-shadow(0 0 28px #ffe060) brightness(1.6)';
-    }, 330);
-
-    // Stage 3: Impact — ring, cross-slash marks, burst
-    setTimeout(() => {
-      const ring = document.createElement('div');
-      ring.className = 'bt-impact-ring';
-      ring.style.left = tx + 'px'; ring.style.top = ty + 'px';
-      btArena.appendChild(ring);
-
-      const ring2 = document.createElement('div');
-      ring2.className = 'bt-impact-ring';
-      ring2.style.left = tx + 'px'; ring2.style.top = ty + 'px';
-      ring2.style.animationDelay = '0.13s';
-      ring2.style.borderColor = 'rgba(255,255,255,0.65)';
-      btArena.appendChild(ring2);
-
-      const cross = document.createElement('div');
-      cross.className = 'bt-slash-cross';
-      cross.style.left = (tx - 25) + 'px'; cross.style.top = (ty - 25) + 'px';
-      btArena.appendChild(cross);
-
-      spawnImpactBurst(tx, ty, 0);
-      setTimeout(() => { ring.remove(); ring2.remove(); cross.remove(); sword.remove(); }, 720);
-    }, 528);
-
-  } else if (fx.type === 'combo') {
-    // 3 rapid strike flashes + short slash trails closing in on target
+  // ── TIMING: Blade Dance ──────────────────────────────────────────────
+  if (mgType === 'TIMING') {
+    // Phase 0: aura burst + sword reveals
     for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        const flash = document.createElement('div');
-        flash.className = 'bt-strike-flash';
-        flash.style.left = (tx - 21 + (Math.random()-0.5)*38) + 'px';
-        flash.style.top  = (ty - 21 + (Math.random()-0.5)*30) + 'px';
-        btArena.appendChild(flash);
-        setTimeout(() => flash.remove(), 420);
-
-        const trail = document.createElement('div');
-        trail.className = 'bt-slash-trail';
-        trail.style.width = (dist * 0.62) + 'px';
-        trail.style.left  = (sx + ddx * 0.38) + 'px';
-        trail.style.top   = (sy + ddy * 0.38 + (Math.random()-0.5)*18 - 1.5) + 'px';
-        trail.style.transform = `rotate(${angle + (Math.random()-0.5)*26}deg)`;
-        btArena.appendChild(trail);
-        setTimeout(() => trail.remove(), 420);
-      }, i * 125 + 55);
+      const ar = mk('bt-aura-ring', {
+        left:(sx-30)+'px', top:(sy-30)+'px', width:'60px', height:'60px',
+        borderColor: C.main, animationDelay:(i*0.1)+'s',
+        boxShadow:`0 0 8px ${C.glow}0.5)`
+      });
+      rm(ar, 700);
     }
-    spawnImpactBurst(tx, ty, 410);
+    const sword = mk('bt-sword-reveal', {
+      left:(sx-20)+'px', top:(sy-34)+'px',
+      filter:`drop-shadow(0 0 8px ${C.main}) drop-shadow(0 0 22px ${C.glow}0.7))`,
+      textContent: undefined
+    });
+    sword.textContent = fromPlayer ? '⚔️' : '🗡️';
+    const glw = mk('bt-sword-glow', {
+      left:(sx-36)+'px', top:(sy-36)+'px', width:'72px', height:'72px',
+      background:`radial-gradient(circle, ${C.glow}0.55) 0%, ${C.glow}0.15) 55%, transparent 75%)`
+    });
+    rm(glw, 680);
 
-  } else if (fx.type === 'bolt') {
-    // Energy bolt — geometric tracer line that scales out, plus impact ring
-    const bolt = document.createElement('div');
-    bolt.className = 'bt-energy-bolt';
-    bolt.style.width     = dist + 'px';
-    bolt.style.left      = sx + 'px';
-    bolt.style.top       = (sy - 2.5) + 'px';
-    bolt.style.transform = `rotate(${angle}deg)`;
-    btArena.appendChild(bolt);
+    // Phase 1: darkness veil + speed lines
+    setTimeout(() => {
+      const veil = mk('bt-veil', {});
+      rm(veil, 800);
+      for (let i = 0; i < 6; i++) {
+        const sl = mk('bt-speed-line', {
+          width: (dist * (0.55 + Math.random() * 0.45)) + 'px',
+          left: sx + 'px',
+          top: (sy + (Math.random()-0.5)*60) + 'px',
+          transform: `rotate(${angle + (Math.random()-0.5)*12}deg)`,
+          background: `linear-gradient(90deg, transparent, ${C.main}, transparent)`,
+          animationDelay: (i * 0.028) + 's'
+        });
+        rm(sl, 400);
+      }
+    }, 260);
 
-    const ring = document.createElement('div');
-    ring.className = 'bt-impact-ring';
-    ring.style.left = tx + 'px'; ring.style.top = ty + 'px';
-    ring.style.animationDelay = '0.22s';
-    ring.style.borderColor = 'rgba(150,230,255,0.9)';
-    btArena.appendChild(ring);
+    // Phase 2: sword lunges + 5 slash trails
+    setTimeout(() => {
+      for (let i = 0; i < 5; i++) {
+        const tr = mk('bt-slash-trail', {
+          width: (dist * (0.7 + i * 0.07)) + 'px',
+          left: sx + 'px',
+          top: (sy - 1.5 + (i-2)*7) + 'px',
+          transform: `rotate(${angle + (i-2)*4}deg)`,
+          background: `linear-gradient(90deg, ${C.glow}0.05), ${C.main}, rgba(255,255,255,0.9), ${C.glow}0.3), transparent)`,
+          boxShadow: `0 0 7px ${C.glow}0.7)`,
+          animationDelay: (i * 0.04) + 's'
+        });
+        rm(tr, 450);
+      }
+      sword.style.transition = 'left 0.2s ease-in,top 0.2s ease-in,transform 0.2s,filter 0.1s';
+      sword.style.left = (tx - 20) + 'px';
+      sword.style.top  = (ty - 34) + 'px';
+      sword.style.transform = `rotate(${angle - 45}deg) scale(0.88)`;
+      sword.style.filter = `drop-shadow(0 0 18px #fff) drop-shadow(0 0 32px ${C.main}) brightness(1.8)`;
+    }, 430);
 
-    spawnImpactBurst(tx, ty, 280);
-    setTimeout(() => { bolt.remove(); ring.remove(); }, 820);
+    // Phase 3: impact — arena flash, rings, cross, shockwave, sparks
+    setTimeout(() => {
+      arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.45), transparent 65%)`, 0);
+      const c2 = mk('bt-slash-cross', { left:(tx-30)+'px', top:(ty-30)+'px', filter:`drop-shadow(0 0 6px ${C.main})` });
+      c2.style.setProperty('--slash-col', C.main);
+      rm(c2, 750);
+      spawnImpactBurst(tx, ty, 0);
+      spawnSparks(tx, ty, 8, C.alt, 60);
+      rm(sword, 350);
+    }, 620);
 
-  } else if (fx.type === 'beam') {
-    const el = document.createElement('div');
-    el.className = 'bt-atk-beam';
-    const minX = Math.min(sx, tx), maxX = Math.max(sx, tx);
-    el.style.left = minX + 'px'; el.style.top = ((sy + ty) / 2) + 'px';
-    el.style.width = (maxX - minX) + 'px';
-    el.style.background = `linear-gradient(90deg, transparent, ${fx.color}, transparent)`;
-    el.style.transformOrigin = fromPlayer ? 'left center' : 'right center';
-    btArena.appendChild(el);
-    spawnImpactBurst(tx, ty, 380);
-    setTimeout(() => el.remove(), 900);
+  // ── MASH: Rapid Combo ────────────────────────────────────────────────
+  } else if (mgType === 'MASH') {
+    const sprSize = parseInt(sourceSprite.style.fontSize) || (fromPlayer ? 76 : 56);
+    // Afterimages slide toward target
+    for (let i = 0; i < 3; i++) {
+      const frac = 0.3 + i * 0.2;
+      setTimeout(() => {
+        const aim = mk('bt-afterimage', {
+          left: (sx + ddx*frac - sprSize*0.4) + 'px',
+          top:  (sy + ddy*frac - sprSize*0.4) + 'px',
+          fontSize: sprSize + 'px',
+          filter: `drop-shadow(0 0 10px ${C.main}) brightness(1.5)`,
+          opacity: '0.55'
+        });
+        aim.textContent = sourceSprite.textContent;
+        aim.style.setProperty('--dx', (ddx*0.18)+'px');
+        aim.style.setProperty('--dy', (ddy*0.18)+'px');
+        rm(aim, 480);
+      }, i * 80);
+    }
+    // 4 rapid strikes
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const ox = (Math.random()-0.5)*40, oy = (Math.random()-0.5)*32;
+        const fl = mk('bt-strike-flash', {
+          left:(tx-22+ox)+'px', top:(ty-22+oy)+'px',
+          width:'44px', height:'44px',
+          background:`radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${C.glow}0.6) 45%, transparent 80%)`,
+          boxShadow:`0 0 12px ${C.main}`
+        });
+        rm(fl, 480);
+        const tr = mk('bt-slash-trail', {
+          width:(dist*0.55)+'px',
+          left:(sx+ddx*0.45)+'px',
+          top:(sy+ddy*0.45 + (Math.random()-0.5)*16 - 1.5)+'px',
+          transform:`rotate(${angle+(Math.random()-0.5)*28}deg)`,
+          background:`linear-gradient(90deg, transparent, ${C.main}, rgba(255,255,255,0.9), transparent)`,
+          boxShadow:`0 0 6px ${C.glow}0.6)`
+        });
+        rm(tr, 400);
+        spawnSparks(tx+ox, ty+oy, 5, C.spark, 0);
+      }, i * 120 + 40);
+    }
+    // Final burst
+    setTimeout(() => {
+      arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.5), transparent 60%)`, 0);
+      spawnImpactBurst(tx, ty, 0);
+    }, 560);
 
-  } else if (fx.type === 'shield') {
-    const el = document.createElement('div');
-    el.className = 'bt-atk-shield';
-    el.style.left = (tx - 30) + 'px'; el.style.top = (ty - 30) + 'px';
-    btArena.appendChild(el);
-    setTimeout(() => el.remove(), 900);
+  // ── HOLD: Charged Beam ───────────────────────────────────────────────
+  } else if (mgType === 'HOLD') {
+    // Phase 0: charge orb + 3 charge rings pulsing inward
+    const orb = mk('bt-charge-orb', {
+      left:(sx-28)+'px', top:(sy-28)+'px', width:'56px', height:'56px',
+      background:`radial-gradient(circle, rgba(255,255,255,0.9) 0%, ${C.beam}0.75) 40%, ${C.beam}0.2) 75%, transparent 100%)`,
+      boxShadow:`0 0 18px ${C.beam}0.8), 0 0 36px ${C.beam}0.4)`
+    });
+    rm(orb, 900);
+    for (let i = 0; i < 3; i++) {
+      const cr = mk('bt-charge-ring', {
+        left:(sx-40)+'px', top:(sy-40)+'px', width:'80px', height:'80px',
+        borderColor:`${C.beam}0.85)`, animationDelay:(i*0.12)+'s',
+        boxShadow:`0 0 10px ${C.beam}0.5)`
+      });
+      rm(cr, 900);
+    }
+    // Phase 1: beam fires
+    setTimeout(() => {
+      const minX = Math.min(sx, tx), len = Math.abs(tx - sx) + Math.abs(ty - sy) * 0.3;
+      const bg = mk('bt-beam-glow', {
+        width: dist+'px', left:sx+'px', top:(sy-11)+'px',
+        transform:`rotate(${angle}deg)`,
+        background:`linear-gradient(90deg, transparent, ${C.beam}0.5), rgba(255,255,255,0.4), ${C.beam}0.3), transparent)`,
+        boxShadow:`0 0 20px ${C.beam}0.6)`
+      });
+      rm(bg, 900);
+      setTimeout(() => {
+        const bc = mk('bt-beam-core', {
+          width:dist+'px', left:sx+'px', top:(sy-3)+'px',
+          transform:`rotate(${angle}deg)`,
+          background:`linear-gradient(90deg, ${C.beam}0.2), rgba(255,255,255,1), ${C.beam}0.9), rgba(255,255,255,0.8), ${C.beam}0.3), transparent)`,
+          boxShadow:`0 0 10px rgba(255,255,255,0.9), 0 0 22px ${C.beam}0.8)`
+        });
+        rm(bc, 750);
+      }, 60);
+      // Phase 2: impact
+      setTimeout(() => {
+        arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.beam}0.55), transparent 60%)`, 0);
+        spawnImpactBurst(tx, ty, 0);
+        spawnSparks(tx, ty, 10, fromPlayer ? '#88ccff' : '#cc88ff', 0);
+      }, 380);
+    }, 400);
+
+  // ── SEQUENCE: Chain Lightning ────────────────────────────────────────
+  } else if (mgType === 'SEQUENCE') {
+    const lColor = fromPlayer ? '#99ddff' : '#dd88ff';
+    // Lock rings close in on target
+    for (let i = 0; i < 2; i++) {
+      const lr = mk('bt-lock-ring', {
+        left:(tx-30)+'px', top:(ty-30)+'px', width:'60px', height:'60px',
+        borderColor: lColor, animationDelay:(i*0.14)+'s',
+        boxShadow:`0 0 8px ${lColor}`
+      });
+      rm(lr, 700);
+    }
+    // 4 lightning bolts descend onto target
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const bx = tx + (Math.random()-0.5)*28;
+        const startY = ty - aRect.height * 0.55;
+        const boltH = ty - startY;
+        const lt = mk('bt-lightning', {
+          left: bx+'px', top: startY+'px',
+          height: boltH+'px',
+          background:`linear-gradient(180deg, transparent, ${lColor}, rgba(255,255,255,0.95), ${lColor})`,
+          boxShadow:`0 0 8px ${lColor}, 0 0 20px ${C.glow}0.6)`
+        });
+        rm(lt, 350);
+        const lf = mk('bt-lightning-flash', {
+          left:(bx-22)+'px', top:(ty-22)+'px', width:'44px', height:'44px',
+          background:`radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${C.glow}0.7) 40%, transparent 80%)`,
+          boxShadow:`0 0 15px ${lColor}`
+        });
+        rm(lf, 380);
+        spawnSparks(bx, ty, 4, lColor, 0);
+      }, i * 140 + 180);
+    }
+    // Final explosion
+    setTimeout(() => {
+      arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.6), transparent 55%)`, 0);
+      spawnImpactBurst(tx, ty, 0);
+    }, 780);
+
+  // ── AIM: Precision Strike ────────────────────────────────────────────
+  } else if (mgType === 'AIM') {
+    const aColor = fromPlayer ? '#80ffcc' : '#ff88aa';
+    // Lock rings close in
+    for (let i = 0; i < 3; i++) {
+      const lr = mk('bt-lock-ring', {
+        left:(tx-25)+'px', top:(ty-25)+'px', width:'50px', height:'50px',
+        borderColor: aColor, animationDelay:(i*0.1)+'s',
+        boxShadow:`0 0 7px ${aColor}`
+      });
+      rm(lr, 650);
+    }
+    // Target flash (lock acquired)
+    setTimeout(() => {
+      const lf = mk('bt-strike-flash', {
+        left:(tx-26)+'px', top:(ty-26)+'px', width:'52px', height:'52px',
+        background:`radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${C.glow}0.6) 50%, transparent 80%)`,
+        boxShadow:`0 0 16px ${aColor}`
+      });
+      rm(lf, 420);
+      // Energy bolt fires
+      const bolt = mk('bt-energy-bolt', {
+        width:dist+'px', left:sx+'px', top:(sy-2.5)+'px',
+        transform:`rotate(${angle}deg)`,
+        background:`linear-gradient(90deg, ${C.glow}0.05), ${aColor}, rgba(255,255,255,1), ${aColor}, transparent)`,
+        boxShadow:`0 0 9px ${aColor}, 0 0 20px ${C.glow}0.5)`
+      });
+      rm(bolt, 500);
+      setTimeout(() => {
+        spawnImpactBurst(tx, ty, 0);
+        spawnSparks(tx, ty, 10, aColor, 0);
+      }, 240);
+    }, 450);
+
+  // ── DODGE: Counter Strike ────────────────────────────────────────────
+  } else if (mgType === 'DODGE') {
+    const cColor = fromPlayer ? '#ffffaa' : '#ffaacc';
+    // Counter flash at source (the blocker)
+    const cf = mk('bt-counter-flash', {
+      left:(sx-32)+'px', top:(sy-32)+'px', width:'64px', height:'64px',
+      background:`radial-gradient(circle, rgba(255,255,255,1) 0%, ${C.glow}0.8) 40%, transparent 80%)`,
+      boxShadow:`0 0 20px ${cColor}, 0 0 40px ${C.glow}0.5)`
+    });
+    rm(cf, 500);
+    // Afterimage at source
+    setTimeout(() => {
+      const aim = mk('bt-afterimage', {
+        left:(sx - (parseInt(sourceSprite.style.fontSize)||60)*0.4)+'px',
+        top:(sy - (parseInt(sourceSprite.style.fontSize)||60)*0.4)+'px',
+        fontSize:(parseInt(sourceSprite.style.fontSize)||60)+'px',
+        filter:`drop-shadow(0 0 14px ${C.main}) brightness(1.8)`,
+        opacity:'0.7'
+      });
+      aim.textContent = sourceSprite.textContent;
+      aim.style.setProperty('--dx', (ddx*0.12)+'px');
+      aim.style.setProperty('--dy', (ddy*0.12)+'px');
+      rm(aim, 500);
+    }, 80);
+    // Reflect arc + impact
+    setTimeout(() => {
+      const ra = mk('bt-reflect-arc', {
+        width:dist+'px', left:sx+'px', top:(sy-1.5)+'px',
+        transform:`rotate(${angle}deg)`,
+        background:`linear-gradient(90deg, transparent, rgba(255,255,255,0.9), ${cColor}, rgba(255,255,255,0.6), transparent)`,
+        boxShadow:`0 0 9px ${cColor}`
+      });
+      rm(ra, 450);
+      setTimeout(() => {
+        arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.5), transparent 62%)`, 0);
+        spawnImpactBurst(tx, ty, 0);
+      }, 230);
+    }, 160);
+
+  // ── RHYTHM: Resonance Waves ──────────────────────────────────────────
+  } else if (mgType === 'RHYTHM') {
+    const rColor = fromPlayer ? '#88ffdd' : '#ff88cc';
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        // Wave emanates from source toward target
+        const rw = mk('bt-rhythm-wave', {
+          left:(sx-20)+'px', top:(sy-20)+'px', width:'40px', height:'40px',
+          borderColor: rColor,
+          boxShadow:`0 0 8px ${rColor}`,
+          animationDuration: '0.58s'
+        });
+        rm(rw, 700);
+        // Trailing slash
+        if (i < 3) {
+          const tr = mk('bt-slash-trail', {
+            width:(dist*(0.4+i*0.2))+'px', left:sx+'px',
+            top:(sy+(i-1)*12-1.5)+'px',
+            transform:`rotate(${angle}deg)`,
+            background:`linear-gradient(90deg, transparent, ${rColor}, rgba(255,255,255,0.7), transparent)`,
+            boxShadow:`0 0 6px ${rColor}`,
+            animationDelay:(i*0.04)+'s'
+          });
+          rm(tr, 450);
+        }
+      }, i * 110);
+    }
+    setTimeout(() => {
+      arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.45), transparent 65%)`, 0);
+      spawnImpactBurst(tx, ty, 0);
+      spawnSparks(tx, ty, 8, rColor, 0);
+    }, 530);
+
+  // ── VOLLEY: Energy Sphere ────────────────────────────────────────────
+  } else if (mgType === 'VOLLEY') {
+    const vColor = fromPlayer ? '#aaddff' : '#ff88ff';
+    // Charge rings + orb forms
+    for (let i = 0; i < 3; i++) {
+      const cr = mk('bt-charge-ring', {
+        left:(sx-32)+'px', top:(sy-32)+'px', width:'64px', height:'64px',
+        borderColor:vColor, animationDelay:(i*0.1)+'s',
+        boxShadow:`0 0 10px ${vColor}`
+      });
+      rm(cr, 800);
+    }
+    const sphere = mk('bt-energy-sphere', {
+      left:(sx-18)+'px', top:(sy-18)+'px', width:'36px', height:'36px',
+      background:`radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${vColor} 45%, ${C.glow}0.4) 75%, transparent 100%)`,
+      boxShadow:`0 0 16px ${vColor}, 0 0 32px ${C.glow}0.5)`
+    });
+    // Sphere launches after charge
+    setTimeout(() => {
+      sphere.style.transition = 'left 0.38s cubic-bezier(0.4,0,0.8,1), top 0.38s cubic-bezier(0.4,0,0.8,1)';
+      sphere.style.left = (tx-18)+'px';
+      sphere.style.top  = (ty-18)+'px';
+      // Spawn trail dots along path
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          const frac = i / 5;
+          const st = mk('bt-sphere-trail', {
+            left:(sx + ddx*frac - 10)+'px',
+            top:(sy + ddy*frac - 10)+'px',
+            width:'20px', height:'20px',
+            background:`radial-gradient(circle, ${vColor} 0%, ${C.glow}0.3) 70%, transparent 100%)`,
+            boxShadow:`0 0 8px ${vColor}`
+          });
+          rm(st, 500);
+        }, i * 60);
+      }
+      // Impact
+      setTimeout(() => {
+        rm(sphere, 0);
+        arenaFlash(`radial-gradient(ellipse at ${tx}px ${ty}px, ${C.glow}0.55), transparent 58%)`, 0);
+        spawnImpactBurst(tx, ty, 0);
+        spawnSparks(tx, ty, 14, vColor, 0);
+      }, 400);
+    }, 420);
   }
 }
 
