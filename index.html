@@ -4765,6 +4765,14 @@ const _fin = {
     setTimeout(() => { el.style.transition=`opacity ${fadeMs}ms ease-out`; el.style.opacity='0'; }, 40);
     setTimeout(() => el.remove(), fadeMs+90);
   },
+  // True impact frame: full-opacity hold then hard fade. times>1 = rapid strobe.
+  impactFrame(parent, times=1, color='#fff', holdMs=55) {
+    for (let i=0; i<times; i++) setTimeout(()=>{
+      const el=this.mk(`position:absolute;inset:0;z-index:94;pointer-events:none;background:${color};opacity:1;`,parent);
+      setTimeout(()=>{ el.style.transition=`opacity ${Math.round(holdMs*1.6)}ms ease-out`; el.style.opacity='0'; },holdMs);
+      setTimeout(()=>el.remove(), holdMs*2.6+35);
+    }, i*(holdMs+26));
+  },
   done(ms) {
     setTimeout(() => {
       const s = document.getElementById('stage');
@@ -4866,6 +4874,7 @@ function triggerHundredSlashes() {
       sl.style.transition=`transform ${0.045+(1-t)*0.03}s linear`;
       sl.style.transform=`rotate(${angle}deg) scaleX(1)`;
       _fin.flash(stage,'#fff',Math.min(0.04+t*0.28,0.52),100);
+      if(count%3===0||count>13) _fin.impactFrame(stage,count>15?2:1,'#fff',42);
       _fin.shake(stage,1.6+count*0.58,170);
       ctrEl.textContent=`×${Math.round(t*100)}`;
       ctrEl.style.color=`rgba(255,${Math.round(255-t*90)},${Math.round(255-t*200)},${0.3+t*0.7})`;
@@ -4905,11 +4914,13 @@ function triggerHundredSlashes() {
         const mega=_fin.mk(`position:absolute;left:-8%;top:${((eY/H)*100).toFixed(1)}%;width:116%;height:8px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.82) 18%,#fff 50%,rgba(255,255,255,.82) 82%,transparent);transform-origin:left center;transform:rotate(${megaAng}deg) scaleX(0);z-index:87;pointer-events:none;box-shadow:0 0 32px rgba(255,240,160,1),0 0 68px rgba(255,200,40,.75);`,stage);
         void mega.offsetWidth; mega.style.transition='transform 0.055s linear'; mega.style.transform=`rotate(${megaAng}deg) scaleX(1)`;
         _fin.shake(stage, 30, 1300);
+        _fin.impactFrame(stage, 2, '#fff', 54);
       }, 80);
     }, 260);
 
     // White-out + ×100 finale
     setTimeout(()=>{
+      _fin.impactFrame(stage, 3, '#fff', 58);
       const wo=_fin.mk('position:absolute;inset:0;z-index:89;pointer-events:none;background:#fff;opacity:0;',stage);
       void wo.offsetWidth; wo.style.transition='opacity 0.09s ease-in'; wo.style.opacity='1';
       _fin.mv(clone, pX, pY, SZ, 0, '');
@@ -4992,6 +5003,7 @@ function triggerLightningStorm() {
       const core=_fin.boltTo(stage,pX,pY,tx,ty,'rgba(240,252,255,1)',2+Math.floor(boltFired/3));
       const glow=_fin.boltTo(stage,pX+4,pY+2,tx,ty,'rgba(100,180,255,.3)',9);
       _fin.flash(stage,'rgba(200,232,255,1)',0.58,175);
+      _fin.impactFrame(stage, boltFired>5?2:1, 'rgba(228,248,255,1)', 46);
       _fin.shake(stage,5+boltFired*.75,240);
 
       // Impact ring at enemy
@@ -5029,6 +5041,7 @@ function triggerLightningStorm() {
     for(let i=0;i<5;i++) setTimeout(()=>{
       const tx=eX+(i-2)*32+(Math.random()-.5)*18, ty=eY+(Math.random()-.5)*28;
       _fin.flash(stage,'rgba(180,226,255,1)',.52,240);
+      _fin.impactFrame(stage, 1, '#fff', 40);
       const c2=_fin.boltTo(stage,pX,pY,tx,ty,'rgba(240,252,255,1)',3);
       const g2=_fin.boltTo(stage,pX+5,pY+3,tx,ty,'rgba(100,180,255,.38)',11);
       setTimeout(()=>{[...c2,...g2].forEach(e=>{e.style.transition='opacity 0.2s';e.style.opacity='0';setTimeout(()=>e.remove(),260);});},360);
@@ -5041,6 +5054,7 @@ function triggerLightningStorm() {
       const beam=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:0;height:22px;border-radius:0 11px 11px 0;background:linear-gradient(90deg,rgba(200,240,255,.92),rgba(240,252,255,1),rgba(160,222,255,.8));transform:translate(0,-50%) rotate(${bAng}deg);transform-origin:0 50%;z-index:84;pointer-events:none;box-shadow:0 0 34px rgba(100,200,255,.95),0 0 68px rgba(60,160,255,.6);transition:width .17s ease-in;`,stage);
       void beam.offsetWidth; beam.style.width=bLen+'px';
       _fin.flash(stage,'rgba(210,240,255,1)',.82,280);
+      _fin.impactFrame(stage, 3, 'rgba(235,250,255,1)', 58);
       btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
       setTimeout(()=>{beam.style.transition='opacity .2s';beam.style.opacity='0';setTimeout(()=>beam.remove(),260);},380);
     },360);
@@ -5126,6 +5140,7 @@ function triggerInfernoSupernova() {
     const beam=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:0;height:20px;border-radius:0 10px 10px 0;background:linear-gradient(90deg,#fff8e0,#ffb030,#ff4000,#cc1000);transform:translate(0,-50%) rotate(${bAng}deg);transform-origin:0 50%;z-index:84;pointer-events:none;box-shadow:0 0 26px #ff6010,0 0 60px rgba(255,70,0,.75);transition:width .18s ease-in;`,stage);
     void beam.offsetWidth; beam.style.width=bLen+'px';
     _fin.flash(stage,'#ff5010',.42,180);
+    _fin.impactFrame(stage, 1, 'rgba(255,235,190,1)', 52);
     _fin.shake(stage,10,300);
     setTimeout(()=>{beam.style.transition='opacity .14s';beam.style.opacity='0';setTimeout(()=>beam.remove(),200);},300);
   },1700);
@@ -5134,10 +5149,11 @@ function triggerInfernoSupernova() {
   setTimeout(()=>{
     orb.style.transition='opacity .08s'; orb.style.opacity='0'; setTimeout(()=>orb.remove(),150);
     _fin.shake(stage,30,1900);
-    // 5 shockwave rings at enemy
+    // 5 shockwave rings at enemy — each with its own impact frame
     for(let i=0;i<5;i++) setTimeout(()=>{
       const sw=_fin.mk(`position:absolute;left:${eX}px;top:${eY}px;width:22px;height:22px;border-radius:50%;border:${4.5-i*.6}px solid rgba(255,${172-i*22},${28-i*5},${1-i*.07});transform:translate(-50%,-50%) scale(0.08);z-index:83;pointer-events:none;box-shadow:0 0 ${24+i*6}px rgba(255,90,0,.65);transition:transform .78s ease-out,opacity .78s ease-out;`,stage);
       void sw.offsetWidth; sw.style.transform=`translate(-50%,-50%) scale(${12+i*4.5})`; sw.style.opacity='0';
+      _fin.impactFrame(stage, 1, `rgba(255,${210-i*18},${160-i*22},1)`, 36);
       setTimeout(()=>sw.remove(),900);
     },i*80);
 
@@ -5149,6 +5165,7 @@ function triggerInfernoSupernova() {
       // Secondary explosion on clone impact
       setTimeout(()=>{
         _fin.flash(stage,'#ff6020',.6,200);
+        _fin.impactFrame(stage, 3, '#fff', 58);
         btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
         // Clone bounces back
         setTimeout(()=>{_fin.mv(clone,pX,pY,SZ,280,'scale(1)');clone.style.filter='drop-shadow(0 0 14px rgba(255,120,40,.7))';},140);
@@ -5231,6 +5248,7 @@ function triggerFrozenWorld() {
     stage.style.animation=''; stage.style.transform='';
     clone.style.transition='filter .3s'; clone.style.filter='drop-shadow(0 0 38px rgba(140,220,255,1)) drop-shadow(0 0 16px #fff)';
     _fin.shake(stage,8,420);
+    _fin.impactFrame(stage, 1, 'rgba(210,242,255,1)', 52);
 
     // Ice spikes radiate FROM clone in all directions (main one aimed at enemy)
     for(let i=0;i<10;i++){
@@ -5253,6 +5271,7 @@ function triggerFrozenWorld() {
   setTimeout(()=>{
     _fin.shake(stage,34,1700);
     _fin.flash(stage,'rgba(220,245,255,1)',.92,260);
+    _fin.impactFrame(stage, 3, '#fff', 60);
     btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
 
     // Crystals scatter from contact point (between clone and enemy)
@@ -5280,6 +5299,7 @@ function triggerFrozenWorld() {
     const bf=_fin.mk(`position:absolute;inset:0;z-index:90;pointer-events:none;background:radial-gradient(circle at ${impX}px ${impY}px,#fff 0%,rgba(200,238,255,.97) 13%,rgba(140,208,255,.78) 30%,rgba(0,28,88,.14) 60%,transparent 100%);`,stage);
     void bf.offsetWidth; bf.style.transition='opacity 1.6s ease-out'; bf.style.opacity='0';
     setTimeout(()=>bf.remove(),1700);
+    _fin.impactFrame(stage, 2, 'rgba(215,242,255,1)', 50);
   },2550);
 
   // Cleanup
