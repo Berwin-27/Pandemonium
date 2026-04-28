@@ -4716,15 +4716,39 @@ const _fin = {
     const uf=document.getElementById('btUltFill'),ut=document.getElementById('btUltText'),uw=document.getElementById('btUltWrap');
     if(uf)uf.style.width='0%'; if(ut)ut.textContent='ULT · 0%'; if(uw)uw.classList.remove('full');
     b.enemyHp = 0;
-    renderBattle();
     const stage = document.getElementById('stage');
-    return { stage, W: stage.clientWidth, H: stage.clientHeight };
+    // Capture sprite positions BEFORE renderBattle changes the layout
+    const stR = stage.getBoundingClientRect();
+    const pR  = btPlayerSprite.getBoundingClientRect();
+    const eR  = btEnemySprite.getBoundingClientRect();
+    const pX = pR.left - stR.left + pR.width/2;
+    const pY = pR.top  - stR.top  + pR.height/2;
+    const eX = eR.left - stR.left + eR.width/2;
+    const eY = eR.top  - stR.top  + eR.height/2;
+    const pEmoji = btPlayerSprite.textContent.trim() || '🍳';
+    renderBattle();
+    return { stage, W: stage.clientWidth, H: stage.clientHeight, pX, pY, eX, eY, pEmoji };
   },
   mk(css, parent) {
     const el = document.createElement('div');
     el.style.cssText = css;
     (parent || document.getElementById('stage')).appendChild(el);
     return el;
+  },
+  // Create a floating appliance sprite clone centred at (x,y)
+  sprite(stage, x, y, emoji, sz=68) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:${x-sz/2}px;top:${y-sz/2}px;width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.72)}px;line-height:${sz}px;text-align:center;z-index:85;pointer-events:none;user-select:none;transform-origin:center center;will-change:left,top,transform,filter;`;
+    el.textContent = emoji;
+    stage.appendChild(el);
+    return el;
+  },
+  // Animate clone to (tx,ty), durMs=0 for instant
+  mv(el, tx, ty, sz, durMs=80, extra='') {
+    const tr = durMs>0?`left ${durMs}ms ease-out,top ${durMs}ms ease-out,transform ${durMs}ms,filter ${durMs}ms`:'none';
+    el.style.transition = tr;
+    el.style.left=(tx-sz/2)+'px'; el.style.top=(ty-sz/2)+'px';
+    el.style.transform=extra;
   },
   shake(el, px, ms) {
     if (!el) return;
@@ -4739,7 +4763,7 @@ const _fin = {
   flash(parent, color, alpha, fadeMs) {
     const el = this.mk(`position:absolute;inset:0;z-index:88;pointer-events:none;background:${color};opacity:${alpha};`, parent);
     setTimeout(() => { el.style.transition=`opacity ${fadeMs}ms ease-out`; el.style.opacity='0'; }, 40);
-    setTimeout(() => el.remove(), fadeMs + 90);
+    setTimeout(() => el.remove(), fadeMs+90);
   },
   done(ms) {
     setTimeout(() => {
@@ -4749,18 +4773,31 @@ const _fin = {
       onEnemyFaint();
     }, ms);
   },
+  // Vertical jagged bolt (top→bottom)
   lightning(container, x, y0, y1, color, thick) {
-    let cx = x, cy = y0;
-    const bolts = [], steps = 10;
-    for (let i = 0; i < steps; i++) {
-      const ny = cy + (y1-y0)/steps;
-      const nx = cx + (Math.random()-.5)*52;
-      const dx = nx-cx, dy = ny-cy;
-      const len = Math.hypot(dx, dy);
-      const ang = Math.atan2(dy, dx)*180/Math.PI;
-      const seg = this.mk(`position:absolute;left:${cx}px;top:${cy}px;width:${len}px;height:${thick||2}px;background:${color||'rgba(220,240,255,1)'};transform-origin:0 50%;transform:rotate(${ang}deg);z-index:83;pointer-events:none;box-shadow:0 0 8px ${color||'rgba(180,220,255,0.8)'},0 0 2px #fff;border-radius:1px;`, container);
-      bolts.push(seg);
-      cx = nx; cy = ny;
+    let cx=x, cy=y0;
+    const bolts=[], steps=10;
+    for (let i=0; i<steps; i++) {
+      const ny=cy+(y1-y0)/steps, nx=cx+(Math.random()-.5)*52;
+      const len=Math.hypot(nx-cx,ny-cy), ang=Math.atan2(ny-cy,nx-cx)*180/Math.PI;
+      const seg=this.mk(`position:absolute;left:${cx}px;top:${cy}px;width:${len}px;height:${thick||2}px;background:${color||'rgba(220,240,255,1)'};transform-origin:0 50%;transform:rotate(${ang}deg);z-index:83;pointer-events:none;box-shadow:0 0 8px ${color||'rgba(180,220,255,0.8)'},0 0 2px #fff;border-radius:1px;`,container);
+      bolts.push(seg); cx=nx; cy=ny;
+    }
+    return bolts;
+  },
+  // Directed jagged bolt from (x0,y0) → (x1,y1) with perp jitter
+  boltTo(container, x0, y0, x1, y1, color, thick) {
+    let cx=x0, cy=y0;
+    const bolts=[], STEPS=13;
+    const dx=x1-x0, dy=y1-y0, L=Math.max(1,Math.hypot(dx,dy));
+    const px=-dy/L, py=dx/L;
+    for (let i=0; i<STEPS; i++) {
+      const t=(i+1)/STEPS, last=i===STEPS-1;
+      const jit=last?0:(Math.random()-.5)*46;
+      const nx=last?x1:x0+dx*t+px*jit, ny=last?y1:y0+dy*t+py*jit;
+      const len=Math.hypot(nx-cx,ny-cy), ang=Math.atan2(ny-cy,nx-cx)*180/Math.PI;
+      const seg=this.mk(`position:absolute;left:${cx}px;top:${cy}px;width:${len}px;height:${thick||2}px;background:${color||'rgba(220,240,255,1)'};transform-origin:0 50%;transform:rotate(${ang}deg);z-index:83;pointer-events:none;box-shadow:0 0 8px ${color||'rgba(180,220,255,0.8)'},0 0 2px #fff;border-radius:1px;`,container);
+      bolts.push(seg); cx=nx; cy=ny;
     }
     return bolts;
   }
@@ -4789,326 +4826,472 @@ function triggerFinisher() {
 function triggerHundredSlashes() {
   const b = state.battle; if (!b || b.ended) return;
   battleLog(`⚔ <b style="color:#d4af37;letter-spacing:4px">HUNDRED SLASHES</b> — Finisher unleashed!`);
-  const { stage, W, H } = _fin.bootstrap(b);
-  const SLASHES = 15;
-  let count = 0;
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
+  const SZ=72, SLASHES=18;
+  let count=0;
 
-  const tint  = _fin.mk('position:absolute;inset:0;z-index:70;background:rgba(120,8,8,0);pointer-events:none;', stage);
+  const tint  = _fin.mk('position:absolute;inset:0;z-index:70;background:rgba(120,4,4,0);pointer-events:none;', stage);
   const ctrEl = _fin.mk(`position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:86;pointer-events:none;font-size:72px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;color:rgba(255,255,255,0);letter-spacing:-2px;user-select:none;white-space:nowrap;`, stage);
   const lblEl = _fin.mk(`position:absolute;left:50%;top:60%;transform:translateX(-50%);z-index:86;pointer-events:none;font-size:13px;font-weight:700;font-family:'Trebuchet MS',Arial,sans-serif;color:rgba(212,175,55,0);letter-spacing:7px;user-select:none;`, stage);
   lblEl.textContent = 'HUNDRED SLASHES';
 
+  // Player clone starts at home
+  const clone = _fin.sprite(stage, pX, pY, pEmoji, SZ);
+  clone.style.filter = 'drop-shadow(0 0 10px #d4af37)';
+  // Hide actual player sprite so clone is the only one visible
+  btPlayerSprite.style.opacity = '0';
+
+  // Wind-up flash
+  setTimeout(() => { clone.style.transition='filter 0.22s'; clone.style.filter='drop-shadow(0 0 28px #fff) drop-shadow(0 0 12px #d4af37)'; }, 150);
+
   function doSlash() {
     if (count >= SLASHES) { doFinal(); return; }
     count++;
-    const t = count / SLASHES;
+    const t = count/SLASHES;
+    tint.style.background = `rgba(148,5,5,${t*0.26})`;
 
-    tint.style.background = `rgba(140,8,8,${t*0.22})`;
+    // Clone dashes to near-enemy position
+    const ox=(Math.random()-.5)*50, oy=(Math.random()-.5)*36;
+    const atkX=eX+ox, atkY=eY+oy;
+    _fin.mv(clone, atkX, atkY, SZ, 62, 'scale(1.18)');
+    clone.style.filter='drop-shadow(0 0 22px #fff) drop-shadow(0 0 8px #ffcc40)';
 
-    // Full-stage diagonal slash line
-    const angle = -38 + (Math.random()-.5)*28;
-    const thick = 2 + count*0.22;
-    const sl = _fin.mk(`position:absolute;left:-8%;top:${8+Math.random()*65}%;width:116%;height:${thick}px;background:linear-gradient(90deg,transparent 0%,rgba(255,255,215,0.55) 15%,rgba(255,255,255,1) 48%,rgba(255,255,215,0.55) 85%,transparent);transform-origin:left center;transform:rotate(${angle}deg) scaleX(0);z-index:82;pointer-events:none;box-shadow:0 0 ${6+count}px rgba(255,245,160,0.9),0 0 ${18+count}px rgba(255,200,60,0.45);`, stage);
-    void sl.offsetWidth;
-    sl.style.transition = `transform ${0.048+(1-t)*0.036}s linear`;
-    sl.style.transform   = `rotate(${angle}deg) scaleX(1)`;
-    setTimeout(() => { sl.style.transition='opacity 0.11s'; sl.style.opacity='0'; setTimeout(()=>sl.remove(),150); }, 75);
+    // Slash line emanates from clone's attack Y position
+    setTimeout(() => {
+      const angle=-40+(Math.random()-.5)*30;
+      const thick=1.8+count*0.24;
+      const topPct=((atkY/H)*100).toFixed(1);
+      const sl=_fin.mk(`position:absolute;left:-8%;top:${topPct}%;width:116%;height:${thick}px;background:linear-gradient(90deg,transparent,rgba(255,255,215,.55) 15%,#fff 48%,rgba(255,255,215,.55) 85%,transparent);transform-origin:left center;transform:rotate(${angle}deg) scaleX(0);z-index:82;pointer-events:none;box-shadow:0 0 ${7+count}px rgba(255,245,160,.9),0 0 ${20+count}px rgba(255,200,60,.45);`,stage);
+      void sl.offsetWidth;
+      sl.style.transition=`transform ${0.045+(1-t)*0.03}s linear`;
+      sl.style.transform=`rotate(${angle}deg) scaleX(1)`;
+      _fin.flash(stage,'#fff',Math.min(0.04+t*0.28,0.52),100);
+      _fin.shake(stage,1.6+count*0.58,170);
+      ctrEl.textContent=`×${Math.round(t*100)}`;
+      ctrEl.style.color=`rgba(255,${Math.round(255-t*90)},${Math.round(255-t*200)},${0.3+t*0.7})`;
+      ctrEl.style.fontSize=`${56+count*2.8}px`;
+      ctrEl.style.textShadow=`0 0 ${8+count*3}px rgba(255,170,40,.9),3px 3px 0 rgba(0,0,0,.6)`;
+      lblEl.style.color=`rgba(212,175,55,${t*0.82})`;
+      lblEl.style.letterSpacing=`${5+count*0.36}px`;
+      if (count%2===0){btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();}
+      // Clone snaps back toward home mid-position
+      setTimeout(()=>{
+        sl.style.transition='opacity 0.12s'; sl.style.opacity='0'; setTimeout(()=>sl.remove(),160);
+        _fin.mv(clone, pX+(eX-pX)*0.22, pY+(eY-pY)*0.22, SZ, 52, 'scale(1)');
+        clone.style.filter='drop-shadow(0 0 12px #d4af37)';
+      }, 72);
+    }, 58);
 
-    // Escalating white flash
-    _fin.flash(stage, '#fff', Math.min(0.05+t*0.28, 0.5), 100);
-    _fin.shake(stage, 1.5+count*0.62, 180);
-
-    // Counter typography
-    ctrEl.textContent = `×${Math.round(t*100)}`;
-    ctrEl.style.color      = `rgba(255,${Math.round(255-t*90)},${Math.round(255-t*200)},${0.35+t*0.65})`;
-    ctrEl.style.fontSize   = `${58+count*2.8}px`;
-    ctrEl.style.textShadow = `0 0 ${8+count*3}px rgba(255,170,40,0.9),3px 3px 0 rgba(0,0,0,0.6)`;
-    lblEl.style.color = `rgba(212,175,55,${t*0.8})`;
-    lblEl.style.letterSpacing = `${5+count*0.35}px`;
-
-    if (count%2===0) { btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt'); btFlashHit(); }
-    setTimeout(doSlash, Math.max(52, 185-count*9));
+    setTimeout(doSlash, Math.max(48,188-count*8));
   }
 
   function doFinal() {
-    _fin.shake(stage, 24, 1100);
-    const wo = _fin.mk('position:absolute;inset:0;z-index:89;pointer-events:none;background:#fff;opacity:0;', stage);
-    void wo.offsetWidth;
-    wo.style.transition = 'opacity 0.09s ease-in';
-    wo.style.opacity = '1';
+    // Clone charges at home, glows max
+    _fin.mv(clone, pX, pY, SZ, 200, 'scale(1.4)');
+    clone.style.filter='drop-shadow(0 0 40px #fff) drop-shadow(0 0 20px #ffd040) drop-shadow(0 0 10px #ff8000)';
+    clone.style.transition='left 200ms ease-out,top 200ms ease-out,transform 200ms,filter 200ms';
+    _fin.shake(stage, 7, 700);
 
-    setTimeout(() => {
-      ctrEl.textContent   = '×100';
-      ctrEl.style.fontSize    = '140px';
-      ctrEl.style.color       = 'rgba(212,175,55,1)';
-      ctrEl.style.textShadow  = '0 0 65px rgba(255,210,40,1),0 0 130px rgba(255,140,0,0.75),6px 6px 0 rgba(0,0,0,0.65)';
-      lblEl.style.color        = 'rgba(255,232,100,0.98)';
-      lblEl.style.letterSpacing = '11px';
-      lblEl.style.fontSize     = '16px';
-    }, 90);
+    // Aerial diagonal rush toward enemy
+    setTimeout(()=>{
+      const rushAngle=Math.atan2(eY-pY,eX-pX)*180/Math.PI;
+      _fin.mv(clone, eX+18, eY-26, SZ, 95, `scale(1.55) rotate(${rushAngle*.35}deg)`);
+      clone.style.filter='drop-shadow(0 0 48px #fff) drop-shadow(0 0 24px #ffd040)';
+      clone.style.transition='left 95ms ease-in,top 95ms ease-in,transform 95ms,filter 80ms';
 
-    setTimeout(() => { wo.style.transition='opacity 0.75s ease-out'; wo.style.opacity='0'; }, 960);
-    setTimeout(() => { btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt'); }, 480);
-    setTimeout(() => { [tint,ctrEl,lblEl,wo].forEach(e=>{try{e.remove();}catch(x){}}); stage.style.transform=''; }, 1900);
-    _fin.done(2150);
+      // Mega diagonal slash sweeping the whole screen
+      setTimeout(()=>{
+        const megaAng=Math.atan2(eY-pY,eX-pX)*180/Math.PI-12;
+        const mega=_fin.mk(`position:absolute;left:-8%;top:${((eY/H)*100).toFixed(1)}%;width:116%;height:8px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.82) 18%,#fff 50%,rgba(255,255,255,.82) 82%,transparent);transform-origin:left center;transform:rotate(${megaAng}deg) scaleX(0);z-index:87;pointer-events:none;box-shadow:0 0 32px rgba(255,240,160,1),0 0 68px rgba(255,200,40,.75);`,stage);
+        void mega.offsetWidth; mega.style.transition='transform 0.055s linear'; mega.style.transform=`rotate(${megaAng}deg) scaleX(1)`;
+        _fin.shake(stage, 30, 1300);
+      }, 80);
+    }, 260);
+
+    // White-out + ×100 finale
+    setTimeout(()=>{
+      const wo=_fin.mk('position:absolute;inset:0;z-index:89;pointer-events:none;background:#fff;opacity:0;',stage);
+      void wo.offsetWidth; wo.style.transition='opacity 0.09s ease-in'; wo.style.opacity='1';
+      _fin.mv(clone, pX, pY, SZ, 0, '');
+      clone.style.filter='none';
+      btPlayerSprite.style.opacity='';
+      setTimeout(()=>{
+        ctrEl.textContent='×100';
+        ctrEl.style.fontSize='150px'; ctrEl.style.color='rgba(212,175,55,1)';
+        ctrEl.style.textShadow='0 0 70px rgba(255,210,40,1),0 0 140px rgba(255,140,0,.75),7px 7px 0 rgba(0,0,0,.65)';
+        lblEl.style.color='rgba(255,232,100,.98)'; lblEl.style.letterSpacing='13px'; lblEl.style.fontSize='16px';
+      },90);
+      btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');
+      setTimeout(()=>{ wo.style.transition='opacity 1s ease-out'; wo.style.opacity='0'; },1150);
+      setTimeout(()=>{ [tint,ctrEl,lblEl,clone,wo].forEach(e=>{try{e.remove();}catch(x){}});stage.style.transform=''; },2350);
+    }, 520);
+
+    _fin.done(2900);
   }
 
-  setTimeout(doSlash, 140);
+  setTimeout(doSlash, 300);
 }
 
 // ── 2. LIGHTNING STORM (electric) ────────────────────────
 function triggerLightningStorm() {
   const b = state.battle; if (!b || b.ended) return;
   battleLog(`⚡ <b style="color:#a0ccff;letter-spacing:4px">LIGHTNING STORM</b> — Heaven's wrath!`);
-  const { stage, W, H } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
+  const SZ=72;
 
-  const tint = _fin.mk('position:absolute;inset:0;z-index:70;background:rgba(0,8,30,0.74);pointer-events:none;', stage);
-  const titleEl = _fin.mk(`position:absolute;left:50%;top:27%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:30px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:10px;color:rgba(160,210,255,0);user-select:none;white-space:nowrap;text-shadow:0 0 26px rgba(100,180,255,0.95),0 0 65px rgba(60,140,255,0.55);transition:color 0.35s;`, stage);
-  titleEl.textContent = 'LIGHTNING STORM';
+  const tint=_fin.mk('position:absolute;inset:0;z-index:70;background:rgba(0,8,30,0.76);pointer-events:none;',stage);
+  const titleEl=_fin.mk(`position:absolute;left:50%;top:22%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:30px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:10px;color:rgba(160,210,255,0);user-select:none;white-space:nowrap;text-shadow:0 0 26px rgba(100,180,255,.95),0 0 65px rgba(60,140,255,.55);transition:color 0.35s;`,stage);
+  titleEl.textContent='LIGHTNING STORM';
 
-  // Pre-storm crackle static
-  function spawnCrackle() {
-    const cr = _fin.mk(`position:absolute;left:${5+Math.random()*85}%;top:${4+Math.random()*34}%;width:${15+Math.random()*58}px;height:1px;background:rgba(180,222,255,${0.5+Math.random()*0.4});z-index:74;pointer-events:none;box-shadow:0 0 4px rgba(140,200,255,0.7);`, stage);
-    setTimeout(() => cr.remove(), 90+Math.random()*80);
+  const clone=_fin.sprite(stage, pX, pY, pEmoji, SZ);
+  clone.style.filter='drop-shadow(0 0 10px rgba(120,190,255,.8))';
+  btPlayerSprite.style.opacity='0';
+
+  // Crackles spawning FROM/AROUND the clone position
+  function spawnCrackle(cx2, cy2) {
+    const ang=Math.random()*360, len=8+Math.random()*35;
+    const cr=_fin.mk(`position:absolute;left:${cx2}px;top:${cy2}px;width:${len}px;height:1px;background:rgba(200,230,255,.88);transform-origin:0 50%;transform:rotate(${ang}deg);z-index:86;pointer-events:none;box-shadow:0 0 4px rgba(140,200,255,.8);`,stage);
+    setTimeout(()=>cr.remove(),70+Math.random()*90);
   }
-  for (let i=0; i<24; i++) setTimeout(spawnCrackle, i*40);
-  setTimeout(() => { titleEl.style.color='rgba(160,210,255,0.96)'; }, 360);
+  // 0-900ms: charge phase — crackles radiate around clone
+  for (let i=0;i<30;i++) setTimeout(()=>{
+    const a=Math.random()*Math.PI*2, d=14+Math.random()*52;
+    spawnCrackle(pX+Math.cos(a)*d, pY+Math.sin(a)*d);
+  }, i*32);
 
-  const BOLTS = 8;
-  let boltFired = 0;
+  // Charge aura rings expanding from clone
+  setTimeout(()=>{
+    clone.style.transition='filter 0.4s';
+    clone.style.filter='drop-shadow(0 0 36px rgba(180,230,255,1)) drop-shadow(0 0 14px rgba(80,160,255,.9))';
+    titleEl.style.color='rgba(160,210,255,.96)';
+    [0,1,2].forEach(i=>setTimeout(()=>{
+      const ring=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:${20+i*24}px;height:${20+i*24}px;border-radius:50%;border:2px solid rgba(140,210,255,${0.8-i*.22});transform:translate(-50%,-50%) scale(0.08);z-index:84;pointer-events:none;box-shadow:0 0 14px rgba(100,180,255,.65);transition:transform .58s ease-out,opacity .58s ease-out;`,stage);
+      void ring.offsetWidth;
+      ring.style.transform=`translate(-50%,-50%) scale(${5+i*3.5})`; ring.style.opacity='0';
+      setTimeout(()=>ring.remove(),700);
+    }, i*130));
+  }, 350);
+
+  const BOLTS=8; let boltFired=0;
 
   function fireBolt() {
-    if (boltFired >= BOLTS) { doBarrage(); return; }
+    if (boltFired>=BOLTS){doBarrage();return;}
     boltFired++;
-    const bx = W*(0.52+Math.random()*0.32);
 
-    // Charge glow at top
-    const charge = _fin.mk(`position:absolute;left:${bx}px;top:2px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#fff,rgba(140,200,255,0.8),transparent);transform:translate(-50%,0) scale(1);z-index:82;pointer-events:none;box-shadow:0 0 20px rgba(120,190,255,0.9),0 0 44px rgba(80,160,255,0.55);transition:transform 0.18s ease-out,opacity 0.12s;`, stage);
-    setTimeout(() => { charge.style.transform='translate(-50%,0) scale(5.5)'; charge.style.opacity='0'; setTimeout(()=>charge.remove(),210); }, 55);
+    // Clone recoil: squish back, then spring forward
+    clone.style.transition='transform 55ms ease-in,filter 55ms';
+    clone.style.transform='scale(0.82) rotate(-8deg)';
+    clone.style.filter='drop-shadow(0 0 55px #fff) drop-shadow(0 0 22px rgba(100,200,255,1))';
 
-    setTimeout(() => {
-      _fin.flash(stage, 'rgba(200,232,255,1)', 0.66, 200);
-      _fin.shake(stage, 5+boltFired*0.8, 270);
+    setTimeout(()=>{
+      clone.style.transition='transform 110ms ease-out,filter 220ms';
+      clone.style.transform='scale(1.22) rotate(5deg)';
 
-      const core = _fin.lightning(stage, bx, 2, H*0.86, 'rgba(240,252,255,1)', 2+Math.floor(boltFired/4));
-      const glow = _fin.lightning(stage, bx+(Math.random()-.5)*10, 2, H*0.86, 'rgba(100,180,255,0.28)', 7);
+      // Directed bolt FROM clone (pX,pY) TO enemy (eX±jitter, eY±jitter)
+      const tx=eX+(Math.random()-.5)*28, ty=eY+(Math.random()-.5)*22;
+      const core=_fin.boltTo(stage,pX,pY,tx,ty,'rgba(240,252,255,1)',2+Math.floor(boltFired/3));
+      const glow=_fin.boltTo(stage,pX+4,pY+2,tx,ty,'rgba(100,180,255,.3)',9);
+      _fin.flash(stage,'rgba(200,232,255,1)',0.58,175);
+      _fin.shake(stage,5+boltFired*.75,240);
 
-      // Ground impact ring
-      const imp = _fin.mk(`position:absolute;left:${bx}px;top:${H*0.84}px;width:16px;height:16px;border-radius:50%;border:3px solid rgba(200,232,255,0.9);transform:translate(-50%,-50%) scale(0.1);z-index:82;pointer-events:none;box-shadow:0 0 16px rgba(150,210,255,0.85);transition:transform 0.44s ease-out,opacity 0.44s ease-out;`, stage);
+      // Impact ring at enemy
+      const imp=_fin.mk(`position:absolute;left:${tx}px;top:${ty}px;width:16px;height:16px;border-radius:50%;border:3px solid rgba(200,232,255,.9);transform:translate(-50%,-50%) scale(0.08);z-index:82;pointer-events:none;box-shadow:0 0 18px rgba(150,210,255,.9);transition:transform .42s ease-out,opacity .42s ease-out;`,stage);
       void imp.offsetWidth;
       imp.style.transform='translate(-50%,-50%) scale(6.5)'; imp.style.opacity='0';
 
-      if (boltFired%2===0) { btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt'); btFlashHit(); }
+      if (boltFired%2===0){btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();}
+      // Also spawn crackles around clone while firing
+      for(let k=0;k<5;k++) setTimeout(()=>{
+        const a=Math.random()*Math.PI*2, d=10+Math.random()*38;
+        spawnCrackle(pX+Math.cos(a)*d,pY+Math.sin(a)*d);
+      },k*18);
 
-      setTimeout(() => {
-        [...core,...glow].forEach(el=>{ el.style.transition='opacity 0.18s'; el.style.opacity='0'; setTimeout(()=>el.remove(),220); });
+      setTimeout(()=>{
+        [...core,...glow].forEach(el=>{el.style.transition='opacity 0.16s';el.style.opacity='0';setTimeout(()=>el.remove(),220);});
         setTimeout(()=>imp.remove(),520);
-      }, 205);
-    }, 195);
+        clone.style.transition='transform 100ms ease-out,filter 200ms';
+        clone.style.transform='scale(1) rotate(0deg)';
+        clone.style.filter='drop-shadow(0 0 22px rgba(120,200,255,.9))';
+      },195);
+    },60);
 
-    setTimeout(fireBolt, Math.max(162, 395-boltFired*24));
+    setTimeout(fireBolt, Math.max(155,385-boltFired*22));
   }
 
   function doBarrage() {
-    _fin.shake(stage, 26, 1500);
-    for (let i=0; i<5; i++) {
-      setTimeout(() => {
-        const bx2 = W*(0.24+i*0.12+Math.random()*0.04);
-        _fin.flash(stage, 'rgba(180,226,255,1)', 0.56, 280);
-        const c2 = _fin.lightning(stage, bx2, 0, H*0.88, 'rgba(240,252,255,1)', 3);
-        const g2 = _fin.lightning(stage, bx2+4, 0, H*0.88, 'rgba(100,180,255,0.34)', 9);
-        setTimeout(()=>{ [...c2,...g2].forEach(e=>{ e.style.transition='opacity 0.22s'; e.style.opacity='0'; setTimeout(()=>e.remove(),280); }); }, 345);
-      }, i*65);
-    }
+    // Clone MEGA charges — full white glow
+    clone.style.transition='transform .22s ease-out,filter .35s';
+    clone.style.transform='scale(1.6)';
+    clone.style.filter='drop-shadow(0 0 65px #fff) drop-shadow(0 0 32px rgba(100,200,255,1)) drop-shadow(0 0 16px #fff)';
+    _fin.shake(stage,28,1700);
 
-    // Hold blue-white mega flash
-    setTimeout(() => {
-      const mf = _fin.mk('position:absolute;inset:0;z-index:90;pointer-events:none;background:linear-gradient(135deg,rgba(200,232,255,1),rgba(240,250,255,0.97),rgba(160,212,255,1));opacity:1;', stage);
-      void mf.offsetWidth; mf.style.transition='opacity 1.15s ease-out'; mf.style.opacity='0';
-      setTimeout(()=>mf.remove(),1250);
-    }, 330);
+    // 5 simultaneous bolts FROM clone, fan spread at enemy
+    for(let i=0;i<5;i++) setTimeout(()=>{
+      const tx=eX+(i-2)*32+(Math.random()-.5)*18, ty=eY+(Math.random()-.5)*28;
+      _fin.flash(stage,'rgba(180,226,255,1)',.52,240);
+      const c2=_fin.boltTo(stage,pX,pY,tx,ty,'rgba(240,252,255,1)',3);
+      const g2=_fin.boltTo(stage,pX+5,pY+3,tx,ty,'rgba(100,180,255,.38)',11);
+      setTimeout(()=>{[...c2,...g2].forEach(e=>{e.style.transition='opacity 0.2s';e.style.opacity='0';setTimeout(()=>e.remove(),260);});},360);
+    },i*58);
 
-    setTimeout(() => { btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt'); }, 420);
-    setTimeout(() => {
-      tint.style.transition='opacity 0.9s'; tint.style.opacity='0';
-      titleEl.style.transition='opacity 0.6s'; titleEl.style.opacity='0';
-      setTimeout(()=>{ tint.remove(); titleEl.remove(); stage.style.transform=''; }, 1010);
-    }, 620);
-    _fin.done(2050);
+    // Thick continuous beam from clone to enemy
+    setTimeout(()=>{
+      const bAng=Math.atan2(eY-pY,eX-pX)*180/Math.PI;
+      const bLen=Math.hypot(eX-pX,eY-pY)+80;
+      const beam=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:0;height:22px;border-radius:0 11px 11px 0;background:linear-gradient(90deg,rgba(200,240,255,.92),rgba(240,252,255,1),rgba(160,222,255,.8));transform:translate(0,-50%) rotate(${bAng}deg);transform-origin:0 50%;z-index:84;pointer-events:none;box-shadow:0 0 34px rgba(100,200,255,.95),0 0 68px rgba(60,160,255,.6);transition:width .17s ease-in;`,stage);
+      void beam.offsetWidth; beam.style.width=bLen+'px';
+      _fin.flash(stage,'rgba(210,240,255,1)',.82,280);
+      btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
+      setTimeout(()=>{beam.style.transition='opacity .2s';beam.style.opacity='0';setTimeout(()=>beam.remove(),260);},380);
+    },360);
+
+    // Blue-white mega flash + fade-out
+    setTimeout(()=>{
+      const mf=_fin.mk('position:absolute;inset:0;z-index:90;pointer-events:none;background:linear-gradient(135deg,rgba(200,232,255,1),rgba(240,250,255,.97),rgba(160,212,255,1));opacity:1;',stage);
+      void mf.offsetWidth; mf.style.transition='opacity 1.4s ease-out'; mf.style.opacity='0';
+      clone.style.transition='transform .35s ease-out,filter .5s,opacity .5s';
+      clone.style.transform='scale(1)'; clone.style.opacity='0';
+      btPlayerSprite.style.opacity='';
+      setTimeout(()=>mf.remove(),1500);
+      setTimeout(()=>{tint.style.transition='opacity .9s';tint.style.opacity='0';titleEl.style.transition='opacity .6s';titleEl.style.opacity='0';setTimeout(()=>{tint.remove();titleEl.remove();clone.remove();stage.style.transform='';},1010);},380);
+    },760);
+
+    _fin.done(2700);
   }
 
-  setTimeout(fireBolt, 1060);
+  setTimeout(fireBolt,1080);
 }
 
 // ── 3. INFERNO SUPERNOVA (fire) ───────────────────────────
 function triggerInfernoSupernova() {
   const b = state.battle; if (!b || b.ended) return;
   battleLog(`🔥 <b style="color:#ff7030;letter-spacing:4px">INFERNO SUPERNOVA</b> — Cataclysm unleashed!`);
-  const { stage, W, H } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
+  const SZ=72;
 
-  const tint = _fin.mk('position:absolute;inset:0;z-index:70;background:rgba(55,8,0,0.65);pointer-events:none;', stage);
-  const titleEl = _fin.mk(`position:absolute;left:50%;top:27%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:28px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:7px;color:rgba(255,120,40,0.96);user-select:none;white-space:nowrap;text-shadow:0 0 26px rgba(255,90,0,1),0 0 65px rgba(200,40,0,0.65);`, stage);
-  titleEl.textContent = 'INFERNO SUPERNOVA';
+  const tint=_fin.mk('position:absolute;inset:0;z-index:70;background:rgba(52,5,0,.68);pointer-events:none;',stage);
+  const titleEl=_fin.mk(`position:absolute;left:50%;top:22%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:28px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:7px;color:rgba(255,120,40,.96);user-select:none;white-space:nowrap;text-shadow:0 0 26px rgba(255,90,0,1),0 0 65px rgba(200,40,0,.65);`,stage);
+  titleEl.textContent='INFERNO SUPERNOVA';
 
-  // Orb at player position
-  const orbX=W*0.16, orbY=H*0.74;
-  const orb = _fin.mk(`position:absolute;left:${orbX}px;top:${orbY}px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#fff8e0,#ff9020,#cc2800);transform:translate(-50%,-50%) scale(1);z-index:82;pointer-events:none;box-shadow:0 0 18px #ff5010,0 0 40px rgba(255,80,0,0.7);transition:transform 1.1s cubic-bezier(0.2,0,0.1,1),box-shadow 1.1s;`, stage);
+  const clone=_fin.sprite(stage, pX, pY, pEmoji, SZ);
+  clone.style.filter='drop-shadow(0 0 10px rgba(255,120,40,.8))';
+  btPlayerSprite.style.opacity='0';
 
-  // Charge rings around orb
-  const rings = [0,1,2].map(i => _fin.mk(`position:absolute;left:${orbX}px;top:${orbY}px;width:${18+i*22}px;height:${18+i*22}px;border-radius:50%;border:${2.2-i*0.5}px solid rgba(255,${140-i*28},0,${0.76-i*0.18});transform:translate(-50%,-50%) scale(0);z-index:81;pointer-events:none;box-shadow:0 0 10px rgba(255,90,0,0.55);`, stage));
+  // Fire orb spawns AT clone (player) position
+  const orb=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#fff8e0,#ff9020,#cc2800);transform:translate(-50%,-50%) scale(1);z-index:86;pointer-events:none;box-shadow:0 0 18px #ff5010,0 0 40px rgba(255,80,0,.7);transition:transform 1.1s cubic-bezier(0.2,0,0.1,1),box-shadow 1.1s,left .5s ease-in,top .5s ease-in;`,stage);
 
-  // Inbound charge particles
+  // Charge rings around clone
+  const rings=[0,1,2].map(i=>_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:${18+i*22}px;height:${18+i*22}px;border-radius:50%;border:${2.2-i*.5}px solid rgba(255,${140-i*28},0,${0.76-i*.18});transform:translate(-50%,-50%) scale(0);z-index:81;pointer-events:none;box-shadow:0 0 10px rgba(255,90,0,.55);`,stage));
+
+  // Inbound charge particles converge on clone position
   function spawnP() {
-    const ang=Math.random()*Math.PI*2, dist=55+Math.random()*155;
-    const p = _fin.mk(`position:absolute;left:${orbX+Math.cos(ang)*dist}px;top:${orbY+Math.sin(ang)*dist}px;width:3px;height:3px;border-radius:50%;background:rgba(255,${80+Math.floor(Math.random()*160)},0,1);z-index:80;pointer-events:none;transition:left 0.44s ease-in,top 0.44s ease-in,opacity 0.36s ease-in 0.08s;`, stage);
-    void p.offsetWidth; p.style.left=orbX+'px'; p.style.top=orbY+'px'; p.style.opacity='0';
+    const ang=Math.random()*Math.PI*2, dist=55+Math.random()*150;
+    const p=_fin.mk(`position:absolute;left:${pX+Math.cos(ang)*dist}px;top:${pY+Math.sin(ang)*dist}px;width:3px;height:3px;border-radius:50%;background:rgba(255,${80+Math.floor(Math.random()*160)},0,1);z-index:80;pointer-events:none;transition:left .44s ease-in,top .44s ease-in,opacity .36s ease-in .08s;`,stage);
+    void p.offsetWidth; p.style.left=pX+'px'; p.style.top=pY+'px'; p.style.opacity='0';
     setTimeout(()=>p.remove(),500);
   }
-  for (let i=0; i<26; i++) setTimeout(spawnP, i*48);
+  for (let i=0;i<28;i++) setTimeout(spawnP,i*48);
 
-  // Orb charges up
-  setTimeout(() => {
-    orb.style.transform='translate(-50%,-50%) scale(7.5)';
-    orb.style.boxShadow='0 0 55px #ff5010,0 0 120px rgba(255,70,0,0.85),0 0 220px rgba(180,30,0,0.48)';
-    rings.forEach((r,i) => setTimeout(() => {
-      r.style.transition=`transform ${0.88+i*0.26}s ease-out,opacity 0.55s ease-out ${0.3+i*0.1}s`;
+  // Orb grows at clone position, clone glows
+  setTimeout(()=>{
+    orb.style.transform='translate(-50%,-50%) scale(7)';
+    orb.style.boxShadow='0 0 55px #ff5010,0 0 120px rgba(255,70,0,.85),0 0 220px rgba(180,30,0,.48)';
+    clone.style.transition='filter .5s'; clone.style.filter='drop-shadow(0 0 40px rgba(255,140,40,1)) drop-shadow(0 0 18px #fff)';
+    rings.forEach((r,i)=>setTimeout(()=>{
+      r.style.transition=`transform ${.88+i*.26}s ease-out,opacity .55s ease-out ${.3+i*.1}s`;
       r.style.transform=`translate(-50%,-50%) scale(${11+i*5.5})`; r.style.opacity='0';
       setTimeout(()=>r.remove(),1250);
-    }, i*130));
-    _fin.shake(stage, 3, 1150);
-  }, 360);
+    },i*130));
+    _fin.shake(stage,3,1200);
+  },350);
 
-  // BEAM fires at 1.85s
-  setTimeout(() => {
-    orb.style.transition='opacity 0.12s'; orb.style.opacity='0'; setTimeout(()=>orb.remove(),200);
-    const beam = _fin.mk(`position:absolute;left:${orbX}px;top:${orbY-12}px;width:0;height:24px;border-radius:12px;background:linear-gradient(90deg,#fff8e0,#ffb030,#ff4000,#cc1000);z-index:84;pointer-events:none;box-shadow:0 0 26px #ff6010,0 0 60px rgba(255,70,0,0.75);transform-origin:left center;transition:width 0.18s ease-in;`, stage);
-    void beam.offsetWidth; beam.style.width=`${W*0.92}px`;
-    _fin.flash(stage, '#ff6020', 0.44, 200);
-    _fin.shake(stage, 10, 320);
-    setTimeout(()=>{ beam.style.transition='opacity 0.14s'; beam.style.opacity='0'; setTimeout(()=>beam.remove(),210); }, 290);
-  }, 1850);
+  // Clone wind-up throw animation
+  setTimeout(()=>{
+    clone.style.transition='transform .18s ease-in,filter .18s';
+    clone.style.transform='scale(1.3) rotate(-18deg)';
+  },1300);
 
-  // EXPLOSION at 2.2s
-  setTimeout(() => {
-    const ex=W*0.77, ey=H*0.5;
-    _fin.shake(stage, 28, 1700);
+  // Orb LAUNCHES from clone toward enemy at 1.7s
+  setTimeout(()=>{
+    orb.style.transition='transform .06s,box-shadow .06s,left .32s ease-in,top .32s ease-in,opacity .14s .3s';
+    orb.style.transform='translate(-50%,-50%) scale(5)';
+    orb.style.left=eX+'px'; orb.style.top=eY+'px';
+    // Clone throws
+    clone.style.transition='transform .22s ease-out,filter .22s';
+    clone.style.transform='scale(1.1) rotate(12deg)';
+    clone.style.filter='drop-shadow(0 0 20px rgba(255,140,40,.8))';
+    // Beam trail from clone to enemy during orb flight
+    const bAng=Math.atan2(eY-pY,eX-pX)*180/Math.PI;
+    const bLen=Math.hypot(eX-pX,eY-pY)+60;
+    const beam=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;width:0;height:20px;border-radius:0 10px 10px 0;background:linear-gradient(90deg,#fff8e0,#ffb030,#ff4000,#cc1000);transform:translate(0,-50%) rotate(${bAng}deg);transform-origin:0 50%;z-index:84;pointer-events:none;box-shadow:0 0 26px #ff6010,0 0 60px rgba(255,70,0,.75);transition:width .18s ease-in;`,stage);
+    void beam.offsetWidth; beam.style.width=bLen+'px';
+    _fin.flash(stage,'#ff5010',.42,180);
+    _fin.shake(stage,10,300);
+    setTimeout(()=>{beam.style.transition='opacity .14s';beam.style.opacity='0';setTimeout(()=>beam.remove(),200);},300);
+  },1700);
 
-    // 5 staggered shockwave rings
-    for (let i=0; i<5; i++) setTimeout(() => {
-      const sw = _fin.mk(`position:absolute;left:${ex}px;top:${ey}px;width:22px;height:22px;border-radius:50%;border:${4.5-i*0.6}px solid rgba(255,${172-i*22},${28-i*5},${1-i*0.07});transform:translate(-50%,-50%) scale(0.08);z-index:83;pointer-events:none;box-shadow:0 0 ${24+i*6}px rgba(255,90,0,0.65);transition:transform 0.76s ease-out,opacity 0.76s ease-out;`, stage);
-      void sw.offsetWidth; sw.style.transform=`translate(-50%,-50%) scale(${11.5+i*4.5})`; sw.style.opacity='0';
-      setTimeout(()=>sw.remove(),880);
-    }, i*80);
+  // EXPLOSION at enemy position 2.1s
+  setTimeout(()=>{
+    orb.style.transition='opacity .08s'; orb.style.opacity='0'; setTimeout(()=>orb.remove(),150);
+    _fin.shake(stage,30,1900);
+    // 5 shockwave rings at enemy
+    for(let i=0;i<5;i++) setTimeout(()=>{
+      const sw=_fin.mk(`position:absolute;left:${eX}px;top:${eY}px;width:22px;height:22px;border-radius:50%;border:${4.5-i*.6}px solid rgba(255,${172-i*22},${28-i*5},${1-i*.07});transform:translate(-50%,-50%) scale(0.08);z-index:83;pointer-events:none;box-shadow:0 0 ${24+i*6}px rgba(255,90,0,.65);transition:transform .78s ease-out,opacity .78s ease-out;`,stage);
+      void sw.offsetWidth; sw.style.transform=`translate(-50%,-50%) scale(${12+i*4.5})`; sw.style.opacity='0';
+      setTimeout(()=>sw.remove(),900);
+    },i*80);
 
-    // Radial orange-to-white mega flash
-    const bf = _fin.mk(`position:absolute;inset:0;z-index:89;pointer-events:none;background:radial-gradient(circle at ${ex}px ${ey}px,#fff8e0 0%,#ffaa30 18%,#ff4000 38%,rgba(140,20,0,0.32) 65%,transparent 100%);`, stage);
-    void bf.offsetWidth; bf.style.transition='opacity 1.4s ease-out'; bf.style.opacity='0';
-    setTimeout(()=>bf.remove(),1500);
+    // Clone RUSHES in after the orb
+    setTimeout(()=>{
+      _fin.mv(clone, eX+22, eY+16, SZ, 130, 'scale(1.4) rotate(8deg)');
+      clone.style.filter='drop-shadow(0 0 50px #fff) drop-shadow(0 0 24px rgba(255,140,40,1))';
+      clone.style.transition='left 130ms ease-in,top 130ms ease-in,transform 130ms,filter 130ms';
+      // Secondary explosion on clone impact
+      setTimeout(()=>{
+        _fin.flash(stage,'#ff6020',.6,200);
+        btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
+        // Clone bounces back
+        setTimeout(()=>{_fin.mv(clone,pX,pY,SZ,280,'scale(1)');clone.style.filter='drop-shadow(0 0 14px rgba(255,120,40,.7))';},140);
+      },100);
+    },160);
 
-    // Ember rain
-    for (let i=0; i<24; i++) setTimeout(() => {
-      const ex2=ex+(Math.random()-.5)*W*0.68, ey2=ey+(Math.random()-.5)*H*0.34;
-      const emb = _fin.mk(`position:absolute;left:${ex2}px;top:${ey2}px;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px;border-radius:50%;background:rgba(255,${55+Math.floor(Math.random()*155)},0,1);z-index:80;pointer-events:none;transition:top ${1.3+Math.random()*0.65}s ease-in,opacity ${1.0+Math.random()*0.4}s ease-out ${0.14+Math.random()*0.22}s;`, stage);
-      void emb.offsetWidth; emb.style.top=`${ey2+95+Math.random()*75}px`; emb.style.opacity='0';
-      setTimeout(()=>emb.remove(),2000);
-    }, i*62);
+    // Radial mega flash
+    const bf=_fin.mk(`position:absolute;inset:0;z-index:89;pointer-events:none;background:radial-gradient(circle at ${eX}px ${eY}px,#fff8e0 0%,#ffaa30 18%,#ff4000 38%,rgba(140,20,0,.32) 65%,transparent 100%);`,stage);
+    void bf.offsetWidth; bf.style.transition='opacity 1.5s ease-out'; bf.style.opacity='0';
+    setTimeout(()=>bf.remove(),1600);
 
-    btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt');
-    btFlashHit();
-  }, 2200);
+    // Ember rain from explosion site
+    for(let i=0;i<30;i++) setTimeout(()=>{
+      const ex2=eX+(Math.random()-.5)*W*.65, ey2=eY+(Math.random()-.5)*H*.32;
+      const emb=_fin.mk(`position:absolute;left:${ex2}px;top:${ey2}px;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px;border-radius:50%;background:rgba(255,${55+Math.floor(Math.random()*155)},0,1);z-index:80;pointer-events:none;transition:top ${1.3+Math.random()*.65}s ease-in,opacity ${1+Math.random()*.4}s ease-out ${.14+Math.random()*.22}s;`,stage);
+      void emb.offsetWidth; emb.style.top=`${ey2+100+Math.random()*80}px`; emb.style.opacity='0';
+      setTimeout(()=>emb.remove(),2100);
+    },i*58);
+  },2100);
 
-  setTimeout(() => {
-    tint.style.transition='opacity 0.88s'; tint.style.opacity='0';
-    titleEl.style.transition='opacity 0.58s'; titleEl.style.opacity='0';
-    setTimeout(()=>{ tint.remove(); titleEl.remove(); stage.style.transform=''; }, 980);
-  }, 3400);
-  _fin.done(3750);
+  setTimeout(()=>{
+    clone.style.transition='opacity .5s'; clone.style.opacity='0';
+    btPlayerSprite.style.opacity='';
+    tint.style.transition='opacity .88s'; tint.style.opacity='0';
+    titleEl.style.transition='opacity .58s'; titleEl.style.opacity='0';
+    setTimeout(()=>{tint.remove();titleEl.remove();clone.remove();stage.style.transform='';},1000);
+  },3800);
+  _fin.done(4300);
 }
 
 // ── 4. ABSOLUTE ZERO (ice) ────────────────────────────────
 function triggerFrozenWorld() {
   const b = state.battle; if (!b || b.ended) return;
   battleLog(`❄ <b style="color:#88ccff;letter-spacing:4px">ABSOLUTE ZERO</b> — Time stops. Then shatters.`);
-  const { stage, W, H } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
+  const SZ=72;
 
-  const tint = _fin.mk('position:absolute;inset:0;z-index:70;background:rgba(0,14,52,0.72);pointer-events:none;', stage);
-  const titleEl = _fin.mk(`position:absolute;left:50%;top:27%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:30px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:9px;color:rgba(140,212,255,0);user-select:none;white-space:nowrap;text-shadow:0 0 24px rgba(100,196,255,0.96),0 0 58px rgba(60,150,255,0.58);transition:color 0.4s;`, stage);
-  titleEl.textContent = 'ABSOLUTE ZERO';
+  const tint=_fin.mk('position:absolute;inset:0;z-index:70;background:rgba(0,12,50,.74);pointer-events:none;',stage);
+  const titleEl=_fin.mk(`position:absolute;left:50%;top:22%;transform:translate(-50%,-50%);z-index:87;pointer-events:none;font-size:30px;font-weight:900;font-family:Impact,'Trebuchet MS',Arial,sans-serif;letter-spacing:9px;color:rgba(140,212,255,0);user-select:none;white-space:nowrap;text-shadow:0 0 24px rgba(100,196,255,.96),0 0 58px rgba(60,150,255,.58);transition:color .4s;`,stage);
+  titleEl.textContent='ABSOLUTE ZERO';
 
-  // Dynamic CSS wobble injected for time-warp effect
-  const wobStyle = document.createElement('style');
-  wobStyle.id = '__finIceWob';
-  wobStyle.textContent = `@keyframes __iceWobble{0%{transform:scaleX(1) scaleY(1)}14%{transform:scaleX(1.009) scaleY(0.991)}28%{transform:scaleX(0.992) scaleY(1.008)}42%{transform:scaleX(1.008) scaleY(0.993)}56%{transform:scaleX(0.994) scaleY(1.006)}70%{transform:scaleX(1.005) scaleY(0.996)}85%{transform:scaleX(0.998) scaleY(1.002)}100%{transform:scaleX(1) scaleY(1)}}`;
+  // Time-warp wobble
+  const wobStyle=document.createElement('style');
+  wobStyle.id='__finIceWob';
+  wobStyle.textContent=`@keyframes __iceWobble{0%{transform:scaleX(1) scaleY(1)}14%{transform:scaleX(1.009) scaleY(.991)}28%{transform:scaleX(.992) scaleY(1.008)}42%{transform:scaleX(1.008) scaleY(.993)}56%{transform:scaleX(.994) scaleY(1.006)}70%{transform:scaleX(1.005) scaleY(.996)}85%{transform:scaleX(.998) scaleY(1.002)}100%{transform:scaleX(1) scaleY(1)}}`;
   document.head.appendChild(wobStyle);
-  stage.style.animation = '__iceWobble 0.5s ease-in-out infinite';
-  stage.style.transformOrigin = '50% 50%';
+  stage.style.animation='__iceWobble .48s ease-in-out infinite';
+  stage.style.transformOrigin='50% 50%';
 
-  setTimeout(() => { titleEl.style.color='rgba(140,212,255,0.96)'; }, 410);
+  // Clone materializes slowly
+  const clone=_fin.sprite(stage, pX, pY, pEmoji, SZ);
+  clone.style.filter='drop-shadow(0 0 0px rgba(140,212,255,0))';
+  clone.style.opacity='0';
+  btPlayerSprite.style.opacity='0';
+  setTimeout(()=>{
+    clone.style.transition='opacity .5s,filter .5s'; clone.style.opacity='1';
+    clone.style.filter='drop-shadow(0 0 18px rgba(140,212,255,.85))';
+    titleEl.style.color='rgba(140,212,255,.96)';
+  },200);
 
-  // Ice crystals spawn around enemy
-  const eX=W*0.73, eY=H*0.46;
-  const crystalEls = [];
-  [0,45,90,135,180,225,270,315].forEach((ang, i) => {
-    setTimeout(() => {
-      const rad=ang*Math.PI/180, d=26+Math.random()*18;
-      const cx=eX+Math.cos(rad)*d, cy=eY+Math.sin(rad)*d;
-      const sz=9+Math.random()*14;
-      const cr = _fin.mk(`position:absolute;left:${cx}px;top:${cy}px;width:0;height:0;z-index:82;pointer-events:none;border-left:${sz/2}px solid transparent;border-right:${sz/2}px solid transparent;border-bottom:${sz}px solid rgba(162,226,255,0.9);transform:translate(-50%,-50%) rotate(${ang+Math.random()*26}deg) scale(0);filter:drop-shadow(0 0 5px rgba(100,200,255,0.72));transition:transform 0.28s cubic-bezier(0.1,0.72,0.2,1.62);`, stage);
+  const crystalEls=[];
+  // 0.6s: Ice crystals grow OUTWARD FROM CLONE toward enemy
+  // Direction angle from player to enemy
+  const angleToEnemy=Math.atan2(eY-pY,eX-pX);
+  [0,45,90,135,180,225,270,315].forEach((deg,i)=>{
+    setTimeout(()=>{
+      const rad=(deg*Math.PI/180)+angleToEnemy*.35; // bias toward enemy
+      const d=28+Math.random()*22+i*6;
+      const cx2=pX+Math.cos(rad)*d, cy2=pY+Math.sin(rad)*d;
+      const sz2=9+Math.random()*14;
+      const cr=_fin.mk(`position:absolute;left:${cx2}px;top:${cy2}px;width:0;height:0;z-index:82;pointer-events:none;border-left:${sz2/2}px solid transparent;border-right:${sz2/2}px solid transparent;border-bottom:${sz2}px solid rgba(162,226,255,.9);transform:translate(-50%,-50%) rotate(${deg}deg) scale(0);filter:drop-shadow(0 0 5px rgba(100,200,255,.72));transition:transform .3s cubic-bezier(0.1,.72,.2,1.62);`,stage);
       void cr.offsetWidth;
-      cr.style.transform=`translate(-50%,-50%) rotate(${ang+Math.random()*26}deg) scale(1)`;
+      cr.style.transform=`translate(-50%,-50%) rotate(${deg+Math.random()*22}deg) scale(1)`;
       crystalEls.push(cr);
-    }, 255+i*88);
+    },620+i*90);
   });
 
-  // Stop wobble, fire ice spikes outward (1.45s)
-  setTimeout(() => {
-    stage.style.animation = '';
-    _fin.shake(stage, 11, 460);
-    for (let i=0; i<10; i++) {
-      const ang2=(i/10)*Math.PI*2;
-      const sp = _fin.mk(`position:absolute;left:${eX}px;top:${eY}px;height:${3+Math.random()*2}px;width:0;background:linear-gradient(90deg,rgba(220,246,255,0.96),rgba(140,212,255,0.55),transparent);transform-origin:0 50%;transform:translate(0,-50%) rotate(${ang2*180/Math.PI}deg) scaleX(0);z-index:83;pointer-events:none;border-radius:2px;box-shadow:0 0 7px rgba(160,222,255,0.72);transition:width 0.38s ease-out,opacity 0.36s ease-out 0.22s;`, stage);
-      void sp.offsetWidth; sp.style.width=`${48+Math.random()*95}px`; sp.style.transform=`translate(0,-50%) rotate(${ang2*180/Math.PI}deg) scaleX(1)`;
-      setTimeout(()=>{ sp.style.opacity='0'; setTimeout(()=>sp.remove(),420); }, 430);
+  // 1.5s: Wobble ends. Clone glows cold blue.
+  setTimeout(()=>{
+    stage.style.animation=''; stage.style.transform='';
+    clone.style.transition='filter .3s'; clone.style.filter='drop-shadow(0 0 38px rgba(140,220,255,1)) drop-shadow(0 0 16px #fff)';
+    _fin.shake(stage,8,420);
+
+    // Ice spikes radiate FROM clone in all directions (main one aimed at enemy)
+    for(let i=0;i<10;i++){
+      const ang2=angleToEnemy+(i/10)*Math.PI*2;
+      const spikeLen=i===0?Math.hypot(eX-pX,eY-pY)*.55:(55+Math.random()*90);
+      const sp=_fin.mk(`position:absolute;left:${pX}px;top:${pY}px;height:${3+Math.random()*2.5}px;width:0;background:linear-gradient(90deg,rgba(220,246,255,.97),rgba(140,212,255,.6),transparent);transform-origin:0 50%;transform:translate(0,-50%) rotate(${ang2*180/Math.PI}deg) scaleX(0);z-index:83;pointer-events:none;border-radius:2px;box-shadow:0 0 7px rgba(160,222,255,.75);transition:width .4s ease-out,opacity .38s ease-out .24s;`,stage);
+      void sp.offsetWidth; sp.style.width=spikeLen+'px'; sp.style.transform=`translate(0,-50%) rotate(${ang2*180/Math.PI}deg) scaleX(1)`;
+      setTimeout(()=>{sp.style.opacity='0';setTimeout(()=>sp.remove(),430);},450);
     }
-  }, 1450);
+  },1500);
 
-  // SHATTER at 2.15s
-  setTimeout(() => {
-    _fin.shake(stage, 30, 1500);
+  // 2.0s: Clone slides toward enemy in slow motion
+  setTimeout(()=>{
+    _fin.mv(clone, eX+8, eY+8, SZ, 520, 'scale(1.15)');
+    clone.style.filter='drop-shadow(0 0 28px rgba(140,220,255,.95)) drop-shadow(0 0 10px #fff)';
+    clone.style.transition='left 520ms cubic-bezier(0.2,0,0.4,1),top 520ms cubic-bezier(0.2,0,0.4,1),transform 520ms,filter 520ms';
+  },2000);
 
-    // Crystal shards scatter
-    crystalEls.forEach((cr,i) => setTimeout(() => {
-      const a=Math.random()*Math.PI*2, d=75+Math.random()*135;
-      cr.style.transition='transform 0.6s ease-out,opacity 0.48s ease-out 0.06s';
-      cr.style.transform += ` translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0.08)`;
-      cr.style.opacity='0'; setTimeout(()=>cr.remove(),700);
-    }, i*36));
+  // 2.55s: CONTACT — clone touches enemy → SHATTER EXPLOSION
+  setTimeout(()=>{
+    _fin.shake(stage,34,1700);
+    _fin.flash(stage,'rgba(220,245,255,1)',.92,260);
+    btEnemySprite.classList.remove('hurt');void btEnemySprite.offsetWidth;btEnemySprite.classList.add('hurt');btFlashHit();
 
-    // 24 ice shard fragments
-    for (let i=0; i<24; i++) setTimeout(() => {
-      const a=Math.random()*Math.PI*2, d=95+Math.random()*170;
-      const sx=eX+Math.cos(a)*20, sy=eY+Math.sin(a)*20;
-      const sh = _fin.mk(`position:absolute;left:${sx}px;top:${sy}px;width:${5+Math.random()*10}px;height:${2+Math.random()*4}px;background:rgba(${188+Math.floor(Math.random()*67)},${216+Math.floor(Math.random()*39)},255,0.92);transform:translate(-50%,-50%) rotate(${Math.random()*360}deg);z-index:84;pointer-events:none;border-radius:1px;box-shadow:0 0 5px rgba(160,212,255,0.88);transition:left ${0.54+Math.random()*0.38}s ease-out,top ${0.54+Math.random()*0.38}s ease-out,opacity 0.42s ease-out 0.16s;`, stage);
+    // Crystals scatter from contact point (between clone and enemy)
+    const impX=(pX+eX)/2+16, impY=(pY+eY)/2+8;
+    crystalEls.forEach((cr,i)=>setTimeout(()=>{
+      const a=Math.random()*Math.PI*2, d=85+Math.random()*150;
+      cr.style.transition='transform .65s ease-out,opacity .5s ease-out .06s';
+      cr.style.transform+=` translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0.06)`;
+      cr.style.opacity='0'; setTimeout(()=>cr.remove(),750);
+    },i*32));
+
+    // 28 ice shards explode from impact point
+    for(let i=0;i<28;i++) setTimeout(()=>{
+      const a=Math.random()*Math.PI*2, d=100+Math.random()*180;
+      const sx=impX+Math.cos(a)*18, sy=impY+Math.sin(a)*18;
+      const sh=_fin.mk(`position:absolute;left:${sx}px;top:${sy}px;width:${5+Math.random()*11}px;height:${2+Math.random()*4}px;background:rgba(${188+Math.floor(Math.random()*67)},${216+Math.floor(Math.random()*39)},255,.93);transform:translate(-50%,-50%) rotate(${Math.random()*360}deg);z-index:84;pointer-events:none;border-radius:1px;box-shadow:0 0 5px rgba(160,212,255,.9);transition:left ${.52+Math.random()*.38}s ease-out,top ${.52+Math.random()*.38}s ease-out,opacity .44s ease-out .14s;`,stage);
       void sh.offsetWidth; sh.style.left=`${sx+Math.cos(a)*d}px`; sh.style.top=`${sy+Math.sin(a)*d}px`; sh.style.opacity='0';
       setTimeout(()=>sh.remove(),1100);
-    }, i*30);
+    },i*28);
 
-    // Radial blue-white shatter flash
-    const bf = _fin.mk(`position:absolute;inset:0;z-index:90;pointer-events:none;background:radial-gradient(circle at ${eX}px ${eY}px,#ffffff 0%,rgba(200,238,255,0.97) 14%,rgba(140,208,255,0.75) 32%,rgba(0,28,88,0.16) 62%,transparent 100%);`, stage);
-    void bf.offsetWidth; bf.style.transition='opacity 1.45s ease-out'; bf.style.opacity='0';
-    setTimeout(()=>bf.remove(),1550);
+    // Clone blasts back to home position
+    setTimeout(()=>{_fin.mv(clone,pX,pY,SZ,320,'scale(1)');clone.style.filter='drop-shadow(0 0 14px rgba(140,212,255,.7))';},140);
 
-    btEnemySprite.classList.remove('hurt'); void btEnemySprite.offsetWidth; btEnemySprite.classList.add('hurt');
-    btFlashHit();
-  }, 2150);
+    // Radial blue-white shatter flash from impact
+    const bf=_fin.mk(`position:absolute;inset:0;z-index:90;pointer-events:none;background:radial-gradient(circle at ${impX}px ${impY}px,#fff 0%,rgba(200,238,255,.97) 13%,rgba(140,208,255,.78) 30%,rgba(0,28,88,.14) 60%,transparent 100%);`,stage);
+    void bf.offsetWidth; bf.style.transition='opacity 1.6s ease-out'; bf.style.opacity='0';
+    setTimeout(()=>bf.remove(),1700);
+  },2550);
 
-  setTimeout(() => {
-    const ws=document.getElementById('__finIceWob'); if(ws) ws.remove();
-    tint.style.transition='opacity 0.88s'; tint.style.opacity='0';
-    titleEl.style.transition='opacity 0.58s'; titleEl.style.opacity='0';
-    setTimeout(()=>{ tint.remove(); titleEl.remove(); stage.style.transform=''; stage.style.animation=''; stage.style.transformOrigin=''; },960);
-  }, 3250);
-  _fin.done(3600);
+  // Cleanup
+  setTimeout(()=>{
+    const ws=document.getElementById('__finIceWob');if(ws)ws.remove();
+    clone.style.transition='opacity .5s';clone.style.opacity='0';
+    btPlayerSprite.style.opacity='';
+    tint.style.transition='opacity .88s';tint.style.opacity='0';
+    titleEl.style.transition='opacity .58s';titleEl.style.opacity='0';
+    setTimeout(()=>{tint.remove();titleEl.remove();clone.remove();stage.style.transform='';stage.style.animation='';stage.style.transformOrigin='';},1000);
+  },3700);
+  _fin.done(4200);
 }
 
 function setBattleMenu(kind) {
