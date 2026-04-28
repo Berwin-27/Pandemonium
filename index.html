@@ -6,13 +6,13 @@
 <title>PANDEMONIUM — GOTTA COOK 'EM ALL</title>
 <style>
 :root {
-  --fg:#ecead2; --bg:#07070f; --panel:#14142a; --panel2:#1d1d3a;
+  --fg:#ecead2; --bg:#04091a; --panel:#0a1628; --panel2:#0f1d36;
   --accent:#f4c165; --accent2:#ffe08a; --good:#7edc8b; --bad:#f06a6a;
-  --dim:#8a8ab0;
+  --dim:#8a8ab0; --navy:#0d1f3c; --navy2:#1a2f50;
 }
 * { box-sizing:border-box; margin:0; padding:0; }
 html, body {
-  background: radial-gradient(ellipse at center, #121230 0%, #05050c 70%) fixed;
+  background: radial-gradient(ellipse at center, #0c1840 0%, #04091a 70%) fixed;
   color: var(--fg); font-family: 'Courier New', 'Consolas', monospace;
   height: 100%; overflow: hidden;
 }
@@ -33,8 +33,9 @@ html, body {
   border-radius: 4px;
   box-shadow:
     0 0 0 1px #000,
-    0 0 0 4px #241d10,
-    0 0 40px rgba(244,193,101,0.18),
+    0 0 0 4px #0a1628,
+    0 0 40px rgba(244,193,101,0.22),
+    0 0 80px rgba(10,30,80,0.4),
     inset 0 0 120px rgba(0,0,0,0.6);
   overflow: hidden;
 }
@@ -48,23 +49,34 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
   background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,0.10) 3px);
   mix-blend-mode: multiply;
 }
+#filmgrain {
+  position:absolute; inset:0; pointer-events:none; z-index:6;
+  opacity:0.055; mix-blend-mode:overlay;
+  animation: grainShift 0.12s steps(1) infinite;
+}
+@keyframes grainShift {
+  0%{transform:translate(0,0)} 10%{transform:translate(-3%,-5%)} 20%{transform:translate(-6%,3%)}
+  30%{transform:translate(4%,-2%)} 40%{transform:translate(-4%,6%)} 50%{transform:translate(-1%,-4%)}
+  60%{transform:translate(5%,2%)} 70%{transform:translate(-3%,5%)} 80%{transform:translate(2%,-6%)}
+  90%{transform:translate(-6%,-1%)} 100%{transform:translate(0,0)}
+}
 /* HUD */
 #hud {
   position:absolute; top:10px; left:10px; z-index: 8;
-  background: linear-gradient(180deg, rgba(20,20,42,0.95), rgba(12,12,28,0.95));
+  background: linear-gradient(180deg, rgba(10,22,40,0.97), rgba(4,9,26,0.97));
   border:2px solid var(--accent); border-radius: 3px;
   padding: 6px 10px; font-size: 11px; letter-spacing:1px; min-width: 160px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 12px rgba(244,193,101,0.12);
 }
 #hud .row { display:flex; justify-content:space-between; align-items:center; }
 #hud .h { color: var(--accent); font-size: 10px; letter-spacing: 3px; margin-bottom:3px; }
 #hud .cnt { color: var(--good); font-weight:bold; }
 #zone {
   position:absolute; top:10px; right:10px; z-index: 8;
-  background: linear-gradient(180deg, rgba(20,20,42,0.95), rgba(12,12,28,0.95));
+  background: linear-gradient(180deg, rgba(10,22,40,0.97), rgba(4,9,26,0.97));
   border:2px solid var(--accent); border-radius: 3px;
   padding: 6px 12px; font-size: 12px; letter-spacing: 3px; color: var(--accent);
-  font-weight: bold;
+  font-weight: bold; box-shadow: 0 0 12px rgba(244,193,101,0.10);
 }
 #hint {
   position:absolute; bottom:10px; right:10px; z-index: 8;
@@ -75,11 +87,11 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 #dialogue {
   position:absolute; left:14px; right:14px; bottom:14px; z-index: 10;
   min-height: 110px;
-  background: linear-gradient(180deg, rgba(22,22,48,0.97), rgba(14,14,32,0.97));
+  background: linear-gradient(180deg, rgba(10,22,42,0.98), rgba(4,9,28,0.98));
   border: 2px solid var(--accent); border-radius: 4px;
   padding: 14px 20px; font-size: 15px; line-height: 1.5;
   display: none; letter-spacing: 1px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.7);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 20px rgba(244,193,101,0.08);
 }
 #dialogue.show { display: block; }
 #dialogue .title {
@@ -1343,6 +1355,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
     </div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
+    <div id="filmgrain"><svg width="200%" height="200%" xmlns="http://www.w3.org/2000/svg"><filter id="fgf"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fgf)"/></svg></div>
     <div id="loadingScreen" style="position:absolute;inset:0;z-index:100;background:linear-gradient(180deg,#07070f 0%,#0d0d24 50%,#07070f 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;">
       <div style="font-size:28px;letter-spacing:10px;color:#f4c165;text-shadow:0 0 20px rgba(244,193,101,0.5);">PANDEMONIUM</div>
       <div style="font-size:11px;letter-spacing:5px;color:#ffe08a;">GOTTA COOK 'EM ALL</div>
@@ -5460,10 +5473,55 @@ function playKillCutscene(onDone) {
         // enemy flickers rapidly
         if (eSpr) eSpr.style.filter=hit%2===0?'brightness(3.5) saturate(0)':'brightness(0.35) saturate(0)';
 
+        // IMPACT FRAMES at milestone hits (7=49×, 14=413×, 19=∞)
+        const impactMilestones = new Set([7,14,19,22]);
+        if (impactMilestones.has(hit)) {
+          const iColors = hit>=19 ? ['#fff','#000','#ff1010','#000','#fff','#ff1010'] : ['#fff','#000','#fff','#ff2020','#000'];
+          iColors.forEach((col,fi) => {
+            const ff=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',
+              zIndex:'9015',background:col,opacity:hit>=19?'0.75':'0.55',
+              transition:'opacity 0.03s ease-out',pointerEvents:'none'});
+            fl(ff);
+            setTimeout(()=>{ ff.style.opacity='0'; setTimeout(()=>ff.remove(),80); }, 16+fi*20);
+          });
+          // manga speed-lines radiating from enemy
+          for (let r=0;r<20;r++) {
+            const ang=(r/20)*360, spLen=70+Math.random()*140;
+            const sl2=sd({position:'absolute',left:ex+'px',top:ey+'px',
+              width:'0',height:(Math.random()>0.5?'2px':'1px'),
+              background:'rgba(255,255,255,0.8)',
+              transform:`translate(-50%,-50%) rotate(${ang}deg)`,
+              transformOrigin:'left center',
+              opacity:'0.9',zIndex:'9011',pointerEvents:'none',
+              transition:`width ${0.055+r*0.002}s ease-out, opacity 0.05s ease-out 0.06s`});
+            fl(sl2);
+            requestAnimationFrame(()=>{ sl2.style.width=spLen+'px'; });
+            setTimeout(()=>{ sl2.style.opacity='0'; setTimeout(()=>sl2.remove(),80); }, 80+r*3);
+          }
+          // big impact ring
+          const impRing=sd({position:'absolute',left:ex+'px',top:ey+'px',
+            width:'80px',height:'80px',borderRadius:'50%',
+            border:`3px solid ${hit>=19?'#ff2020':'#fff'}`,
+            transform:'translate(-50%,-50%) scale(0.05)',opacity:'1',
+            zIndex:'9012',pointerEvents:'none',
+            transition:'transform 0.22s ease-out, opacity 0.22s ease-out'});
+          fl(impRing);
+          requestAnimationFrame(()=>{ impRing.style.transform='translate(-50%,-50%) scale(6)'; impRing.style.opacity='0'; });
+          setTimeout(()=>impRing.remove(), 300);
+        }
+
+        // beyond hit 22: every 2nd hit gets a quick partial flash
+        if (hit > 22 && hit%2===0) {
+          const qf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',
+            zIndex:'9008',background:hit%4===0?'#fff':'#ff1020',opacity:'0.28',
+            transition:'opacity 0.025s ease-out',pointerEvents:'none'});
+          fl(qf); requestAnimationFrame(()=>{ qf.style.opacity='0'; setTimeout(()=>qf.remove(),80); });
+        }
+
         // micro screen flash every 4th hit
-        if (hit%4===0) {
-          const mf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9008',background:'#fff',opacity:'0.18',transition:'opacity 0.04s ease-out'});
-          fl(mf); requestAnimationFrame(()=>{ mf.style.opacity='0'; });
+        if (hit%4===0 && hit<=22) {
+          const mf=bd({position:'fixed',top:'0',left:'0',right:'0',bottom:'0',zIndex:'9008',background:'#fff',opacity:'0.18',transition:'opacity 0.04s ease-out',pointerEvents:'none'});
+          fl(mf); requestAnimationFrame(()=>{ mf.style.opacity='0'; setTimeout(()=>mf.remove(),100); });
         }
 
         // spark burst every 5th hit
@@ -7483,8 +7541,17 @@ function drawFloor(ch, sx, sy, tx, ty, h, p) {
 
 function drawFeature(ch, sx, sy, tx, ty, h) {
   switch (ch) {
-    case '#': { // stone exterior wall
+    case '#': { // stone exterior wall — 45° depth faces
       ctx.fillStyle = '#3c3644'; ctx.fillRect(sx, sy, TILE, TILE);
+      // right-side depth face (darker, 45° shadow)
+      ctx.fillStyle = '#22202c';
+      ctx.fillRect(sx+12, sy, 4, TILE);
+      // top face (lighter, simulates angled wall cap)
+      ctx.fillStyle = '#5a5468';
+      ctx.fillRect(sx, sy, TILE, 3);
+      ctx.fillStyle = '#484058';
+      ctx.fillRect(sx, sy+3, TILE, 1);
+      // mortar/brick lines
       ctx.fillStyle = '#555064';
       ctx.fillRect(sx, sy, TILE, 1); ctx.fillRect(sx, sy + 7, TILE, 1);
       ctx.fillRect(sx, sy, 1, TILE);
@@ -7497,6 +7564,9 @@ function drawFeature(ch, sx, sy, tx, ty, h) {
       ctx.fillStyle = '#6a6478';
       ctx.fillRect(sx + 2, sy + 2, 1, 1);
       ctx.fillRect(sx + 11, sy + 10, 1, 1);
+      // 45° corner catch highlight
+      ctx.fillStyle = '#6e6880';
+      ctx.fillRect(sx, sy, 1, 2); ctx.fillRect(sx, sy, 2, 1);
       break;
     }
     case '|': { // interior wallpaper wall
@@ -7823,10 +7893,13 @@ function drawFeature(ch, sx, sy, tx, ty, h) {
 function drawEntitySprite(e, sx, sy) {
   // skip if it's a fixed tile-type entity — its graphics come from the tile beneath
   if (e.fixed) return;
-  // soft shadow under emoji item
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  // blob shadow
+  const _esg = ctx.createRadialGradient(sx+TILE/2, sy+TILE-2, 0, sx+TILE/2, sy+TILE-2, 9);
+  _esg.addColorStop(0, 'rgba(0,0,0,0.5)');
+  _esg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = _esg;
   ctx.beginPath();
-  ctx.ellipse(sx + TILE / 2, sy + TILE - 2, 5, 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx+TILE/2, sy+TILE-2, 9, 3.5, 0, 0, Math.PI*2);
   ctx.fill();
   if (!e.e) return;
   ctx.font = '13px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
@@ -7836,10 +7909,13 @@ function drawEntitySprite(e, sx, sy) {
 }
 
 function drawPlayer(sx, sy) {
-  // shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  // blob shadow
+  const _bsg = ctx.createRadialGradient(sx+8, sy+16, 0, sx+8, sy+16, 10);
+  _bsg.addColorStop(0, 'rgba(0,0,0,0.55)');
+  _bsg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = _bsg;
   ctx.beginPath();
-  ctx.ellipse(sx + 8, sy + 15, 5, 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx+8, sy+16, 10, 4, 0, 0, Math.PI*2);
   ctx.fill();
   // cape / travel coat
   ctx.fillStyle = '#2a3050';
