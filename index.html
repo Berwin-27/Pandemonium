@@ -5605,7 +5605,7 @@ function useStruggle() {
   audio.glance();
   battleLog(`${getEvoName(state.activeAppliance).toUpperCase()} struggles desperately! <b>${dmg}</b> damage.`);
   renderBattle();
-  if (b.enemyHp <= 0) { b.ended = true; setTimeout(() => _randomKillCutscene(() => { btEnemySprite.classList.add('faint'); onEnemyFaint(); }), 350); return; }
+  if (b.enemyHp <= 0) { setTimeout(() => triggerFinisher(), 250); return; }
   setTimeout(() => enemyTurn(), 850);
 }
 
@@ -5710,7 +5710,7 @@ function resolveBattleMove(score, gotGood) {
   const matchMsg = matchup > 1 ? ' <span style="color:#7edc8b">SUPER EFFECTIVE!</span>' : (matchup < 1 ? ' <span style="color:#e55">Not very effective...</span>' : '');
   battleLog(`${qual}${b.enemy.n} takes <b>${dmg}</b> damage.${matchMsg}`);
   renderBattle();
-  if (b.enemyHp <= 0) { b.ended = true; setTimeout(() => _randomKillCutscene(() => { btEnemySprite.classList.add('faint'); onEnemyFaint(); }), 350); return; }
+  if (b.enemyHp <= 0) { setTimeout(() => triggerFinisher(), 250); return; }
   setTimeout(() => enemyTurn(), 1200);
 }
 
@@ -6736,6 +6736,24 @@ function playCatchCutscene(onDone) {
   }, 5000);
 }
 
+function teleportEntityToRandomPosition(ent) {
+  const m = ent.m;
+  const map = maps[m]; if (!map) return;
+  const valid = [];
+  for (let y = 0; y < map.h; y++) {
+    for (let x = 0; x < map.w; x++) {
+      if (x === ent.x && y === ent.y) continue;
+      if (BLOCK.has(tileAt(m, x, y))) continue;
+      if (entities.some(e => e !== ent && e.m === m && e.x === x && e.y === y)) continue;
+      valid.push({ x, y });
+    }
+  }
+  if (!valid.length) return;
+  const pos = valid[Math.floor(Math.random() * valid.length)];
+  ent.x = pos.x;
+  ent.y = pos.y;
+}
+
 function onEnemyFaint() {
   const b = state.battle; if (!b) return;
   b.ended = true;
@@ -6764,7 +6782,8 @@ function onEnemyFaint() {
     if (b.enemyShiny) state.shinies[b.enemy.id] = true;
     dailyTrack('catch', { elem: getElement(b.enemy.id), rarity: b.enemy.rarity });
   } else {
-    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It escapes before you can catch it.`);
+    battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It flickers and warps to a new location...`);
+    teleportEntityToRandomPosition(b.enemy);
   }
   dailyTrack('win', {});
   if (b.turnCount > 0 && state.playerHp >= state.playerMaxHp) dailyTrack('perfectWin', {});
