@@ -9059,13 +9059,16 @@ function renderInventoryModal() {
     const winsCount = state.applianceWins[sel.id] || 0;
     const nextEvo = getWinsToNextEvo(sel.id);
     const evoProgress = isCaught ? (nextEvo ? ` &nbsp;&bull;&nbsp; WINS: ${winsCount} (${nextEvo.need} to EVO ${nextEvo.next})` : ` &nbsp;&bull;&nbsp; WINS: ${winsCount} (MAX EVO)`) : '';
+    const itemEvoHint = ITEM_EVO[sel.id] && state[ITEM_EVO[sel.id].stateKey]
+      ? ` &nbsp;&bull;&nbsp; <span style="color:#f4c165">&#9733; ${ITEM_EVO[sel.id].itemName} ready &mdash; special evo available!</span>`
+      : '';
     const head =
       `<div class="name"><span style="font-size:22px;vertical-align:-2px">${reveal ? sel.e : '\u2753'}</span> ` +
       `#${String(sel.id).padStart(2,'0')} ${reveal ? getEvoName(sel.id) : '???'}${evoLabel}${shinyLabel} ` +
       `<span style="color:${col};letter-spacing:3px;font-size:11px">&bull; ${rarLabel}</span></div>`;
     const body = reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
-        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}</div>` +
+        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}${itemEvoHint}</div>` +
         (isCaught ? `<div style="margin-top:6px">${renderStatBars(sel)}</div>${renderEvoChain(sel)}` : '')
       : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
         `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`;
