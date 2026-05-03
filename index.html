@@ -490,6 +490,38 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 .rar-admin      { color:#f067ff !important; }
 .invslot .rbadge { position:absolute; bottom:1px; right:2px; font-size:8px; letter-spacing:1px; font-weight:bold; opacity:0.9; }
 .invslot { position:relative; }
+
+/* ── Pandex animated slot effects ───────────────────────── */
+.invslot.caught { animation: slotIdlePulse 3s ease-in-out infinite; }
+@keyframes slotIdlePulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.invslot.caught:hover { transform: scale(1.15) !important; transition: transform .12s ease !important; animation-play-state: paused; }
+.invslot.caught.shiny-slot { animation: slotShinyPulse 1.5s ease-in-out infinite !important; }
+@keyframes slotShinyPulse {
+  0%,100% { box-shadow: 0 0 6px #ffd700, 0 0 16px rgba(255,215,0,.4); transform: scale(1); }
+  50% { box-shadow: 0 0 14px #ffd700, 0 0 32px rgba(255,215,0,.7); transform: scale(1.07); }
+}
+/* Element glow on hover */
+.invslot.elem-fire:hover { box-shadow: 0 0 12px #ff6b35 !important; }
+.invslot.elem-ice:hover  { box-shadow: 0 0 12px #5bcefa !important; }
+.invslot.elem-electric:hover { box-shadow: 0 0 12px #ffe44d !important; }
+/* Rarity tier border thickness */
+.invslot[data-rarity="rare"] { border-width: 2px !important; }
+.invslot[data-rarity="epic"] { border-width: 2px !important; }
+.invslot[data-rarity="mythic"] { border-width: 3px !important; }
+.invslot[data-rarity="legendary"] { border-width: 3px !important; }
+.invslot[data-rarity="ultra"] { border-width: 3px !important; animation: slotUltraPulse 2s ease-in-out infinite !important; }
+@keyframes slotUltraPulse {
+  0%,100% { filter: drop-shadow(0 0 4px rgba(255,80,180,.5)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255,80,180,.9)); }
+}
+@keyframes loreReveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 #invtabs { display:flex; gap:6px; justify-content:center; margin-bottom:10px; flex-wrap:wrap; }
 .invtab { padding:4px 10px; font-size:10px; letter-spacing:2px; border:1px solid #2a2e5a; border-radius:3px; cursor:pointer; color:#888; }
 .invtab.active { border-color: var(--accent); color: var(--accent); background: rgba(244,193,101,0.08); }
@@ -2473,7 +2505,7 @@ const HIDDEN_ITEMS = [
   { map:'cave',       x:10, y:8,  item:'Shiny Lure',   oneTime:true,
     msg:'A Shiny Lure! Next encounter has 50% shiny chance!',
     effect(){ state.shinyLureActive = true; } },
-  { map:'mountain',   x:20, y:10, item:'Frost Core',   oneTime:true,
+  { map:'mountain',   x:20, y:14, item:'Frost Core',   oneTime:true,
     msg:'A Frost Core! FROZEN status now lasts 2 turns!',
     effect(){ state.frostCore = true; } },
   { map:'scrapyard',  x:14, y:8,  item:'Max Ration',   oneTime:true,
@@ -8912,7 +8944,9 @@ function renderInventoryModal() {
       const isCaught = state.caught.has(it.id);
       const reveal = isCaught || state.adminMode;
       const admin = state.adminMode && !isCaught;
-      const cls = `invslot ${sel} ${reveal ? 'caught' : 'silh'}${admin ? ' admin' : ''}`;
+      const elemCls = reveal ? `elem-${getElement(it.id)}` : '';
+      const shinyAnimCls = (state.shinies && state.shinies[it.id]) ? 'shiny-slot' : '';
+      const cls = `invslot ${sel} ${reveal ? 'caught' : 'silh'}${admin ? ' admin' : ''} ${elemCls} ${shinyAnimCls}`.trim();
       const col = admin ? '#f067ff' : RARITY_COLOR[it.rarity];
       const badgeCh = admin ? 'A' : RARITY_LABEL[it.rarity][0];
       const badge = `<div class="rbadge" style="color:${col}">${badgeCh}</div>`;
@@ -8921,7 +8955,7 @@ function renderInventoryModal() {
       const isShinySlot = state.shinies[it.id];
       const border = admin ? '#f067ff' : (isShinySlot ? '#ffd700' : (isCaught ? '#7edc8b' : '#2a2e5a'));
       const shinyGlow = isShinySlot ? ';box-shadow:0 0 8px #ffd700' : '';
-      html += `<div class="${cls}" data-idx="${i}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}</div>`;
+      html += `<div class="${cls}" data-idx="${i}" data-rarity="${it.rarity}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}</div>`;
     } else {
       html += `<div class="invslot empty"></div>`;
     }
@@ -8961,6 +8995,12 @@ function renderInventoryModal() {
       : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
         `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`;
     invDetail.innerHTML = head + body;
+    if (reveal && isCaught && !invDetail._hasLoreAnim) {
+      invDetail._hasLoreAnim = true;
+      invDetail.style.animation = 'none';
+      void invDetail.offsetWidth;
+      invDetail.style.animation = 'loreReveal .35s ease';
+    }
   }
 }
 
