@@ -1271,6 +1271,20 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 .evo-chain-row { display:flex; align-items:center; gap:6px; margin:6px 0; font-size:10px; color:#aaa; font-family:'Courier New',monospace; }
 .evo-chain-arrow { color:#555; font-size:12px; }
 .evo-chain-name { color:#f4c165; }
+/* ── Evolution Cutscene ─────────────────────────────────── */
+#evoModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:9500; align-items:center; justify-content:center; flex-direction:column; }
+#evoModal.show { display:flex; animation:evoFadeIn .4s ease; }
+@keyframes evoFadeIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+.evo-scene { text-align:center; font-family:'Courier New',monospace; color:#e0e0e0; padding:30px; max-width:380px; }
+.evo-emoji-before { font-size:72px; display:block; filter:grayscale(1) brightness(0.5); transition:all 1.2s ease; }
+.evo-emoji-before.transforming { filter:none; transform:scale(1.4); }
+.evo-flash-ring { width:140px; height:140px; border-radius:50%; border:3px solid #f4c165; margin:20px auto; display:flex; align-items:center; justify-content:center; animation:evoRingPulse 0.8s ease-in-out infinite; }
+@keyframes evoRingPulse { 0%,100%{box-shadow:0 0 12px #f4c165,0 0 30px rgba(244,193,101,.3)} 50%{box-shadow:0 0 24px #f4c165,0 0 60px rgba(244,193,101,.6)} }
+.evo-title { font-size:13px; letter-spacing:4px; color:#f4c165; margin:16px 0 6px; text-transform:uppercase; }
+.evo-name-new { font-size:20px; font-weight:bold; letter-spacing:3px; margin-bottom:12px; }
+.evo-stat-gains { font-size:11px; color:#7edc8b; letter-spacing:1px; margin-bottom:16px; line-height:1.8; }
+.evo-continue-btn { background:#1a1a2e; border:1px solid #f4c165; color:#f4c165; padding:8px 24px; border-radius:4px; font-family:inherit; font-size:11px; letter-spacing:3px; cursor:pointer; text-transform:uppercase; }
+.evo-continue-btn:hover { background:#2a2a4e; }
 </style>
 </head>
 <body>
@@ -1288,7 +1302,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <div id="stars"><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span></div>
     </div>
     <div id="zone">HOME</div>
-    <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE &bull; F9 = LOAD</div>
+    <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE SLOTS &bull; F9 = LOAD SLOTS</div>
     <div id="dialogue"></div>
     <div id="invmodal">
       <div id="invpanel">
@@ -1437,10 +1451,10 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <p>Catching an Appliance requires skill. Time your strikes, hammer buttons, hold your nerve, follow precise sequences, and take careful aim. Rarer Appliances demand sharper technique.</p>
       <div class="keys">
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
-        P &mdash; PANDEX &nbsp; M &mdash; WARP HOME &nbsp; F5 &mdash; SAVE &nbsp; F9 &mdash; LOAD
+        P &mdash; PANDEX &nbsp; M &mdash; WARP HOME &nbsp; F5 &mdash; SAVE SLOTS &nbsp; F9 &mdash; LOAD SLOTS
       </div>
       <div class="press" style="cursor:pointer" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}))">&gt; TAP or PRESS SPACE TO BEGIN &lt;</div>
-      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="loadGame()">&gt; TAP or F9 TO CONTINUE &lt;</div>
+      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="openSaveSlots('load')">&gt; TAP or F9 TO CONTINUE &lt;</div>
     </div>
     <div id="starter">
       <h1>CHOOSE YOUR FIRST</h1>
@@ -2422,6 +2436,74 @@ const entities = [
 ];
 
 // ======================================================================
+// CYCLING-DIALOGUE NPCS
+// ======================================================================
+const CYCLE_NPCS = [
+  { id:'cnpc_chef',     m:'house',     x:5,  y:2,  e:'👨‍🍳', n:'Chef Blanc',
+    lines:['The Legendary Pot Roast dwells deep in the void — no Appliance has ever cooked it twice.','I once caught a shiny Kettleton. The hue was wrong. The hum was perfect. It changed me.','Catch all 63. Every last one. The Pandex does not forgive gaps.'] },
+  { id:'cnpc_hiker',    m:'wild',      x:12, y:8,  e:'🧭', n:'Trail Scout',
+    lines:['A hidden item glitters near the old riverbed. Look where the grass thins.','Electric types are weak to Ice — and too proud to admit it.','I spotted a Shiny Blendax once. Just once. I still dream about it.'] },
+  { id:'cnpc_tinker',   m:'market',    x:22, y:14, e:'🔧', n:'Tinker Rue',
+    lines:['I left a Gadget Chip wedged beneath aisle nine. Someone should grab it.','Rare Appliances lurk in places other people overlook. Check the corners.','SHORTED status disables electric moves entirely for two turns. Plan accordingly.'] },
+  { id:'cnpc_elder',    m:'plains',    x:8,  y:16, e:'👴', n:'Elder Watt',
+    lines:['In my day, catching one took all week. Now you kids just wing a Takeout Box and walk away.','The void map holds only the strongest. You are not ready. Go anyway.','Three Michelin Stars and a secret awaits you — the fourth door never opens twice.'] },
+  { id:'cnpc_ghost',    m:'cave',      x:15, y:11, e:'👻', n:'???',
+    lines:['...','...catch...them...all...','You should not be here.'] },
+  { id:'cnpc_alchemist',m:'mountain',  x:22, y:13, e:'⚗️', n:'Peak Alchemist',
+    lines:['Frost is patient. Ice types win wars of attrition.','The cave is cold but the rewards are legendary — literally.','I sealed a Frost Core beneath these stones. Only the worthy find it.'] },
+  { id:'cnpc_diver',    m:'lake',      x:18, y:12, e:'🤿', n:'Lake Diver',
+    lines:['Something glimmers at the bottom. I can\'t reach it. Maybe you can.','Boatsworth taught me everything I know about dignity and leaking.','Catch rate goes up when they\'re weakened. Don\'t sleep on that mechanic.'] },
+  { id:'cnpc_merchant', m:'scrapyard', x:6,  y:10, e:'🛒', n:'Scrap Merchant',
+    lines:['Everything in here was once someone\'s prize catch. A tragedy, truly.','The Salvageon is rebuilt from seven broken units. Still counts as one catch.','A shiny among the rust... I saw it once. Blinked. Gone.'] },
+];
+
+// ======================================================================
+// HIDDEN ITEM PICKUPS
+// ======================================================================
+const HIDDEN_ITEMS = [
+  { map:'wild',       x:15, y:15, item:'Golden Fork',  oneTime:true,
+    msg:'Found a hidden Golden Fork! +25 max HP permanently!',
+    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
+  { map:'market',     x:24, y:15, item:'Gadget Chip',  oneTime:true,
+    msg:'Found a Gadget Chip hidden in the aisle! Gadget Scanner activated!',
+    effect(){ state.gadget = true; } },
+  { map:'plains',     x:26, y:6,  item:'Lucky Charm',  oneTime:true,
+    msg:'Found a Lucky Charm! Catch rate +10%!',
+    effect(){ state.luckyCharmBonus = 1; } },
+  { map:'cave',       x:10, y:8,  item:'Shiny Lure',   oneTime:true,
+    msg:'A Shiny Lure! Next encounter has 50% shiny chance!',
+    effect(){ state.shinyLureActive = true; } },
+  { map:'mountain',   x:20, y:10, item:'Frost Core',   oneTime:true,
+    msg:'A Frost Core! FROZEN status now lasts 2 turns!',
+    effect(){ state.frostCore = true; } },
+  { map:'scrapyard',  x:14, y:8,  item:'Max Ration',   oneTime:true,
+    msg:'Max Ration! Fully restored HP!',
+    effect(){ state.playerHp = state.playerMaxHp; } },
+];
+
+function checkHiddenItems() {
+  if (!state.started || state.won) return;
+  for (const hi of HIDDEN_ITEMS) {
+    if (hi.map !== state.map) continue;
+    if (hi.x !== state.px || hi.y !== state.py) continue;
+    const key = `${hi.map}:${hi.x}:${hi.y}`;
+    if (hi.oneTime && state.hiddenItemsFound.has(key)) continue;
+    if (hi.oneTime) state.hiddenItemsFound.add(key);
+    hi.effect();
+    toast(hi.msg);
+    autoSave();
+    break;
+  }
+}
+
+function npcCycleTalk(npc) {
+  const count = state.npcTalks[npc.id] || 0;
+  const line = npc.lines[count % npc.lines.length];
+  state.npcTalks[npc.id] = count + 1;
+  openDialog(npc.n, [line]);
+}
+
+// ======================================================================
 // APPLIANCE STATS
 // ======================================================================
 (function _buildApplianceStats() {
@@ -2578,7 +2660,12 @@ const state = {
   activeBuffs: {},          // buffName → expiry timestamp
   ultGauge: 0,             // 0–100 percent; fills on player damage dealt
   playtime: 0,             // ms of active play time
-  lastSaveSlot: 0          // 0|1|2 — slot last used to save/load
+  lastSaveSlot: 0,         // 0|1|2 — slot last used to save/load
+  npcTalks: {},            // npc id → number of times talked
+  hiddenItemsFound: new Set(), // keys 'map:x:y' for collected hidden items
+  frostCore: false,        // Frost Core: FROZEN lasts 2 turns
+  shinyLureActive: false,  // Shiny Lure: next encounter has 50% shiny chance
+  luckyCharmBonus: 0       // Lucky Charm: +10% catch rate
 };
 
 function checkAdminTerminal() {
@@ -3840,7 +3927,12 @@ function _buildSaveData() {
     shinies: state.shinies, bossesDefeated: state.bossesDefeated,
     dailyDate: state.dailyDate, dailyProgress: state.dailyProgress,
     dailyClaimed: state.dailyClaimed, activeBuffs: state.activeBuffs,
-    playtime: state.playtime || 0, ts: Date.now()
+    playtime: state.playtime || 0, ts: Date.now(),
+    npcTalks: state.npcTalks || {},
+    hiddenItemsFound: [...(state.hiddenItemsFound || [])],
+    frostCore: state.frostCore || false,
+    shinyLureActive: state.shinyLureActive || false,
+    luckyCharmBonus: state.luckyCharmBonus || 0
   };
 }
 
@@ -3863,6 +3955,11 @@ function _applySaveData(d) {
   state.dailyClaimed = d.dailyClaimed || {};
   state.activeBuffs = d.activeBuffs || {};
   state.playtime = d.playtime || 0;
+  state.npcTalks = d.npcTalks || {};
+  state.hiddenItemsFound = new Set(d.hiddenItemsFound || []);
+  state.frostCore = d.frostCore || false;
+  state.shinyLureActive = d.shinyLureActive || false;
+  state.luckyCharmBonus = d.luckyCharmBonus || 0;
   state.started = true; state.screen = 'world';
   state.moving = false; state.prog = 0;
 }
@@ -4018,7 +4115,8 @@ function tileAt(m, x, y) {
 }
 function entAt(m, x, y) {
   return entities.find(e => e.m === m && e.x === x && e.y === y
-    && !(e.id && state.caught.has(e.id)));
+    && !(e.id && state.caught.has(e.id)))
+    || CYCLE_NPCS.find(e => e.m === m && e.x === x && e.y === y);
 }
 function isWaterTile(m, x, y) { return tileAt(m, x, y) === '~' && (m === 'lake' || m === 'beach'); }
 function canWalk(m, x, y) {
@@ -4031,6 +4129,7 @@ function canWalk(m, x, y) {
   if (e.shrine) return false;
   if (e.gate && checkGate(e.gate)) return true;
   if (e.npc)    return false;
+  if (e.lines)  return false; // cycling-dialogue NPC blocks movement
   if (e.id)     return false; // catchable appliance blocks movement until caught
   return true;
 }
@@ -4124,7 +4223,7 @@ function tryMove(dx, dy, dirName) {
   const nx = state.px + dx, ny = state.py + dy;
   const tr = transitions(state.map, nx, ny);
   if (tr) {
-    state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map);
+    state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition();
     const tf=document.createElement('div');
     Object.assign(tf.style,{position:'fixed',inset:'0',zIndex:'4000',background:'rgba(0,0,0,0)',pointerEvents:'none',transition:'background .14s ease-in'});
     document.body.appendChild(tf); void tf.offsetWidth; tf.style.background='rgba(0,0,0,.82)';
@@ -4155,6 +4254,7 @@ function interact() {
   if (e.heal)   return healStation(e);
   if (e.gate)   return gateNpcTalk(e);
   if (e.bulletin) return bulletinBoardInteract();
+  if (e.lines)  return npcCycleTalk(e);   // cycling-dialogue NPC
   if (e.npc)    return openDialog(e.n, [e.desc]);
   if (e.id && !state.caught.has(e.id)) return encounter(e);
 }
@@ -4231,16 +4331,6 @@ function activeElement() {
   return p ? getElement(p.id) : 'neutral';
 }
 
-function elemMatchup(atkElem, defElem) {
-  if (atkElem === 'fire'     && defElem === 'ice')      return 1.5;
-  if (atkElem === 'ice'      && defElem === 'electric') return 1.5;
-  if (atkElem === 'electric' && defElem === 'fire')     return 1.5;
-  if (atkElem === 'fire'     && defElem === 'fire')     return 0.5;
-  if (atkElem === 'ice'      && defElem === 'ice')      return 0.5;
-  if (atkElem === 'electric' && defElem === 'electric') return 0.5;
-  return 1.0;
-}
-
 function encounter(e) { startBattle(e); }
 
 // ======================================================================
@@ -4290,8 +4380,9 @@ function startBattle(enemyEnt) {
     turnCount: 0,
     lastMinigame: null,
     switchList: null,
-    enemyShiny: Math.random() < 0.01
+    enemyShiny: Math.random() < (state.shinyLureActive ? 0.50 : 0.01)
   };
+  if (state.shinyLureActive) { state.shinyLureActive = false; }
   if (state.battle.enemyShiny) {
     state.battle.enemyMaxHp = Math.round(state.battle.enemyMaxHp * 1.3);
   }
@@ -6565,6 +6656,19 @@ function setBattleMenu(kind) {
       const _fl = _finLabel();
       html += `<div class="bt-btn" data-mv="ult" style="grid-column:1 / -1;border-color:${_fl.color};color:${_fl.color};box-shadow:0 0 12px ${_fl.color}55;animation:ultBarPulse 0.7s ease-in-out infinite">${_fl.icon} ${_fl.name} ${_fl.icon}<span class="bt-mg" style="color:#f0d060">FINISHER &bull; ULT GAUGE FULL</span></div>`;
     }
+    // Enemy status hint panel
+    if (!b.isBoss) {
+      const eEl = getElement(b.enemy.id);
+      const pEl = activeElement();
+      const mu = elemMatchup(pEl, eEl);
+      const eInfo = ELEMENTS[eEl] || ELEMENTS.neutral;
+      const effectiveness = mu > 1 ? `<span style="color:#7edc8b">SUPER EFFECTIVE vs ${eInfo.label}</span>` :
+                            mu < 1 ? `<span style="color:#e55">NOT VERY EFFECTIVE vs ${eInfo.label}</span>` :
+                            `<span style="color:#888">Neutral vs ${eInfo.label}</span>`;
+      const statusWarn = b.enemyStatus && STATUS_DEFS[b.enemyStatus] ? `<span style="color:${STATUS_DEFS[b.enemyStatus].color}">${STATUS_DEFS[b.enemyStatus].label}</span> &bull; ` : '';
+      const playerStatusWarn = b.playerStatus && STATUS_DEFS[b.playerStatus] ? `<span style="color:${STATUS_DEFS[b.playerStatus].color}">YOU: ${STATUS_DEFS[b.playerStatus].label}</span> &bull; ` : '';
+      html += `<div style="grid-column:1/-1;font-size:9px;color:#666;padding:2px 4px;border-top:1px solid #1a1a2e;margin-top:2px">${playerStatusWarn}${statusWarn}${effectiveness}</div>`;
+    }
     btMenu.innerHTML = html;
     if (!allUsed) {
       const firstAvail = moves.findIndex(m => m.mg !== b.lastMinigame);
@@ -6677,7 +6781,8 @@ const catchScoreText = document.getElementById('catchScoreText');
 function catchChance(rarity, hpPct) {
   const base = { common:0.85, rare:0.65, epic:0.45, mythic:0.30, legendary:0.20, ultra:0.10 }[rarity] || 0.5;
   const hpBoost = (1 - hpPct) * 0.35;
-  return Math.min(0.98, base + hpBoost);
+  const luckBonus = (state.luckyCharmBonus || 0) * 0.10;
+  return Math.min(0.98, base + hpBoost + luckBonus);
 }
 
 function startCatchSequence() {
@@ -7089,9 +7194,9 @@ function resolveBattleMove(score, gotGood) {
     if (matchup > 1) setTimeout(() => playMatchupFlash(true), 100);
     else if (matchup < 1) setTimeout(() => playMatchupFlash(false), 100);
   }, 200);
-  if (state.adminMode || crit) audio.crit();
-  else if (score > 0.7) audio.cleanHit();
-  else if (score > 0.4) audio.hit();
+  if (state.adminMode || crit) { audio.crit(); triggerScreenShake(8, 380); }
+  else if (score > 0.7) { audio.cleanHit(); audio.battleHit(); triggerScreenShake(4, 240); }
+  else if (score > 0.4) { audio.hit(); audio.battleHit(); triggerScreenShake(2, 160); }
   else audio.glance();
   const qual = state.adminMode ? 'ADMIN OVERRIDE! ' : (crit ? 'CRITICAL! ' : (score > 0.7 ? 'Clean hit! ' : (score > 0.4 ? '' : 'Glancing blow. ')));
   const matchMsg = matchup > 1 ? ' <span style="color:#7edc8b">SUPER EFFECTIVE!</span>' : (matchup < 1 ? ' <span style="color:#e55">Not very effective...</span>' : '');
@@ -8365,8 +8470,8 @@ function onEnemyFaint() {
     if (newStage > prevStage) {
       const evoName = getEvoName(activeId);
       const col = EVO_COLOR[newStage];
-      audio.catchSuccess();
-      playEvoFlash(activeId, evoName, col);
+      const prevEnt = entities.find(e => e.id === activeId);
+      setTimeout(() => showEvoCutscene(activeId, prevEnt ? prevEnt.n : 'Appliance', evoName, prevEnt ? prevEnt.e : '?', prevEnt ? prevEnt.e : '★', col, newStage === 2 ? 18 : 12), 500);
       battleLog(`<b style="color:${col};font-size:14px">★ EVOLUTION! ★</b> Your appliance evolved into <b style="color:${col}">${evoName.toUpperCase()}</b>!`);
       dailyTrack('evolve', {});
       const hpGain = newStage === 2 ? 18 : 12;
@@ -8437,7 +8542,7 @@ function closeBattle() {
   btArena.classList.remove('boss-shake');
   audio.stopBattle();
   audio.startArea(state.map);
-  saveGame();
+  autoSave();
   if (!wasBoss) {
     const pending = pendingBossStar();
     if (pending > 0) {
@@ -8702,6 +8807,44 @@ function moveInvSel(delta) {
   if (n >= list.length) n = list.length - 1;
   state.invSel = n;
   renderInventoryModal();
+}
+
+function showEvoCutscene(activeId, fromName, toName, fromEmoji, toEmoji, evoColor, hpGain) {
+  const modal = document.getElementById('evoModal');
+  if (!modal) return;
+  modal.innerHTML = `
+    <div class="evo-scene">
+      <div class="evo-flash-ring">
+        <span class="evo-emoji-before" id="evoEmoji">${fromEmoji}</span>
+      </div>
+      <div class="evo-title" id="evoTitleText">What?! ${fromName.toUpperCase()} is evolving!</div>
+      <div class="evo-name-new" id="evoNameNew" style="color:${evoColor};opacity:0">???</div>
+      <div class="evo-stat-gains" id="evoStatGains"></div>
+      <button class="evo-continue-btn" id="evoContinueBtn" style="display:none" onclick="document.getElementById('evoModal').classList.remove('show')">CONTINUE &#9658;</button>
+    </div>`;
+  modal.classList.add('show');
+  if (window.audio && audio.evoFanfare) audio.evoFanfare();
+  // Phase 1: flash and transform emoji
+  setTimeout(() => {
+    const emojiEl = document.getElementById('evoEmoji');
+    if (emojiEl) { emojiEl.classList.add('transforming'); emojiEl.textContent = toEmoji; }
+  }, 800);
+  // Phase 2: reveal new name
+  setTimeout(() => {
+    const nameEl = document.getElementById('evoNameNew');
+    const titleEl = document.getElementById('evoTitleText');
+    if (nameEl) { nameEl.textContent = toName.toUpperCase(); nameEl.style.opacity = '1'; nameEl.style.transition = 'opacity .6s ease'; }
+    if (titleEl) titleEl.textContent = '✶ EVOLUTION COMPLETE ✶';
+    const statsEl = document.getElementById('evoStatGains');
+    if (statsEl) statsEl.innerHTML = `+${hpGain} MAX HP<br>All stats increased!`;
+  }, 1600);
+  // Phase 3: show continue button
+  setTimeout(() => {
+    const btn = document.getElementById('evoContinueBtn');
+    if (btn) btn.style.display = 'inline-block';
+  }, 2400);
+  // Auto-dismiss after 6s
+  setTimeout(() => { try { modal.classList.remove('show'); } catch(e) {} }, 6000);
 }
 
 function renderStatBars(ent) {
@@ -10157,6 +10300,14 @@ function render() {
     if (sx < -TILE || sy < -TILE || sx > VW || sy > VH) continue;
     drawEntitySprite(e, sx, sy);
   }
+  // Draw cycling-dialogue NPCs
+  for (const e of CYCLE_NPCS) {
+    if (e.m !== state.map) continue;
+    const sx = e.x * TILE - cam.x;
+    const sy = e.y * TILE - cam.y;
+    if (sx < -TILE || sy < -TILE || sx > VW || sy > VH) continue;
+    drawEntitySprite(e, sx, sy);
+  }
   // player
   const pdx = state.moving ? (state.tx - state.px) * state.prog : 0;
   const pdy = state.moving ? (state.ty - state.py) * state.prog : 0;
@@ -10254,7 +10405,7 @@ function tick(now) {
     if (state.moving) {
       const swimming = isWaterTile(state.map, state.tx, state.ty);
       state.prog += dt / (swimming ? STEP_MS * 2.2 : STEP_MS);
-      if (state.prog >= 1) { state.px = state.tx; state.py = state.ty; state.moving = false; state.prog = 0; checkAdminTerminal(); }
+      if (state.prog >= 1) { state.px = state.tx; state.py = state.ty; state.moving = false; state.prog = 0; checkAdminTerminal(); checkHiddenItems(); }
     }
     if (!state.moving) {
       if (keys['arrowup']    || keys['w']) tryMove(0, -1, 'up');
@@ -10354,5 +10505,6 @@ requestAnimationFrame(tick);
 })();
 </script>
 <div id="saveModal"></div>
+<div id="evoModal"></div>
 </body>
 </html>
