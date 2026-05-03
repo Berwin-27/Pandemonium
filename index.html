@@ -1335,6 +1335,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
     </div>
     <div id="zone">HOME</div>
     <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE SLOTS &bull; F9 = LOAD SLOTS</div>
+    <div id="streakHud" style="display:none;position:absolute;top:4px;right:8px;font-family:'Courier New',monospace;font-size:9px;color:#f4c165;letter-spacing:2px;z-index:50"></div>
     <div id="dialogue"></div>
     <div id="invmodal">
       <div id="invpanel">
@@ -2072,6 +2073,15 @@ const EVO_THRESHOLDS = {
 };
 const EVO_SUFFIX = ['', ' EX', ' MEGA'];
 const EVO_COLOR = ['', '#7edc8b', '#f4c165'];
+// Items needed for special evolutions (id → required item key in state)
+const ITEM_EVO = {
+  1:  { stateKey: 'luckyCharmBonus', itemName: 'Lucky Charm',  toName: 'Spatulon Aurum',    toEmoji: '✨🍳', stage: 1 },
+  2:  { stateKey: 'gadget',          itemName: 'Gadget Chip',  toName: 'Whisk-er PRO',      toEmoji: '⚙️🥣', stage: 1 },
+  17: { stateKey: 'gadget',          itemName: 'Gadget Chip',  toName: 'Toasty MK.II',      toEmoji: '🔥🍞', stage: 1 },
+  22: { stateKey: 'frostCore',       itemName: 'Frost Core',   toName: 'Rollor Glacier',    toEmoji: '❄️🍞', stage: 1 },
+  28: { stateKey: 'frostCore',       itemName: 'Frost Core',   toName: 'Mixtron Cryo',      toEmoji: '❄️⚙️', stage: 1 },
+  35: { stateKey: 'luckyCharmBonus', itemName: 'Lucky Charm',  toName: 'Ovenar Prime',      toEmoji: '✨🔥', stage: 1 },
+};
 function getEvoStage(id) {
   const wins = (state.applianceWins && state.applianceWins[id]) || 0;
   const ent = entities.find(e => e.id === id);
@@ -2204,6 +2214,19 @@ function dailyTrack(type, data) {
 function claimDailyReward(ch) {
   if (state.dailyClaimed[ch.key]) return;
   state.dailyClaimed[ch.key] = true;
+  // Update daily streak
+  const _today = new Date().toDateString();
+  const _yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (state.streakLastDate === _yesterday) {
+    state.dailyStreak = (state.dailyStreak || 0) + 1;
+  } else if (state.streakLastDate !== _today) {
+    state.dailyStreak = 1;
+  }
+  state.streakLastDate = _today;
+  if (state.dailyStreak >= 7) {
+    state.streakBonusExpiry = Date.now() + 86400000;
+    toast('STREAK BONUS! +10% catch rate for 24h!');
+  }
   const BUFF_DURATION = 20 * 60 * 1000;
   if (ch.reward === 'mystery_meat') {
     state.activeBuffs.doubleDamage = Date.now() + BUFF_DURATION;
@@ -2697,7 +2720,10 @@ const state = {
   hiddenItemsFound: new Set(), // keys 'map:x:y' for collected hidden items
   frostCore: false,        // Frost Core: FROZEN lasts 2 turns
   shinyLureActive: false,  // Shiny Lure: next encounter has 50% shiny chance
-  luckyCharmBonus: 0       // Lucky Charm: +10% catch rate
+  luckyCharmBonus: 0,      // Lucky Charm: +10% catch rate
+  dailyStreak: 0,          // consecutive days with a daily claim
+  streakLastDate: null,    // date string of last claim day
+  streakBonusExpiry: null  // timestamp when 7-day streak bonus expires
 };
 
 function checkAdminTerminal() {
@@ -3972,7 +3998,10 @@ function _buildSaveData() {
     hiddenItemsFound: [...(state.hiddenItemsFound || [])],
     frostCore: state.frostCore || false,
     shinyLureActive: state.shinyLureActive || false,
-    luckyCharmBonus: state.luckyCharmBonus || 0
+    luckyCharmBonus: state.luckyCharmBonus || 0,
+    dailyStreak: state.dailyStreak || 0,
+    streakLastDate: state.streakLastDate || null,
+    streakBonusExpiry: state.streakBonusExpiry || null
   };
 }
 
@@ -4000,6 +4029,9 @@ function _applySaveData(d) {
   state.frostCore = d.frostCore || false;
   state.shinyLureActive = d.shinyLureActive || false;
   state.luckyCharmBonus = d.luckyCharmBonus || 0;
+  state.dailyStreak = d.dailyStreak || 0;
+  state.streakLastDate = d.streakLastDate || null;
+  state.streakBonusExpiry = d.streakBonusExpiry || null;
   state.started = true; state.screen = 'world';
   state.moving = false; state.prog = 0;
 }
@@ -6687,7 +6719,8 @@ function setBattleMenu(kind) {
     let html = moves.map((m, i) => {
       const used = m.mg === b.lastMinigame;
       const cls = `bt-btn ${i===0 && !used?'focus':''} ${used?'dim':''}`;
-      return `<div class="${cls}" data-mv="${i}" data-disabled="${used?1:0}">${m.name}<span class="bt-mg">${m.mg} &bull; PWR ${m.power}${used?' (LAST)':''}</span></div>`;
+      const statusTag = m.status ? ` <span style="color:#aaa;font-size:8px">[${m.status}?]</span>` : '';
+      return `<div class="${cls}" data-mv="${i}" data-disabled="${used?1:0}">${m.name}${statusTag}<span class="bt-mg">${m.mg} &bull; PWR ${m.power}${used?' (LAST)':''}</span></div>`;
     }).join('');
     if (allUsed) {
       html += `<div class="bt-btn focus" data-mv="struggle" style="grid-column:1 / -1">STRUGGLE<span class="bt-mg">NO MINIGAME &bull; PWR 5</span></div>`;
@@ -6822,7 +6855,8 @@ function catchChance(rarity, hpPct) {
   const base = { common:0.85, rare:0.65, epic:0.45, mythic:0.30, legendary:0.20, ultra:0.10 }[rarity] || 0.5;
   const hpBoost = (1 - hpPct) * 0.35;
   const luckBonus = (state.luckyCharmBonus || 0) * 0.10;
-  return Math.min(0.98, base + hpBoost + luckBonus);
+  const streakBonus = (state.streakBonusExpiry && Date.now() < state.streakBonusExpiry) ? 0.10 : 0;
+  return Math.min(0.98, base + hpBoost + luckBonus + streakBonus);
 }
 
 function startCatchSequence() {
@@ -7250,7 +7284,14 @@ function resolveBattleMove(score, gotGood) {
   if (b.enemyHp <= 0) { setTimeout(() => triggerFinisher(), 250); return; }
   if (!b.isBoss && !b.enemyWeakNotified && b.enemyHp <= b.enemyMaxHp * 0.25) {
     b.enemyWeakNotified = true;
-    setTimeout(() => battleLog(`<span style="color:#ff9060">&#9656; ${b.enemy.n} is weakened! Try a Takeout Box!</span>`), 350);
+    setTimeout(() => {
+      battleLog(`<span style="color:#ff9060">&#9656; ${b.enemy.n} is weakened! Try a Takeout Box!</span>`);
+      const _cf = document.createElement('div');
+      Object.assign(_cf.style, { position:'absolute', inset:'0', background:'rgba(0,220,80,.22)', zIndex:'30', pointerEvents:'none', transition:'opacity .6s ease-out' });
+      if (btArena) { btArena.appendChild(_cf); void _cf.offsetWidth; setTimeout(() => { _cf.style.opacity='0'; setTimeout(() => { try{_cf.remove();}catch(ex){} }, 680); }, 120); }
+      const _r = btEnemySprite ? btEnemySprite.getBoundingClientRect() : null;
+      if (_r) spawnConfetti(_r.left + _r.width/2, _r.top + _r.height/2, 14);
+    }, 350);
   }
   if (b.isBoss && !b.bossEnraged && b.enemyHp <= b.enemyMaxHp * 0.5) {
     b.bossEnraged = true;
@@ -8510,7 +8551,28 @@ function onEnemyFaint() {
   const activeId = state.activeAppliance;
   if (activeId) {
     const prevStage = getEvoStage(activeId);
-    state.applianceWins[activeId] = (state.applianceWins[activeId] || 0) + 1;
+    // Item-gated evolution check
+    let itemEvoFired = false;
+    const itemEvo = ITEM_EVO[activeId];
+    if (itemEvo && state[itemEvo.stateKey] && getEvoStage(activeId) < itemEvo.stage) {
+      const wins = (state.applianceWins[activeId] || 0) + 1;
+      state.applianceWins[activeId] = wins;
+      itemEvoFired = true;
+      // Force-set wins to meet the threshold if item is held
+      const thresholds = EVO_THRESHOLDS[entities.find(e=>e.id===activeId)?.rarity] || [3,8];
+      if (wins >= Math.max(1, thresholds[0] - 1)) {
+        const evoName = itemEvo.toName;
+        const col = EVO_COLOR[1] || '#f4c165';
+        setTimeout(() => showEvoCutscene && showEvoCutscene(activeId, entities.find(e=>e.id===activeId)?.n || '?', evoName, entities.find(e=>e.id===activeId)?.e || '?', itemEvo.toEmoji, col, 15), 500);
+        battleLog(`<b style="color:${col};font-size:14px">★ ITEM EVOLUTION! ★</b> ${itemEvo.itemName} triggered evolution into <b style="color:${col}">${evoName.toUpperCase()}</b>!`);
+        state.playerMaxHp += 15;
+        state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 15);
+        dailyTrack && dailyTrack('evolve', {});
+        // Mark item consumed
+        state[itemEvo.stateKey] = false;
+      }
+    }
+    if (!itemEvoFired) state.applianceWins[activeId] = (state.applianceWins[activeId] || 0) + 1;
     const newStage = getEvoStage(activeId);
     if (newStage > prevStage) {
       const evoName = getEvoName(activeId);
@@ -10453,6 +10515,13 @@ let last = performance.now();
 function tick(now) {
   const dt = Math.min(64, now - last); last = now;
   if (state.started && !state.won) state.playtime = (state.playtime || 0) + dt;
+  // Update streak HUD
+  const _shud = document.getElementById('streakHud');
+  if (_shud && state.dailyStreak > 0) {
+    const bonusActive = state.streakBonusExpiry && Date.now() < state.streakBonusExpiry;
+    _shud.style.display = '';
+    _shud.textContent = `🔥 ${state.dailyStreak} DAY STREAK${bonusActive ? ' ★ BONUS ACTIVE' : ''}`;
+  }
   if (state.mini) miniTick(dt);
   if (state.started && !state.won && !state.dialog && !state.invOpen && !state.mini && !state.battle) {
     if (state.moving) {
