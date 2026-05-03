@@ -1334,6 +1334,7 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
       <div id="stars"><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span></div>
     </div>
     <div id="zone">HOME</div>
+    <div id="dexHud" style="position:absolute;bottom:4px;left:8px;font-family:'Courier New',monospace;font-size:9px;color:#888;letter-spacing:2px;z-index:50"></div>
     <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE SLOTS &bull; F9 = LOAD SLOTS</div>
     <div id="streakHud" style="display:none;position:absolute;top:4px;right:8px;font-family:'Courier New',monospace;font-size:9px;color:#f4c165;letter-spacing:2px;z-index:50"></div>
     <div id="dialogue"></div>
@@ -2671,9 +2672,12 @@ function renderStatusPills() {
     if (arena) arena.appendChild(statusEl);
   }
   let html = '';
-  for (const { key, turns } of allStatus) {
+  for (const { who, key, turns } of allStatus) {
     const d = STATUS_DEFS[key]; if (!d) continue;
-    html += `<span style="background:${d.color}22;border:1px solid ${d.color};border-radius:3px;padding:1px 5px;font-size:9px;color:${d.color};margin:0 2px">${d.label} ×${turns}</span>`;
+    const whoTag = who === 'enemy'
+      ? `<span style="color:#888;font-size:7px">FOE</span> `
+      : `<span style="color:#5bcefa;font-size:7px">YOU</span> `;
+    html += `<span style="background:${d.color}22;border:1px solid ${d.color};border-radius:3px;padding:1px 6px;font-size:9px;color:${d.color}">${whoTag}${d.label} ×${turns}</span>`;
   }
   statusEl.innerHTML = html;
   statusEl.style.display = allStatus.length ? 'flex' : 'none';
@@ -3855,6 +3859,38 @@ document.addEventListener('keyup', e => {
   }
 });
 
+const WARP_POINTS = [
+  { label:'HOUSE',      map:'house',     x:5,  y:5  },
+  { label:'TOWN',       map:'town',      x:15, y:10 },
+  { label:'MARKET',     map:'market',    x:5,  y:5  },
+  { label:'WILD',       map:'wild',      x:5,  y:5  },
+  { label:'CAVE',       map:'cave',      x:5,  y:5  },
+  { label:'BASE',       map:'base',      x:5,  y:5  },
+  { label:'DIMENSION',  map:'dimension', x:9,  y:9  },
+  { label:'PLAINS',     map:'plains',    x:5,  y:5  },
+  { label:'MOUNTAIN',   map:'mountain',  x:5,  y:5  },
+  { label:'LAKE',       map:'lake',      x:5,  y:5  },
+  { label:'BEACH',      map:'beach',     x:5,  y:5  },
+  { label:'FUNGAL',     map:'fungal',    x:5,  y:5  },
+  { label:'SCRAPYARD',  map:'scrapyard', x:5,  y:5  },
+];
+function openFastTravel() {
+  const opts = WARP_POINTS.map((w, i) =>
+    `<span style="display:block;padding:4px 8px;cursor:pointer;color:${state.map===w.map?'#f4c165':'#e0e0e0'};background:${state.map===w.map?'rgba(244,193,101,.1)':'transparent'};border-radius:3px" onclick="fastTravelTo(${i});closeDialog()">${state.map===w.map?'▶ ':''} ${w.label}</span>`
+  ).join('');
+  openDialog(`<b style="color:#f4c165;letter-spacing:3px">⚡ FAST TRAVEL</b><br><span style="font-size:9px;color:#666">Warp costs 0 HP</span>`, []);
+  // Override dialog content
+  const dlg = document.getElementById('dialogue');
+  if (dlg) dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px">${opts}</div>`;
+}
+function fastTravelTo(idx) {
+  const w = WARP_POINTS[idx]; if (!w) return;
+  if (state.map === w.map) { toast('Already here!'); return; }
+  state.map = w.map; state.px = state.tx = w.x; state.py = state.ty = w.y;
+  state.moving = false; state.prog = 0;
+  audio.startArea(w.map); audio.zoneTransition();
+  toast(`Warped to ${w.label}!`);
+}
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
 
@@ -3962,6 +3998,9 @@ function onKeyDown(e) {
   // world
   if (k === 'p' || k === 'i') { openInventory(); e.preventDefault(); return; }
   if (k === 'm') { teleportHome(); e.preventDefault(); return; }
+  if (k === 'f' && state.screen === 'world' && !state.battle && !state.invOpen && !state.mini && !state.dialog) {
+    openFastTravel(); e.preventDefault(); return;
+  }
   if (k === ' ' || k === 'enter' || k === 'e') { interact(); e.preventDefault(); return; }
 }
 
@@ -10525,6 +10564,12 @@ function tick(now) {
     const bonusActive = state.streakBonusExpiry && Date.now() < state.streakBonusExpiry;
     _shud.style.display = '';
     _shud.textContent = `🔥 ${state.dailyStreak} DAY STREAK${bonusActive ? ' ★ BONUS ACTIVE' : ''}`;
+  }
+  const _dhud = document.getElementById('dexHud');
+  if (_dhud && state.started) {
+    const pct = Math.round((state.caught.size / (typeof TOTAL_DEX !== 'undefined' ? TOTAL_DEX : 63)) * 100);
+    _dhud.textContent = `DEX ${state.caught.size}/${typeof TOTAL_DEX !== 'undefined' ? TOTAL_DEX : 63} (${pct}%)`;
+    _dhud.style.color = pct >= 100 ? '#f4c165' : pct >= 50 ? '#7edc8b' : '#888';
   }
   if (state.mini) miniTick(dt);
   if (state.started && !state.won && !state.dialog && !state.invOpen && !state.mini && !state.battle) {
