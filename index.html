@@ -7285,6 +7285,12 @@ function resolveBattleMove(score, gotGood) {
   const b = state.battle; if (!b) return;
   if (tickPlayerStatus()) return;
   const mv = b.pendingMove; b.pendingMove = null;
+  // SHORTED: electric appliances lose their move, deal 1 dmg
+  if (b.playerStatus && b.playerStatus.SHORTED && activeElement() === 'electric') {
+    battleLog(`<span style="color:#ffe44d">⚡ SHORTED! Electric power disrupted — move fizzles for 1 damage.</span>`);
+    b.enemyHp = Math.max(0, b.enemyHp - 1); renderBattle();
+    setTimeout(() => enemyTurn(), 900); return;
+  }
   b.lastMinigame = mv.mg;
   const base = mv.power + playerAtkBonus();
   const critThreshold = isBuffActive('critBoost') ? 0.7 : 0.92;
