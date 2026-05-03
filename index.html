@@ -4083,14 +4083,14 @@ function getSaveSlotMeta(slot) {
   if (slot === 0 && legacy && !localStorage.getItem(SAVE_KEY(0))) {
     try {
       const d = JSON.parse(legacy);
-      return { used: true, starter: d.starter, caught: (d.caught||[]).length, ts: null, playtime: 0 };
+      return { used: true, starter: d.starter, caught: (d.caught||[]).length, ts: null, playtime: 0, map: (d.map||'?').toUpperCase() };
     } catch(e) {}
   }
   const raw = localStorage.getItem(SAVE_KEY(slot));
   if (!raw) return { used: false };
   try {
     const d = JSON.parse(raw);
-    return { used: true, starter: d.starter, caught: (d.caught||[]).length, ts: d.ts||null, playtime: d.playtime||0 };
+    return { used: true, starter: d.starter, caught: (d.caught||[]).length, ts: d.ts||null, playtime: d.playtime||0, map: (d.map||'?').toUpperCase() };
   } catch(e) { return { used: false }; }
 }
 
@@ -4117,6 +4117,7 @@ function renderSaveSlots() {
           <div class="slot-label">SLOT ${i+1}${state.lastSaveSlot===i?' ●':''}</div>
           ${m.used ? `
             <div class="slot-starter">${m.starter||'?'}</div>
+            <div class="slot-info">📍 ${m.map||'?'}</div>
             <div class="slot-info">📗 ${m.caught}/${typeof TOTAL_DEX!=='undefined'?TOTAL_DEX:'?'}</div>
             <div class="slot-info">⏱ ${fmtTime(m.playtime)}</div>
             <div class="slot-info">${fmtDate(m.ts)}</div>
