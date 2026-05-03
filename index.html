@@ -3780,12 +3780,20 @@ function getMovesForAppliance(id) {
     VOLLEY:   ['RALLY','RETURN','BOUNCE','VOLLEY']
   };
   const evoBonus = evoPowerBonus(id);
-  return moveTypes.map((mg, i) => ({
-    name: short + ' ' + suf[mg][(id + i) % suf[mg].length],
-    mg,
-    power: (i === 0 ? basePow + 5 : basePow + ((id * 3 + i) % 4)) + evoBonus,
-    desc: i === 0 ? 'Signature move.' : ''
-  }));
+  const elem = window.getElement ? getElement(id) : 'neutral';
+  const STATUS_BY_ELEM = { fire:'BURNT', ice:'FROZEN', electric:'SHORTED', neutral:'OVERHEATED' };
+  const elemStatus = STATUS_BY_ELEM[elem] || null;
+  return moveTypes.map((mg, i) => {
+    const isSpecial = i === 3;
+    return {
+      name: short + ' ' + suf[mg][(id + i) % suf[mg].length],
+      mg,
+      power: (i === 0 ? basePow + 5 : isSpecial ? basePow - 2 : basePow + ((id * 3 + i) % 4)) + evoBonus,
+      desc: i === 0 ? 'Signature move.' : (isSpecial && elemStatus ? `May inflict ${elemStatus}.` : ''),
+      status: isSpecial ? elemStatus : null,
+      statusChance: isSpecial ? 0.30 : 0
+    };
+  });
 }
 
 function starterBaseHp(id) {
@@ -7233,6 +7241,11 @@ function resolveBattleMove(score, gotGood) {
   const qual = state.adminMode ? 'ADMIN OVERRIDE! ' : (crit ? 'CRITICAL! ' : (score > 0.7 ? 'Clean hit! ' : (score > 0.4 ? '' : 'Glancing blow. ')));
   const matchMsg = matchup > 1 ? ' <span style="color:#7edc8b">SUPER EFFECTIVE!</span>' : (matchup < 1 ? ' <span style="color:#e55">Not very effective...</span>' : '');
   battleLog(`${qual}${b.enemy.n} takes <b>${dmg}</b> damage.${matchMsg}`);
+  if (mv && mv.status && mv.statusChance && Math.random() < mv.statusChance && !b.isBoss) {
+    applyEnemyStatus(mv.status);
+    const sd = STATUS_DEFS[mv.status];
+    if (sd) setTimeout(() => battleLog(`<span style="color:${sd.color}">${b.enemy.n} is now ${sd.label}! ${sd.desc}</span>`), 200);
+  }
   renderBattle();
   if (b.enemyHp <= 0) { setTimeout(() => triggerFinisher(), 250); return; }
   if (!b.isBoss && !b.enemyWeakNotified && b.enemyHp <= b.enemyMaxHp * 0.25) {
