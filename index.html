@@ -1317,6 +1317,334 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 .evo-stat-gains { font-size:11px; color:#7edc8b; letter-spacing:1px; margin-bottom:16px; line-height:1.8; }
 .evo-continue-btn { background:#1a1a2e; border:1px solid #f4c165; color:#f4c165; padding:8px 24px; border-radius:4px; font-family:inherit; font-size:11px; letter-spacing:3px; cursor:pointer; text-transform:uppercase; }
 .evo-continue-btn:hover { background:#2a2a4e; }
+
+/* ═══════════════════════════════════════════════════════════
+   PANDEMONIUM — VISUAL UPGRADE  · clean high-resolution UI
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-void:      #050510;
+  --bg-deep:      #07071a;
+  --bg-panel:     #0d0d22;
+  --bg-raised:    #13132e;
+  --bg-inset:     #08080f;
+  --border-dim:   rgba(255,255,255,.055);
+  --border-mid:   rgba(255,255,255,.10);
+  --border-gold:  rgba(244,193,101,.28);
+  --accent:       #f4c165;
+  --accent-hi:    #ffd84d;
+  --accent-glow:  rgba(244,193,101,.18);
+  --text-hi:      #eeeef8;
+  --text-mid:     #9090b0;
+  --text-lo:      #50506a;
+  --c-green:      #7edc8b;
+  --c-red:        #ff6060;
+  --c-blue:       #5bcefa;
+  --shadow-deep:  0 10px 50px rgba(0,0,0,.80);
+  --shadow-mid:   0 4px 20px rgba(0,0,0,.55);
+  --shadow-sm:    0 2px 8px rgba(0,0,0,.40);
+  --radius:       6px;
+  --radius-sm:    4px;
+  --radius-lg:    10px;
+  --ease:         .18s ease;
+}
+
+/* ── Base ────────────────────────────────────────────────── */
+body { background: var(--bg-void) !important; }
+#wrap { background: var(--bg-void) !important; }
+
+/* ── HUD chrome ─────────────────────────────────────────── */
+#hud {
+  background: linear-gradient(180deg,rgba(5,5,16,.97) 0%,rgba(5,5,16,.82) 100%) !important;
+  border-bottom: 1px solid var(--border-dim) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+#stars .on  { text-shadow: 0 0 10px rgba(244,193,101,.7) !important; font-size:16px !important; }
+#stars .off { font-size:16px !important; opacity:.25 !important; }
+#zone  { font-size:10px !important; letter-spacing:5px !important; color:var(--text-mid) !important; }
+#hint  { font-size:9px !important; color:var(--text-lo) !important; letter-spacing:1px !important; }
+
+/* ── Pandex / Inventory ─────────────────────────────────── */
+#invmodal { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+#invpanel {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-deep) 100%) !important;
+  border: 1px solid var(--border-mid) !important;
+  box-shadow: var(--shadow-deep), inset 0 1px 0 rgba(255,255,255,.04) !important;
+  border-radius: var(--radius-lg) !important;
+}
+#invtitle { font-size:16px !important; letter-spacing:6px !important; }
+#invprogress { font-size:11px !important; letter-spacing:2px !important; margin-bottom:8px !important; }
+.invtab {
+  font-size:10px !important;
+  padding:5px 12px !important;
+  border-radius:var(--radius-sm) !important;
+  letter-spacing:1px !important;
+  transition: background var(--ease), color var(--ease), box-shadow var(--ease) !important;
+}
+.invtab.active {
+  background: rgba(244,193,101,.10) !important;
+  border-color: var(--border-gold) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 12px var(--accent-glow) !important;
+}
+.invtab:hover:not(.active) { background: rgba(255,255,255,.05) !important; }
+.invslot {
+  border-radius:var(--radius-sm) !important;
+  font-size:24px !important;
+  transition: transform var(--ease), box-shadow var(--ease) !important;
+  aspect-ratio: 1 !important;
+}
+.invslot.selected {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 18px var(--accent-glow) !important;
+}
+.invslot.caught:hover { transform: scale(1.16) !important; animation-play-state:paused !important; }
+#invdetail {
+  background: linear-gradient(145deg, var(--bg-inset) 0%, var(--bg-panel) 100%) !important;
+  border: 1px solid var(--border-dim) !important;
+  border-radius: var(--radius) !important;
+  font-size: 12px !important;
+  line-height: 1.65 !important;
+  min-height: 120px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03) !important;
+}
+#invdetail .name { font-size:14px !important; letter-spacing:2px !important; margin-bottom:6px !important; }
+#invdetail .desc { font-size:11px !important; color:var(--text-mid) !important; line-height:1.6 !important; }
+#invdetail .act  { font-size:10px !important; letter-spacing:1px !important; margin-top:4px !important; }
+
+/* ── Battle screen ──────────────────────────────────────── */
+#battle {
+  background: radial-gradient(ellipse at 50% 110%, #160830 0%, #07071a 55%, var(--bg-void) 100%) !important;
+}
+.bt-panel {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-raised) 100%) !important;
+  border: 1px solid var(--border-mid) !important;
+  box-shadow: var(--shadow-mid), inset 0 1px 0 rgba(255,255,255,.04) !important;
+  border-radius: var(--radius) !important;
+}
+.bt-arena {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden !important;
+}
+/* Big crisp sprites */
+#btEnemySprite {
+  font-size: 72px !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.65)) !important;
+  transition: transform .15s ease, filter .15s ease !important;
+}
+#btPlayerSprite {
+  font-size: 64px !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.5)) !important;
+  transition: transform .15s ease, filter .15s ease !important;
+}
+#btEnemyName, #btPlayerName {
+  font-size: 13px !important;
+  letter-spacing: 2px !important;
+  color: var(--text-hi) !important;
+  font-weight: bold !important;
+}
+#btEnemyRarity { font-size:10px !important; letter-spacing:2px !important; }
+#btPlayerLvl   { font-size:10px !important; letter-spacing:2px !important; color:var(--text-mid) !important; }
+/* Gradient HP bars */
+.hp-fill {
+  background: linear-gradient(90deg, #22cc66 0%, #55ee88 100%) !important;
+  transition: width .38s cubic-bezier(.4,0,.2,1) !important;
+  border-radius: 3px !important;
+}
+.hp-fill.mid { background: linear-gradient(90deg, #d4880a 0%, #f4c165 100%) !important; }
+.hp-fill.low { background: linear-gradient(90deg, #bb2020 0%, #ff5555 100%) !important; }
+.hp-track {
+  background: rgba(0,0,0,.45) !important;
+  border: 1px solid var(--border-dim) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.5) !important;
+  height: 8px !important;
+}
+.hp-text { font-size:11px !important; color:var(--text-hi) !important; letter-spacing:1px !important; }
+/* Battle log */
+#btLog {
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+  color: var(--text-hi) !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244,193,101,.25) transparent;
+}
+#btLog p, #btLog div { padding: 1px 0 !important; }
+/* Battle menu */
+.bt-btn {
+  border-radius: var(--radius-sm) !important;
+  font-size: 11px !important;
+  letter-spacing: 1.5px !important;
+  padding: 10px 14px !important;
+  background: linear-gradient(145deg, var(--bg-panel) 0%, var(--bg-raised) 100%) !important;
+  border: 1px solid var(--border-mid) !important;
+  color: var(--text-hi) !important;
+  transition: background var(--ease), box-shadow var(--ease), transform .1s ease !important;
+  cursor: pointer !important;
+}
+.bt-btn:hover:not(.dim) {
+  background: linear-gradient(145deg, var(--bg-raised) 0%, #18183c 100%) !important;
+  box-shadow: 0 0 16px var(--accent-glow) !important;
+  transform: translateY(-1px) !important;
+}
+.bt-btn.focus {
+  border-color: var(--border-gold) !important;
+  box-shadow: 0 0 0 1px rgba(244,193,101,.18), 0 0 20px var(--accent-glow), inset 0 0 12px rgba(244,193,101,.05) !important;
+}
+.bt-btn.dim { opacity:.45 !important; cursor:not-allowed !important; }
+.bt-mg {
+  display: block !important;
+  font-size: 9px !important;
+  letter-spacing: 1px !important;
+  color: var(--text-mid) !important;
+  margin-top: 2px !important;
+}
+/* ULT gauge */
+#btUltWrap {
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border-dim) !important;
+}
+
+/* ── Dialogue ────────────────────────────────────────────── */
+#dialogue {
+  background: linear-gradient(160deg, rgba(5,5,20,.97) 0%, rgba(10,10,30,.95) 100%) !important;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-deep), 0 0 50px rgba(244,193,101,.07) !important;
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+#toastEl {
+  border-radius: var(--radius) !important;
+  font-size: 12px !important;
+  letter-spacing: 2px !important;
+  background: linear-gradient(135deg, rgba(10,10,28,.97) 0%, rgba(18,18,44,.95) 100%) !important;
+  border: 1px solid var(--border-gold) !important;
+  box-shadow: var(--shadow-mid), 0 0 24px rgba(244,193,101,.12) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  padding: 10px 20px !important;
+}
+
+/* ── Save Modal ──────────────────────────────────────────── */
+#saveModal { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.save-modal-inner {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-deep) 100%) !important;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-deep), 0 0 80px rgba(244,193,101,.08) !important;
+  padding: 24px !important;
+}
+.save-modal-title { font-size:16px !important; letter-spacing:5px !important; margin-bottom:18px !important; }
+.save-slot-card {
+  background: linear-gradient(145deg, var(--bg-inset) 0%, var(--bg-panel) 100%) !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border-dim) !important;
+  padding: 12px 10px !important;
+  transition: border-color var(--ease), box-shadow var(--ease) !important;
+}
+.save-slot-card:hover { border-color: var(--border-gold) !important; box-shadow: 0 0 20px rgba(244,193,101,.1) !important; }
+.save-slot-card .slot-label   { font-size:9px !important; letter-spacing:3px !important; margin-bottom:4px !important; }
+.save-slot-card .slot-starter { font-size:13px !important; font-weight:bold !important; }
+.save-slot-card .slot-info    { font-size:10px !important; color:var(--text-mid) !important; }
+.slot-btn {
+  border-radius: var(--radius-sm) !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  padding: 6px 10px !important;
+  transition: background var(--ease), box-shadow var(--ease) !important;
+  background: linear-gradient(135deg, var(--bg-raised) 0%, var(--bg-panel) 100%) !important;
+}
+.slot-btn:hover { background: #22224a !important; box-shadow: 0 0 10px rgba(244,193,101,.1) !important; }
+.slot-btn.danger { border-color: rgba(180,100,30,.5) !important; color: #cc9955 !important; }
+.slot-btn.cancel { padding: 8px 16px !important; font-size: 11px !important; }
+
+/* ── Evolution Modal ─────────────────────────────────────── */
+#evoModal { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.evo-scene { padding: 40px 32px !important; }
+.evo-title { font-size: 14px !important; letter-spacing: 5px !important; }
+.evo-name-new { font-size: 24px !important; letter-spacing: 4px !important; }
+.evo-stat-gains { font-size: 12px !important; line-height: 2 !important; }
+.evo-continue-btn {
+  padding: 10px 32px !important;
+  font-size: 12px !important;
+  letter-spacing: 3px !important;
+  border-radius: var(--radius-sm) !important;
+  transition: background var(--ease), box-shadow var(--ease) !important;
+}
+.evo-continue-btn:hover { background: #22224a !important; box-shadow: 0 0 20px var(--accent-glow) !important; }
+
+/* ── Intro / Starter ─────────────────────────────────────── */
+.starterCard {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-raised) 100%) !important;
+  border: 1px solid var(--border-mid) !important;
+  border-radius: var(--radius) !important;
+  transition: transform var(--ease), box-shadow var(--ease) !important;
+}
+.starterCard.focus {
+  border-color: var(--border-gold) !important;
+  box-shadow: 0 0 28px rgba(244,193,101,.22), var(--shadow-mid) !important;
+  transform: translateY(-4px) scale(1.02) !important;
+}
+.starterCard:hover:not(.focus) { transform: translateY(-2px) !important; }
+
+/* ── Minigame panel ──────────────────────────────────────── */
+#minipanel {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-deep) 100%) !important;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-deep), 0 0 50px rgba(244,193,101,.07) !important;
+}
+
+/* ── Stat bars ───────────────────────────────────────────── */
+.stat-bar-track {
+  background: rgba(0,0,0,.45) !important;
+  border: 1px solid var(--border-dim) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  height: 6px !important;
+}
+.stat-bar-fill  { border-radius: 3px !important; height: 6px !important; }
+.stat-bar-label { font-size: 9px !important; color: var(--text-mid) !important; width: 26px !important; }
+.stat-bar-val   { font-size: 10px !important; font-weight: bold !important; }
+
+/* ── Stage / world frame ─────────────────────────────────── */
+#stage {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-deep), 0 0 0 1px var(--border-dim) !important;
+}
+#map { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* ── Scrollbars ──────────────────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: rgba(244,193,101,.25) transparent; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(244,193,101,.28); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(244,193,101,.5); }
+
+/* ── Bulletin / bulletin board ───────────────────────────── */
+#bulletinPanel {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-deep) 100%) !important;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-deep) !important;
+}
+
+/* ── Admin panel ─────────────────────────────────────────── */
+#adminPanel {
+  background: linear-gradient(160deg, var(--bg-panel) 0%, var(--bg-deep) 100%) !important;
+  border: 1px solid rgba(240,103,255,.3) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-deep), 0 0 30px rgba(240,103,255,.08) !important;
+}
 </style>
 </head>
 <body>
@@ -1695,6 +2023,21 @@ const TILE = 16;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
+
+// DPR-aware canvas scaling — keeps coordinate space in CSS pixels
+let _canvasDPR = 0;
+function _resizeCanvas() {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const cssW = parseInt(canvas.style.width)  || canvas.offsetWidth  || 320;
+  const cssH = parseInt(canvas.style.height) || canvas.offsetHeight || 320;
+  if (_canvasDPR === dpr && canvas.width === cssW * dpr) return;
+  _canvasDPR = dpr;
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', _resizeCanvas);
 const VW = canvas.width, VH = canvas.height;
 
 // Tile chars:
@@ -10435,6 +10778,7 @@ function updateCamera() {
 }
 
 function render() {
+  _resizeCanvas();
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   const mp = maps[state.map];
   const x0 = Math.max(0, Math.floor(cam.x / TILE));
