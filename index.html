@@ -1698,6 +1698,120 @@ body { background: var(--bg-void) !important; }
   transition:color .15s;
 }
 .csf-skip:hover { color:rgba(255,255,255,.55); }
+
+/* ── Appliance Battle Animations ─────────────────────────── */
+/* idle: element-based float + glow — apply via elem-X class on sprite */
+@keyframes idleFire {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 6px 22px rgba(255,80,20,.55)); }
+  50%    { transform:translateY(-7px) scale(1.04); filter:drop-shadow(0 16px 32px rgba(255,80,20,.85)) brightness(1.12); }
+}
+@keyframes idleFireHigh {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 8px 30px rgba(255,80,20,.75)) drop-shadow(0 0 18px rgba(255,80,20,.4)); }
+  50%    { transform:translateY(-11px) scale(1.08); filter:drop-shadow(0 22px 44px rgba(255,80,20,1)) brightness(1.2) drop-shadow(0 0 30px rgba(255,80,20,.6)); }
+}
+@keyframes idleIce {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 6px 20px rgba(64,176,255,.5)); }
+  50%    { transform:translateY(-6px) scale(1.03); filter:drop-shadow(0 14px 28px rgba(64,176,255,.8)) brightness(1.09); }
+}
+@keyframes idleIceHigh {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 8px 28px rgba(64,176,255,.7)) drop-shadow(0 0 16px rgba(64,176,255,.35)); }
+  50%    { transform:translateY(-10px) scale(1.07); filter:drop-shadow(0 20px 40px rgba(64,176,255,1)) brightness(1.14) drop-shadow(0 0 28px rgba(64,176,255,.55)); }
+}
+@keyframes idleElec {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 6px 20px rgba(255,224,96,.45)); }
+  25%,75%{ transform:translateY(-3px) scale(1.01) rotate(.5deg); }
+  50%    { transform:translateY(-8px) scale(1.05) rotate(1.5deg); filter:drop-shadow(0 18px 34px rgba(255,224,96,.9)) brightness(1.2); }
+}
+@keyframes idleElecHigh {
+  0%    { transform:translateY(0) scale(1);       filter:drop-shadow(0 8px 28px rgba(255,224,96,.6)); }
+  20%   { transform:translateY(-3px) scale(1.02) rotate(-1deg); filter:brightness(1.3); }
+  50%   { transform:translateY(-12px) scale(1.09) rotate(2deg); filter:drop-shadow(0 24px 46px rgba(255,224,96,1)) brightness(1.3) drop-shadow(0 0 32px rgba(255,224,96,.65)); }
+  80%   { transform:translateY(-4px) scale(1.02) rotate(-1deg); }
+  100%  { transform:translateY(0) scale(1);       filter:drop-shadow(0 8px 28px rgba(255,224,96,.6)); }
+}
+@keyframes idleNeutral {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 6px 18px rgba(212,175,55,.35)); }
+  50%    { transform:translateY(-5px) scale(1.025); filter:drop-shadow(0 12px 24px rgba(212,175,55,.6)); }
+}
+@keyframes idleNeutralHigh {
+  0%,100%{ transform:translateY(0) scale(1);      filter:drop-shadow(0 8px 26px rgba(212,175,55,.55)) drop-shadow(0 0 14px rgba(212,175,55,.3)); }
+  50%    { transform:translateY(-9px) scale(1.07); filter:drop-shadow(0 18px 38px rgba(212,175,55,.85)) brightness(1.14) drop-shadow(0 0 26px rgba(212,175,55,.5)); }
+}
+
+/* base idle by element */
+.bt-sprite-arena.elem-fire     { animation:idleFire    2.2s  ease-in-out infinite !important; }
+.bt-sprite-arena.elem-ice      { animation:idleIce     3.0s  ease-in-out infinite !important; }
+.bt-sprite-arena.elem-electric { animation:idleElec    1.75s ease-in-out infinite !important; }
+.bt-sprite-arena.elem-neutral  { animation:idleNeutral 2.6s  ease-in-out infinite !important; }
+
+/* legendary/ultra get high-intensity variant + faster */
+.bt-sprite-arena.rarity-legendary.elem-fire,
+.bt-sprite-arena.rarity-ultra.elem-fire     { animation:idleFireHigh    1.5s  ease-in-out infinite !important; }
+.bt-sprite-arena.rarity-legendary.elem-ice,
+.bt-sprite-arena.rarity-ultra.elem-ice      { animation:idleIceHigh     2.1s  ease-in-out infinite !important; }
+.bt-sprite-arena.rarity-legendary.elem-electric,
+.bt-sprite-arena.rarity-ultra.elem-electric { animation:idleElecHigh    1.3s  ease-in-out infinite !important; }
+.bt-sprite-arena.rarity-legendary.elem-neutral,
+.bt-sprite-arena.rarity-ultra.elem-neutral  { animation:idleNeutralHigh 1.8s  ease-in-out infinite !important; }
+
+/* mythic: speed up base */
+.bt-sprite-arena.rarity-mythic.elem-fire     { animation-duration: 1.8s  !important; }
+.bt-sprite-arena.rarity-mythic.elem-ice      { animation-duration: 2.4s  !important; }
+.bt-sprite-arena.rarity-mythic.elem-electric { animation-duration: 1.45s !important; }
+.bt-sprite-arena.rarity-mythic.elem-neutral  { animation-duration: 2.1s  !important; }
+
+/* attack animations — player (moves right) */
+@keyframes attackFire    { 0%{transform:translateX(0) scale(1)} 25%{transform:translateX(22px) translateY(-8px) scale(1.2);filter:drop-shadow(0 0 32px rgba(255,80,20,1)) brightness(1.5)} 65%{transform:translateX(-5px) scale(.93)} 100%{transform:translateX(0) scale(1)} }
+@keyframes attackIce     { 0%{transform:translateX(0) scale(1)} 28%{transform:translateX(20px) scale(1.18) rotate(-4deg);filter:drop-shadow(0 0 28px rgba(64,176,255,1)) brightness(1.4)} 68%{transform:translateX(-4px) scale(.94) rotate(2deg)} 100%{transform:translateX(0) scale(1) rotate(0)} }
+@keyframes attackElec    { 0%,100%{transform:translateX(0) scale(1)} 15%{transform:translateX(-4px) scale(.96)} 32%{transform:translateX(24px) scale(1.22);filter:drop-shadow(0 0 36px rgba(255,224,96,1)) brightness(1.6)} 56%{transform:translateX(-8px) scale(.9);filter:brightness(1.3)} 78%{transform:translateX(4px) scale(.98)} }
+@keyframes attackNeutral { 0%{transform:translateX(0) scale(1)} 28%{transform:translateX(18px) translateY(-4px) scale(1.15);filter:drop-shadow(0 0 24px rgba(212,175,55,.9)) brightness(1.35)} 65%{transform:translateX(-5px) scale(.94)} 100%{transform:translateX(0) scale(1)} }
+
+/* attack animations — enemy (mirrors: moves left) */
+@keyframes attackFireE    { 0%{transform:translateX(0) scale(1)} 25%{transform:translateX(-22px) translateY(-8px) scale(1.2);filter:drop-shadow(0 0 32px rgba(255,80,20,1)) brightness(1.5)} 65%{transform:translateX(5px) scale(.93)} 100%{transform:translateX(0) scale(1)} }
+@keyframes attackIceE     { 0%{transform:translateX(0) scale(1)} 28%{transform:translateX(-20px) scale(1.18) rotate(4deg);filter:drop-shadow(0 0 28px rgba(64,176,255,1)) brightness(1.4)} 68%{transform:translateX(4px) scale(.94) rotate(-2deg)} 100%{transform:translateX(0) scale(1) rotate(0)} }
+@keyframes attackElecE    { 0%,100%{transform:translateX(0) scale(1)} 15%{transform:translateX(4px) scale(.96)} 32%{transform:translateX(-24px) scale(1.22);filter:drop-shadow(0 0 36px rgba(255,224,96,1)) brightness(1.6)} 56%{transform:translateX(8px) scale(.9);filter:brightness(1.3)} 78%{transform:translateX(-4px) scale(.98)} }
+@keyframes attackNeutralE { 0%{transform:translateX(0) scale(1)} 28%{transform:translateX(-18px) translateY(-4px) scale(1.15);filter:drop-shadow(0 0 24px rgba(212,175,55,.9)) brightness(1.35)} 65%{transform:translateX(5px) scale(.94)} 100%{transform:translateX(0) scale(1)} }
+
+.bt-sprite-player.attacking.elem-fire     { animation:attackFire    .42s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-player.attacking.elem-ice      { animation:attackIce     .48s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-player.attacking.elem-electric { animation:attackElec    .36s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-player.attacking.elem-neutral  { animation:attackNeutral .44s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-enemy.attacking.elem-fire      { animation:attackFireE    .42s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-enemy.attacking.elem-ice       { animation:attackIceE     .48s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-enemy.attacking.elem-electric  { animation:attackElecE    .36s cubic-bezier(.2,0,.4,1) !important; }
+.bt-sprite-enemy.attacking.elem-neutral   { animation:attackNeutralE .44s cubic-bezier(.2,0,.4,1) !important; }
+
+/* hurt — based on defender's element (their elemental reaction to being hit) */
+@keyframes hurtFire    { 0%{transform:translateX(0)} 20%{transform:translateX(-18px) scale(.9);filter:brightness(.55)} 60%{transform:translateX(9px)} 100%{transform:translateX(0) scale(1)} }
+@keyframes hurtIce     { 0%{transform:translateX(0)} 25%{transform:translateX(-16px) scale(.92);filter:brightness(.65) saturate(0)} 65%{transform:translateX(7px)} 100%{transform:translateX(0)} }
+@keyframes hurtElec    { 0%{transform:translateX(0)} 12%{transform:translateX(-20px) scale(.87);filter:brightness(2.2) saturate(0)} 36%{transform:translateX(13px) scale(1.08);filter:brightness(1.4)} 62%{transform:translateX(-7px)} 100%{transform:translateX(0) scale(1)} }
+@keyframes hurtNeutral { 0%{transform:translateX(0)} 20%{transform:translateX(-16px) scale(.93)} 55%{transform:translateX(8px)} 100%{transform:translateX(0)} }
+
+.bt-sprite-arena.hurt.elem-fire     { animation:hurtFire    .34s ease !important; }
+.bt-sprite-arena.hurt.elem-ice      { animation:hurtIce     .37s ease !important; }
+.bt-sprite-arena.hurt.elem-electric { animation:hurtElec    .3s  ease !important; }
+.bt-sprite-arena.hurt.elem-neutral  { animation:hurtNeutral .32s ease !important; }
+
+/* faint — dramatic exit per element */
+@keyframes faintFire    { to { transform:translateY(36px) scale(.52) rotate(22deg);   opacity:0; filter:brightness(2) blur(6px); } }
+@keyframes faintIce     { to { transform:translateY(26px) scale(.48) rotate(-18deg);  opacity:0; filter:brightness(.4) saturate(0) blur(5px); } }
+@keyframes faintElec    { 0%{filter:brightness(1)} 14%{filter:brightness(3.5)} to { transform:translateY(30px) scale(.5); opacity:0; filter:brightness(.2) blur(7px); } }
+@keyframes faintNeutral { to { transform:translateY(30px) scale(.56); opacity:0; filter:blur(5px); } }
+
+.bt-sprite-arena.faint.elem-fire     { animation:faintFire    .62s ease forwards !important; }
+.bt-sprite-arena.faint.elem-ice      { animation:faintIce     .66s ease forwards !important; }
+.bt-sprite-arena.faint.elem-electric { animation:faintElec    .56s ease forwards !important; }
+.bt-sprite-arena.faint.elem-neutral  { animation:faintNeutral .60s ease forwards !important; }
+
+/* enhanced entrance by rarity */
+@keyframes enterEpic   { from{transform:translateY(-38px) scale(.5);opacity:0;filter:brightness(4)} 52%{filter:brightness(2)} to{transform:translateY(0) scale(1);opacity:1;filter:brightness(1)} }
+@keyframes enterLegend { from{transform:scale(0) rotate(-90deg);opacity:0;filter:brightness(5)} 55%{transform:scale(1.22) rotate(9deg);filter:brightness(2.5)} 80%{transform:scale(.95) rotate(-2deg)} to{transform:scale(1) rotate(0);opacity:1;filter:brightness(1)} }
+@keyframes enterUltra  { from{transform:scale(0);opacity:0;filter:brightness(9) saturate(0)} 32%{transform:scale(1.5);filter:brightness(3)} 62%{transform:scale(.87)} 80%{transform:scale(1.1)} to{transform:scale(1);opacity:1;filter:brightness(1)} }
+
+.bt-sprite-arena.entering.rarity-epic,
+.bt-sprite-arena.entering.rarity-mythic    { animation:enterEpic   .58s cubic-bezier(.34,1.56,.64,1) forwards !important; }
+.bt-sprite-arena.entering.rarity-legendary { animation:enterLegend .70s cubic-bezier(.34,1.56,.64,1) forwards !important; }
+.bt-sprite-arena.entering.rarity-ultra     { animation:enterUltra  .78s cubic-bezier(.34,1.56,.64,1) forwards !important; }
 </style>
 </head>
 <body>
@@ -4900,6 +5014,8 @@ function startBattle(enemyEnt) {
   populateStands();
   btEnemySprite.classList.remove('hurt','faint','attacking','shiny');
   btPlayerSprite.classList.remove('hurt','faint','attacking');
+  setSpriteBattleClasses(btEnemySprite, enemyEnt.id);
+  setSpriteBattleClasses(btPlayerSprite, state.battle.starter?.id ?? state.battle.starter);
   if (state.battle.enemyShiny) { btEnemySprite.classList.add('shiny'); setTimeout(playShinyFlash, 700); }
   btEnemySprite.classList.add('entering');
   btPlayerSprite.classList.add('entering');
@@ -4961,6 +5077,8 @@ function startBossBattle(starNum) {
     populateStands();
     btEnemySprite.classList.remove('hurt','faint','attacking','shiny');
     btPlayerSprite.classList.remove('hurt','faint','attacking','shiny');
+    setSpriteBattleClasses(btEnemySprite, state.battle.enemy?.id ?? state.battle.enemy);
+    setSpriteBattleClasses(btPlayerSprite, state.battle.starter?.id ?? state.battle.starter);
     btEnemySprite.classList.add('entering');
     btPlayerSprite.classList.add('entering');
     setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
@@ -5876,9 +5994,65 @@ function playMichelinFlash(starNum) {
     setTimeout(()=>{ tx.style.transition='opacity .7s ease-out'; tx.style.opacity='0'; rm(tx,800); },1150);
   },290);
 }
+// Stamp elem-X rarity-X classes on a battle sprite div for animation system
+function setSpriteBattleClasses(spriteEl, applianceId) {
+  const id = (typeof applianceId === 'object' && applianceId !== null) ? applianceId.id : applianceId;
+  const ent = entities.find(e => e.id === id);
+  const elem = getElement(id) || 'neutral';
+  const rarity = (ent && ent.rarity) ? ent.rarity : 'common';
+  [...spriteEl.classList].forEach(c => {
+    if (c.startsWith('elem-') || c.startsWith('rarity-')) spriteEl.classList.remove(c);
+  });
+  spriteEl.classList.add(`elem-${elem}`, `rarity-${rarity}`);
+}
+
+// Spawn element-flavored attack particles from source sprite toward target sprite
+function spawnElementAttack(fromEl, toEl, elem) {
+  const cfg = {
+    fire:     { chars:['🔥','💥','✨'], count:7 },
+    ice:      { chars:['❄️','💎','·'],  count:6 },
+    electric: { chars:['⚡','✦','○'],  count:5 },
+    neutral:  { chars:['💨','◆','·'],  count:6 },
+  };
+  const c = cfg[elem] || cfg.neutral;
+  const sR = fromEl.getBoundingClientRect();
+  const tR = toEl.getBoundingClientRect();
+  const sx = sR.left + sR.width / 2, sy = sR.top + sR.height / 2;
+  const dx = (tR.left + tR.width / 2) - sx;
+  const dy = (tR.top  + tR.height / 2) - sy;
+  for (let i = 0; i < c.count; i++) {
+    const p = document.createElement('div');
+    const jx = (Math.random() - 0.5) * 36;
+    const jy = (Math.random() - 0.5) * 36;
+    p.textContent = c.chars[i % c.chars.length];
+    p.style.cssText = `position:fixed;left:${sx}px;top:${sy}px;font-size:${14+Math.random()*10}px;` +
+      `line-height:1;pointer-events:none;z-index:9200;transform:translate(-50%,-50%);opacity:0;`;
+    document.body.appendChild(p);
+    setTimeout(() => {
+      p.style.transition = `all ${.26+Math.random()*.1}s cubic-bezier(.4,0,.2,1)`;
+      p.style.opacity = '1';
+      p.style.transform = `translate(calc(-50% + ${dx*.6+jx}px),calc(-50% + ${dy*.6+jy}px)) scale(1.1)`;
+      setTimeout(() => {
+        p.style.transition = 'all .18s ease';
+        p.style.opacity = '0';
+        p.style.transform = `translate(calc(-50% + ${dx+jx}px),calc(-50% + ${dy+jy*.5}px)) scale(.3)`;
+        setTimeout(() => p.remove(), 200);
+      }, 200);
+    }, i * 38);
+  }
+}
+
 function btAttackAnim(sprite) {
+  const b = state.battle;
+  if (!b) { sprite.classList.remove('attacking'); void sprite.offsetWidth; sprite.classList.add('attacking'); setTimeout(() => sprite.classList.remove('attacking'), 440); return; }
+  const isPlayer = sprite === btPlayerSprite;
+  const rawId = isPlayer ? (b.starter?.id ?? b.starter) : (b.enemy?.id ?? b.enemy);
+  const id = (typeof rawId === 'object' && rawId !== null) ? rawId.id : rawId;
+  const elem = getElement(id) || 'neutral';
   sprite.classList.remove('attacking'); void sprite.offsetWidth; sprite.classList.add('attacking');
-  setTimeout(() => sprite.classList.remove('attacking'), 400);
+  setTimeout(() => sprite.classList.remove('attacking'), 440);
+  const target = isPlayer ? btEnemySprite : btPlayerSprite;
+  if (target) spawnElementAttack(sprite, target, elem);
 }
 
 function battleLog(html) {
@@ -7670,6 +7844,7 @@ function doSwitch(idx) {
   }
   b.lastMinigame = null;
   dailyTrack('switch', {});
+  setSpriteBattleClasses(btPlayerSprite, target.id || target);
   btPlayerSprite.classList.add('entering');
   setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
   setTimeout(() => playEnterFlash(), 100);
@@ -7864,6 +8039,7 @@ function enemyTurn() {
         state.playerHp = nxt.hp;
         state.playerMaxHp = nxt.maxHp;
         b.lastMinigame = null;
+        setSpriteBattleClasses(btPlayerSprite, nxtEnt.id || nxtEnt);
         btPlayerSprite.classList.add('entering');
         setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
         setTimeout(() => playEnterFlash(), 100);
