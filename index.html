@@ -2013,6 +2013,23 @@ body { background: var(--bg-void) !important; }
       </div>
       <div class="foot">PRESS 1, 2, OR 3 &mdash; OR CLICK A CARD</div>
     </div>
+    <div id="lakeGatewayPrompt" style="display:none;position:absolute;inset:0;z-index:26;background:rgba(4,8,22,0.92);align-items:center;justify-content:center;flex-direction:column;">
+      <div style="background:linear-gradient(180deg,rgba(8,16,40,0.97),rgba(5,10,28,0.97));border:2px solid #5bcefa;border-radius:4px;padding:24px 32px;text-align:center;box-shadow:0 0 32px rgba(91,206,250,0.35);">
+        <div style="color:#5bcefa;font-size:13px;letter-spacing:4px;margin-bottom:6px;">🌊 LAKE GATEWAY 🌊</div>
+        <div id="lakeGwStep" style="color:#8ab;font-size:10px;letter-spacing:3px;margin-bottom:14px;">PASSWORD 1 OF 3</div>
+        <input id="lakeGwInput" type="password" placeholder="ENTER PASSWORD..." autocomplete="off" spellcheck="false"
+          style="background:#050a18;border:1px solid #5bcefa;color:#5bcefa;font-family:inherit;font-size:14px;letter-spacing:2px;padding:8px 14px;width:220px;text-align:center;outline:none;">
+        <div style="color:#444;font-size:10px;margin-top:10px;letter-spacing:2px;">PRESS ENTER TO SUBMIT &bull; ESC TO CANCEL</div>
+      </div>
+    </div>
+    <div id="galleryOverlay" style="display:none;position:absolute;inset:0;z-index:48;background:rgba(4,4,14,0.94);flex-direction:column;overflow-y:auto;padding:20px 16px;">
+      <div style="max-width:560px;margin:0 auto;width:100%;">
+        <div style="color:#f4c165;font-size:13px;letter-spacing:5px;text-align:center;margin-bottom:4px;">✨ SECRET GALLERY ✨</div>
+        <div style="color:#555;font-size:9px;letter-spacing:3px;text-align:center;margin-bottom:18px;">WALK TO THE DOOR TO LEAVE &bull; E TO REOPEN</div>
+        <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div>
+        <div style="text-align:center;margin-top:18px;"><span onclick="hideGalleryOverlay()" style="color:#5bcefa;font-size:10px;letter-spacing:3px;cursor:pointer;border:1px solid #5bcefa;padding:5px 14px;border-radius:2px;">[ EXPLORE ROOM ]</span></div>
+      </div>
+    </div>
     <div id="adminPrompt" style="display:none;position:absolute;inset:0;z-index:25;background:rgba(6,6,16,0.85);align-items:center;justify-content:center;flex-direction:column;">
       <div style="background:linear-gradient(180deg,rgba(20,20,42,0.97),rgba(14,14,32,0.97));border:2px solid #f067ff;border-radius:4px;padding:24px 32px;text-align:center;box-shadow:0 0 30px rgba(240,103,255,0.3);">
         <div style="color:#f067ff;font-size:13px;letter-spacing:4px;margin-bottom:12px;">&#9889; ADMIN TERMINAL &#9889;</div>
@@ -2382,6 +2399,21 @@ const maps = {
     ]
   },
   // ================ SHRINE DIMENSION (ultras) ================
+  gallery: {
+    w: 14, h: 10, music:'base',
+    tiles: [
+      "##############",
+      "#bbbbbbbbbbbb#",
+      "#bWbbbbbbbbWb#",
+      "#bbbbbbbbbbbb#",
+      "#bbbbbbbbbbbb#",
+      "#bbbbbbbbbbbb#",
+      "#bbbbbbbbbbbb#",
+      "#bWbbbbbbbbWb#",
+      "######E#######",
+      "##############"
+    ]
+  },
   dimension: {
     w: 18, h: 12, music:'dimension',
     tiles: [
@@ -3215,6 +3247,7 @@ const state = {
   adminMode: false,         // unlocked via base-bottom-left password
   gadget: false,            // professor's gadget (extends fog-of-war)
   adminPrompt: false,       // text input dialog for admin code
+  lakeGatewayOpen: false,   // 3-password lake gateway prompt
   applianceWins: {},        // id → battle wins with that appliance active
   shinies: {},              // id → true if caught as shiny
   bossesDefeated: {},       // boss id → true when beaten
@@ -3234,6 +3267,94 @@ const state = {
   streakLastDate: null,    // date string of last claim day
   streakBonusExpiry: null  // timestamp when 7-day streak bonus expires
 };
+
+// ── LAKE GATEWAY (3-password secret entrance) ─────────────
+let _lakeGwStep = 0;
+const LAKE_GW_PASSWORDS = ['Aarna', 'Em', 'Jessica'];
+
+function checkLakeGateway() {
+  if (state.lakeGatewayOpen || state.dialog || state.battle || state.mini) return;
+  if (state.map === 'lake' && state.px === 15 && state.py === 7) {
+    openLakeGatewayPrompt();
+  }
+}
+
+function openLakeGatewayPrompt() {
+  state.lakeGatewayOpen = true;
+  _lakeGwStep = 0;
+  const el = document.getElementById('lakeGatewayPrompt');
+  el.style.display = 'flex';
+  const inp = document.getElementById('lakeGwInput');
+  const stepEl = document.getElementById('lakeGwStep');
+  inp.value = ''; inp.placeholder = 'ENTER PASSWORD...'; inp.style.borderColor = '#5bcefa';
+  stepEl.textContent = 'PASSWORD 1 OF 3';
+  setTimeout(() => inp.focus(), 50);
+}
+
+function closeLakeGatewayPrompt() {
+  state.lakeGatewayOpen = false;
+  document.getElementById('lakeGatewayPrompt').style.display = 'none';
+}
+
+function submitLakePassword() {
+  const inp = document.getElementById('lakeGwInput');
+  const stepEl = document.getElementById('lakeGwStep');
+  const val = inp.value.trim();
+  if (val === LAKE_GW_PASSWORDS[_lakeGwStep]) {
+    _lakeGwStep++;
+    inp.value = '';
+    if (_lakeGwStep >= LAKE_GW_PASSWORDS.length) {
+      closeLakeGatewayPrompt();
+      audio.portal();
+      toast('✨ THE LAKE PARTS... ✨');
+      setTimeout(() => {
+        state.map = 'gallery'; state.px = state.tx = 6; state.py = state.ty = 4;
+        audio.startArea('base'); audio.zoneTransition();
+        buildGalleryGrid();
+        setTimeout(showGalleryOverlay, 400);
+      }, 600);
+    } else {
+      stepEl.textContent = `PASSWORD ${_lakeGwStep + 1} OF 3`;
+      inp.placeholder = `PASSWORD ${_lakeGwStep + 1}...`;
+      inp.style.borderColor = '#7edc8b';
+      setTimeout(() => { inp.style.borderColor = '#5bcefa'; }, 450);
+    }
+  } else {
+    _lakeGwStep = 0;
+    inp.value = ''; inp.placeholder = 'WRONG...';
+    stepEl.textContent = 'PASSWORD 1 OF 3';
+    inp.style.borderColor = '#e55';
+    setTimeout(() => { inp.style.borderColor = '#5bcefa'; inp.placeholder = 'ENTER PASSWORD...'; }, 1200);
+  }
+}
+
+function buildGalleryGrid() {
+  const grid = document.getElementById('galleryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  // Loads gallery1.jpg through gallery12.jpg — upload these files to your GitHub repo
+  for (let i = 1; i <= 12; i++) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'border:1px solid #333;border-radius:3px;overflow:hidden;background:#0a0a18;';
+    const img = document.createElement('img');
+    img.src = `./gallery${i}.jpg`;
+    img.alt = `Photo ${i}`;
+    img.style.cssText = 'width:100%;height:140px;object-fit:cover;display:block;';
+    img.onerror = () => { wrap.style.display = 'none'; };
+    wrap.appendChild(img);
+    grid.appendChild(wrap);
+  }
+}
+
+function showGalleryOverlay() {
+  const el = document.getElementById('galleryOverlay');
+  if (el) el.style.display = 'flex';
+}
+
+function hideGalleryOverlay() {
+  const el = document.getElementById('galleryOverlay');
+  if (el) el.style.display = 'none';
+}
 
 function checkAdminTerminal() {
   if (state.adminMode || state.adminPrompt) return;
@@ -4399,6 +4520,13 @@ function fastTravelTo(idx) {
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
 
+  // Lake gateway prompt eats all input except escape/enter
+  if (state.lakeGatewayOpen) {
+    if (k === 'escape') { closeLakeGatewayPrompt(); e.preventDefault(); }
+    else if (k === 'enter') { submitLakePassword(); e.preventDefault(); }
+    return;
+  }
+
   // Admin prompt eats all input except escape/enter
   if (state.adminPrompt) {
     if (k === 'escape') { closeAdminPrompt(); e.preventDefault(); }
@@ -4498,6 +4626,15 @@ function onKeyDown(e) {
     if (k === 'arrowdown' || k === 's') { moveInvSel(6); e.preventDefault(); return; }
     if (k === 'tab') { cycleInvFilter(); e.preventDefault(); return; }
     return;
+  }
+
+  // Gallery overlay toggle
+  if (state.map === 'gallery') {
+    if (k === 'escape') { hideGalleryOverlay(); e.preventDefault(); return; }
+    if (k === 'e' || k === ' ' || k === 'enter') {
+      const go = document.getElementById('galleryOverlay');
+      if (go && go.style.display === 'none') { showGalleryOverlay(); e.preventDefault(); return; }
+    }
   }
 
   // world
@@ -4792,6 +4929,7 @@ function transitions(m, x, y) {
   const map = maps[m];
 
   // === Indoor door-based transitions (house, cave, base, dimension, market) ===
+  if (m === 'gallery' && x === 6 && y === 8) { hideGalleryOverlay(); return { to:'lake', x:15, y:8 }; }
   if (m === 'house' && x === 10 && y === 13) return { to:'town', x:15, y:3 };
   if (m === 'town'  && x === 15 && y === 2)  return { to:'house', x:10, y:12 };
   if (m === 'town'  && x === 23 && y === 14) return { to:'market', x:13, y:16 };
@@ -10046,7 +10184,7 @@ function renderHud() {
   const zones = { house: 'HOME', town: 'TOWN', market: 'GRANDE MART', wild: 'WILDERNESS',
                   cave: 'DEEP CAVE', base: 'UNDERGROUND BASE', dimension: 'CRYSTAL DIMENSION',
                   plains: 'GOLDEN PLAINS', mountain: 'FROSTPEAK MOUNTAIN', lake: 'STILLWATER LAKE', beach: 'SUNBURN BEACH',
-                  fungal: 'FUNGAL HOLLOW', scrapyard: 'THE SCRAPYARD' };
+                  fungal: 'FUNGAL HOLLOW', scrapyard: 'THE SCRAPYARD', gallery: '✨ SECRET GALLERY ✨' };
   document.getElementById('zone').textContent = zones[state.map] || state.map.toUpperCase();
   // Michelin stars
   const starsEl = document.getElementById('stars');
@@ -10124,7 +10262,7 @@ function tick(now) {
     if (state.moving) {
       const swimming = isWaterTile(state.map, state.tx, state.ty);
       state.prog += dt / (swimming ? STEP_MS * 2.2 : STEP_MS);
-      if (state.prog >= 1) { state.px = state.tx; state.py = state.ty; state.moving = false; state.prog = 0; checkAdminTerminal(); checkHiddenItems(); }
+      if (state.prog >= 1) { state.px = state.tx; state.py = state.ty; state.moving = false; state.prog = 0; checkAdminTerminal(); checkLakeGateway(); checkHiddenItems(); }
     }
     if (!state.moving) {
       if (keys['arrowup']    || keys['w']) tryMove(0, -1, 'up');
