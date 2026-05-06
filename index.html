@@ -2022,18 +2022,13 @@ body { background: var(--bg-void) !important; }
         <div style="color:#444;font-size:10px;margin-top:10px;letter-spacing:2px;">PRESS ENTER TO SUBMIT &bull; ESC TO CANCEL</div>
       </div>
     </div>
-    <div id="galleryOverlay" style="display:none;position:absolute;inset:0;z-index:48;background:#04040e;align-items:center;justify-content:center;flex-direction:column;">
-      <div style="color:#f4c165;font-size:11px;letter-spacing:5px;margin-bottom:10px;">✨ SECRET GALLERY ✨</div>
-      <div style="position:relative;width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;box-sizing:border-box;">
-        <button onclick="galleryNav(-1)" style="background:none;border:1px solid #333;color:#aaa;font-size:22px;padding:6px 10px;cursor:pointer;border-radius:2px;flex-shrink:0;">‹</button>
-        <div style="flex:1;min-width:0;position:relative;">
-          <img id="galleryImg" src="" alt="" style="width:100%;max-height:220px;object-fit:contain;display:block;border:1px solid #222;border-radius:2px;background:#0a0a18;">
-          <div id="galleryLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#444;font-size:10px;letter-spacing:2px;">LOADING...</div>
-        </div>
-        <button onclick="galleryNav(1)" style="background:none;border:1px solid #333;color:#aaa;font-size:22px;padding:6px 10px;cursor:pointer;border-radius:2px;flex-shrink:0;">›</button>
-      </div>
-      <div id="galleryCounter" style="color:#555;font-size:9px;letter-spacing:3px;margin-top:10px;">— / —</div>
-      <div style="color:#333;font-size:9px;letter-spacing:2px;margin-top:6px;">← → ARROW KEYS &bull; ESC TO EXPLORE ROOM &bull; E TO REOPEN</div>
+    <div id="galleryOverlay" style="display:none;position:absolute;inset:0;z-index:48;background:#000;">
+      <img id="galleryImg" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;">
+      <div id="galleryLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px;letter-spacing:3px;pointer-events:none;background:#000;">LOADING PHOTOS...</div>
+      <button onclick="galleryNav(-1)" style="position:absolute;left:0;top:0;bottom:0;width:14%;background:linear-gradient(to right,rgba(0,0,0,0.55),transparent);border:none;color:rgba(255,255,255,0.65);font-size:40px;cursor:pointer;display:flex;align-items:center;justify-content:flex-start;padding-left:10px;z-index:2;">‹</button>
+      <button onclick="galleryNav(1)" style="position:absolute;right:0;top:0;bottom:0;width:14%;background:linear-gradient(to left,rgba(0,0,0,0.55),transparent);border:none;color:rgba(255,255,255,0.65);font-size:40px;cursor:pointer;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;z-index:2;">›</button>
+      <div id="galleryCounter" style="position:absolute;bottom:14px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.45);font-size:9px;letter-spacing:3px;pointer-events:none;">— / —</div>
+      <div style="position:absolute;top:10px;right:12px;color:rgba(255,255,255,0.25);font-size:8px;letter-spacing:2px;pointer-events:none;">ESC · EXPLORE ROOM</div>
     </div>
     <div id="adminPrompt" style="display:none;position:absolute;inset:0;z-index:25;background:rgba(6,6,16,0.85);align-items:center;justify-content:center;flex-direction:column;">
       <div style="background:linear-gradient(180deg,rgba(20,20,42,0.97),rgba(14,14,32,0.97));border:2px solid #f067ff;border-radius:4px;padding:24px 32px;text-align:center;box-shadow:0 0 30px rgba(240,103,255,0.3);">
