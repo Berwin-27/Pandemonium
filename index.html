@@ -3337,20 +3337,20 @@ let _galleryPhotos = [];
 let _galleryIdx = 0;
 
 const GALLERY_FILES = [
-  '241bda6f3e33ddd98d966300d3942c6f%20(1).jpeg',
-  '30dd58336a3b2f13723bd74f01c3a82c%20(1).jpeg',
-  '548a1be2231cddf6ff06e4b3a7ecdcb8%20(1).jpeg',
-  '6efb3e31423f2753e6100520b25f8d2a%20(1).jpeg',
-  '7e0e34013f3dfdcb344a987bdbe95f5f%20(2).jpeg',
+  '241bda6f3e33ddd98d966300d3942c6f (1).jpeg',
+  '30dd58336a3b2f13723bd74f01c3a82c (1).jpeg',
+  '548a1be2231cddf6ff06e4b3a7ecdcb8 (1).jpeg',
+  '6efb3e31423f2753e6100520b25f8d2a (1).jpeg',
+  '7e0e34013f3dfdcb344a987bdbe95f5f (2).jpeg',
   'IMG_0235.png',
   'IMG_0350.jpeg',
   'IMG_1688.jpeg',
-  'IMG_1748%20(2).png',
+  'IMG_1748 (2).png',
   'IMG_1879.png',
   'IMG_1880.png',
   'IMG_2037.png',
   'IMG_2039.png',
-  'IMG_2672%20(2).jpeg',
+  'IMG_2672 (2).jpeg',
   'IMG_3953.jpeg',
   'IMG_4371.jpeg',
   'IMG_4372.jpeg',
@@ -3360,17 +3360,29 @@ const GALLERY_FILES = [
   'IMG_4717.png',
   'IMG_6531.png',
   'IMG_6785.jpeg',
-  'IMG_7749%20(1).jpeg',
-  'a18bef407f448501212ee5ae59828aea%20(1).jpeg',
+  'IMG_7749 (1).jpeg',
+  'a18bef407f448501212ee5ae59828aea (1).jpeg',
   'ac4847d1af947b89939be22ee69c2438.jpeg',
-  'b2368be3e74bd4435c7185539f8aeca0%20(2).jpeg',
-  'c32587069166908e16d3cc37662bb7cf%20(2).jpeg',
+  'b2368be3e74bd4435c7185539f8aeca0 (2).jpeg',
+  'c32587069166908e16d3cc37662bb7cf (2).jpeg',
 ];
 
 function buildGalleryGrid() {
-  _galleryPhotos = GALLERY_FILES.map(f => './' + f);
+  _galleryPhotos = [];
   _galleryIdx = 0;
-  _renderGallerySlide();
+  const counter = document.getElementById('galleryCounter');
+  const loading = document.getElementById('galleryLoading');
+  if (loading) { loading.style.display = 'flex'; loading.textContent = 'LOADING PHOTOS...'; }
+  if (counter) counter.textContent = '— / —';
+  let done = 0;
+  const total = GALLERY_FILES.length;
+  for (const f of GALLERY_FILES) {
+    const src = './' + f.split(' ').join('%20');
+    const probe = new Image();
+    probe.onload  = () => { _galleryPhotos.push(src); if (++done === total) _galleryReady(); };
+    probe.onerror = () => { if (++done === total) _galleryReady(); };
+    probe.src = src;
+  }
 }
 
 function _galleryReady() {
@@ -3384,19 +3396,24 @@ function _renderGallerySlide() {
   const loading = document.getElementById('galleryLoading');
   if (!img) return;
   if (_galleryPhotos.length === 0) {
-    loading.textContent = 'NO PHOTOS YET — SEE INSTRUCTIONS';
-    loading.style.display = 'flex';
-    img.style.display = 'none';
-    counter.textContent = '0 / 0';
+    if (loading) { loading.style.display = 'flex'; loading.textContent = 'NO PHOTOS FOUND'; }
+    if (img) img.style.display = 'none';
+    if (counter) counter.textContent = '0 / 0';
     return;
   }
-  loading.style.display = 'flex';
-  loading.textContent = 'LOADING...';
+  if (loading) loading.style.display = 'flex';
+  if (loading) loading.textContent = 'LOADING...';
   img.style.display = 'block';
+  img.onload  = () => { if (loading) loading.style.display = 'none'; };
+  img.onerror = () => {
+    // remove broken photo and advance
+    _galleryPhotos.splice(_galleryIdx, 1);
+    if (_galleryPhotos.length === 0) { _renderGallerySlide(); return; }
+    _galleryIdx = _galleryIdx % _galleryPhotos.length;
+    _renderGallerySlide();
+  };
   img.src = _galleryPhotos[_galleryIdx];
-  img.onload  = () => { loading.style.display = 'none'; };
-  img.onerror = () => { loading.textContent = 'COULD NOT LOAD'; };
-  counter.textContent = `${_galleryIdx + 1} / ${_galleryPhotos.length}`;
+  if (counter) counter.textContent = `${_galleryIdx + 1} / ${_galleryPhotos.length}`;
 }
 
 function galleryNav(dir) {
