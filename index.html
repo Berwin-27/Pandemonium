@@ -6592,31 +6592,6 @@ function triggerFrozenWorld() {
   });
 }
 
-function setBattleMenu_FINAL_SENTINEL_DO_NOT_TOUCH() { /*_BLOCK_START_
-    const deg=(idx*37)%360, sz2=14+Math.random()*16;
-    const cr=_fin.mk(`position:absolute;left:${cx2}px;top:${cy2}px;width:0;height:0;z-index:81;pointer-events:none;border-left:${sz2/2}px solid transparent;border-right:${sz2/2}px solid transparent;border-bottom:${sz2*1.6}px solid rgba(${140+Math.random()*60|0},${210+Math.random()*35|0},255,.92);transform:translate(-50%,-100%) rotate(${deg}deg) scale(0);filter:drop-shadow(0 0 6px rgba(100,200,255,.8));transition:transform .38s cubic-bezier(.1,.72,.2,1.62);`,stage);
-    void cr.offsetWidth; cr.style.transform=`translate(-50%,-100%) rotate(${deg}deg) scale(1)`;
-    crystalTrail.push(cr);
-    const fb=_fin.mk(`position:absolute;left:${cx2}px;top:${cy2}px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,rgba(210,244,255,.88),rgba(140,210,255,.3),transparent);transform:translate(-50%,-50%) scale(0.1);z-index:82;pointer-events:none;transition:transform .38s ease-out,opacity .35s ease-out .1s;`,stage);
-    void fb.offsetWidth; fb.style.transform='translate(-50%,-50%) scale(4)'; fb.style.opacity='0';
-    setTimeout(()=>fb.remove(),560);
-  }
-
-  const STEPS=10, walkDur=3200;
-  setTimeout(()=>{
-    for(let i=0;i<STEPS;i++){
-      const stepMs=walkDur/STEPS;
-      setTimeout(()=>{
-        const currFrac=i/STEPS;
-        plantCrystal(pX+(eX-pX)*currFrac+Math.random()*22-11, pY+(eY-pY)*currFrac+Math.random()*16-8, i);
-    setBattleMenu('end');
-  } else {
-    battleLog('You try to retreat, but it blocks your path!');
-    setTimeout(() => enemyTurn(), 600);
-    setBattleMenu('none');
-  }
-}
-
 const catchOverlay = document.getElementById('catchOverlay');
 const catchScoreText = document.getElementById('catchScoreText');
 
