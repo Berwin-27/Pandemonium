@@ -6807,6 +6807,25 @@ const _fin = {
     const el=this.mk(`position:absolute;left:${cx}px;top:${cy}px;width:20px;height:20px;border-radius:50%;border:3px solid ${color};transform:translate(-50%,-50%) scale(0.05);z-index:${z};pointer-events:none;box-shadow:0 0 12px ${color};transition:transform ${dur}ms ease-out,opacity ${dur}ms ease-out;`,stage);
     void el.offsetWidth; el.style.transform=`translate(-50%,-50%) scale(${maxSc})`; el.style.opacity='0';
     setTimeout(()=>el.remove(),dur+100); return el;
+  },
+  slashMark(stage,x,y,ang,col){
+    const el=this.mk(`position:absolute;left:${x}px;top:${y}px;width:60px;height:3px;background:linear-gradient(90deg,transparent,${col||'rgba(255,255,200,.95)'},transparent);transform:translate(-50%,-50%) rotate(${ang||0}deg);z-index:87;pointer-events:none;border-radius:2px;box-shadow:0 0 9px ${col||'#ffffa0'};opacity:1;transition:opacity .28s ease-out;`,stage);
+    setTimeout(()=>{el.style.opacity='0';},72); setTimeout(()=>el.remove(),400);
+  },
+  showOv(badge,emoji,title,sub,color,bg){
+    const ov=document.getElementById('cutsceneOverlay');
+    ov.style.background=`radial-gradient(ellipse at 50% 42%,${bg||'#07071a'} 0%,#050510 100%)`;
+    ov.innerHTML=`<div class="csf-frame" style="--csf-accent:${color}"><div class="csf-badge">${badge}</div><div class="csf-emoji">${emoji}</div><div class="csf-title">${title}</div>${sub?`<div class="csf-sub">${sub}</div>`:''}</div>`;
+    ov.classList.add('show'); ov.style.opacity='1';
+  },
+  hideOv(){
+    const ov=document.getElementById('cutsceneOverlay');
+    ov.style.transition='opacity .12s ease-out'; ov.style.opacity='0';
+    setTimeout(()=>{ov.classList.remove('show');ov.innerHTML='';ov.style.opacity='';ov.style.transition='';},165);
+  },
+  clearBolts(segs,holdMs){
+    holdMs=holdMs||120;
+    setTimeout(()=>segs.forEach(s=>{try{s.style.opacity='0';s.style.transition='opacity .16s';setTimeout(()=>s.remove(),220);}catch(e){}}),holdMs);
   }
 };
 
@@ -6832,169 +6851,174 @@ function triggerFinisher() {
 // ── 1. HUNDRED SLASHES (neutral) ─────────────────────────
 function triggerHundredSlashes() {
   const b = state.battle; if (!b || b.ended) return;
-  const { pEmoji } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
   const eEmoji = btEnemySprite.textContent.trim() || '👾';
   const eNm = (b.enemy?.n || 'ENEMY').toUpperCase();
   battleLog(`⚔ <b style="color:#d4af37;letter-spacing:4px">HUNDRED SLASHES</b> — Finisher unleashed!`);
-  const frames = [
-    { badge:'FINISHER',  emoji:'⚔️',
-      title:'HUNDRED SLASHES',    sub:`${eNm} cannot escape...`,
-      color:'#d4af37', bg:'#0a0800', dur:800 },
-    { badge:'CHARGE',    emoji:`${pEmoji}💨`,
-      title:'CHARGING UP!',       sub:'One hundred strikes loading...',
-      color:'#e8c860', bg:'#0e0c00', dur:900 },
-    { badge:'STRIKE I',  emoji:'⚔️💫',
-      title:'FIRST WAVE!',        sub:'Thirty cuts per second.',
-      color:'#ffffff',  bg:'#1a1200', dur:700,
-      flash:'rgba(255,255,255,0.5)', shake:6 },
-    { badge:'STRIKE II', emoji:'💢',
-      title:'FORTY MORE!',        sub:'The blade is a blur.',
-      color:'#ffcc00', bg:'#181000', dur:800,
-      shake:10 },
-    { badge:'FINAL',     emoji:`⚔️${eEmoji}`,
-      title:'FINAL BLOW!',        sub:`${eNm} has no defense left!`,
-      color:'#ff9020', bg:'#1a0800', dur:750,
-      flash:'rgba(255,180,0,0.5)', shake:12 },
-    { badge:'RESULT',    emoji:`💥${eEmoji}`,
-      title:'OVERWHELMED!',       sub:'One hundred cuts. No mercy.',
-      color:'#ff6010', bg:'#140600', dur:700 },
-    { badge:'VICTORY',   emoji:`🏆${pEmoji}`,
-      title:'VICTORY!',           sub:'Finisher complete.',
-      color:'#ffd700', bg:'#0a0500', dur:1000 },
-  ];
-  const container = document.getElementById('cutsceneOverlay');
-  audio.victory();
-  spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 52);
-  runCutsceneFrames(frames, container, () => {
-    btEnemySprite.classList.add('faint');
-    onEnemyFaint();
+  const C = '#d4af37';
+  const pc = _fin.sprite(stage, pX, pY, pEmoji, 74);
+  const ec = _fin.sprite(stage, eX, eY, eEmoji, 64);
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  _fin.showOv('FINISHER', '⚔️', 'HUNDRED SLASHES', `${eNm} cannot escape...`, C, '#0a0800');
+
+  // reveal & charge
+  at(780, () => { _fin.hideOv(); pc.style.transition='transform .22s,filter .22s'; pc.style.transform='scale(1.5)'; pc.style.filter=`drop-shadow(0 0 28px ${C}) brightness(1.6)`; _fin.flash(stage,`${C}1a`,1,380); });
+  // SLASH 1
+  at(400, () => { _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); _fin.mv(pc,eX-26,eY+10,74,82,'scale(1.3) rotate(-22deg)'); });
+  at(95, () => { _fin.impactFrame(stage,1,'#ffffff',44); _fin.sw(stage,eX,eY,C,6,310,86); _fin.shake(ec,11,190); for(let i=0;i<4;i++) _fin.slashMark(stage,eX+(Math.random()-.5)*52,eY+(Math.random()-.5)*46,(Math.random()-.5)*160,i%2?'#fff':'#ffe080'); });
+  at(150, () => { _fin.ghost(stage,pc,74); _fin.mv(pc,pX,pY,74,105,'scale(1.4)'); });
+  // SLASH 2
+  at(330, () => { _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); _fin.mv(pc,eX+22,eY-16,74,80,'scale(1.35) rotate(20deg)'); });
+  at(92, () => { _fin.impactFrame(stage,2,'#ffe060',40); _fin.sw(stage,eX,eY,'#ffcc00',8,290,86); _fin.shake(ec,15,220); for(let i=0;i<5;i++) _fin.slashMark(stage,eX+(Math.random()-.5)*58,eY+(Math.random()-.5)*52,(Math.random()-.5)*180,i%2?'#ffe060':'#fff'); });
+  at(155, () => { _fin.ghost(stage,pc,74); _fin.mv(pc,pX,pY,74,100,'scale(1.45)'); });
+  // FINAL CHARGE
+  at(310, () => { pc.style.filter=`drop-shadow(0 0 42px #fff) drop-shadow(0 0 20px ${C}) brightness(2.2)`; _fin.flash(stage,'#ffffff18',1,220); });
+  at(200, () => { _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); _fin.mv(pc,eX,eY,74,70,'scale(1.7) rotate(-6deg)'); });
+  // FINAL IMPACT
+  at(78, () => {
+    _fin.impactFrame(stage,3,'#ffffff',55); _fin.sw(stage,eX,eY,'#ffffff',13,520,94); _fin.sw(stage,eX,eY,C,10,640,89); _fin.sw(stage,eX,eY,'#ff8800',7,740,85);
+    _fin.shake(ec,26,550); _fin.shake(stage,16,480);
+    for(let i=0;i<10;i++) _fin.slashMark(stage,eX+(Math.random()-.5)*74,eY+(Math.random()-.5)*64,(Math.random()-.5)*180,i%3===0?'#ff8800':i%3===1?'#fff':'#ffe060');
   });
+  at(255, () => { _fin.ghost(stage,pc,74); _fin.mv(pc,pX,pY,74,175,'scale(1)'); pc.style.filter=''; ec.style.opacity='0.22'; ec.style.transition='opacity .45s'; });
+  at(680, () => { [pc,ec].forEach(el=>{try{el.remove();}catch(e){}}); audio.victory(); spawnConfetti(W/2,H/2,68); _fin.showOv('VICTORY',`🏆${pEmoji}`,'VICTORY!','One hundred cuts. No mercy.','#ffd700','#0a0500'); });
+  at(1250, () => { _fin.hideOv(); });
+  at(200,  () => { if(stage) stage.style.transform=''; btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
 // ── 2. LIGHTNING STORM (electric) ────────────────────────
 function triggerLightningStorm() {
   const b = state.battle; if (!b || b.ended) return;
-  const { pEmoji } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
   const eEmoji = btEnemySprite.textContent.trim() || '👾';
   const eNm = (b.enemy?.n || 'ENEMY').toUpperCase();
   battleLog(`⚡ <b style="color:#a0ccff;letter-spacing:4px">LIGHTNING STORM</b> — Heaven's wrath!`);
-  const frames = [
-    { badge:'FINISHER',  emoji:'⚡',
-      title:'LIGHTNING STORM',    sub:`${eNm} targeted...`,
-      color:'#ffe060', bg:'#0a0a00', dur:800 },
-    { badge:'CHARGE',    emoji:`${pEmoji}⚡`,
-      title:'POWER SURGE!',       sub:'Static building to critical.',
-      color:'#ffe060', bg:'#0d0d00', dur:900 },
-    { badge:'DISCHARGE', emoji:'🌩️',
-      title:'DISCHARGE!',         sub:'Ten million volts, released.',
-      color:'#ffffff',  bg:'#141400', dur:650,
-      flash:'rgba(255,255,200,0.6)', shake:8 },
-    { badge:'STORM',     emoji:'⚡⚡⚡',
-      title:"HEAVEN'S WRATH!",    sub:'The sky tears open.',
-      color:'#ffe060', bg:'#0a0a00', dur:800,
-      shake:12 },
-    { badge:'IMPACT',    emoji:`⚡${eEmoji}⚡`,
-      title:'FRIED!',             sub:`${eNm} circuits destroyed!`,
-      color:'#ffffff',  bg:'#0f0f00', dur:750,
-      flash:'rgba(255,240,100,0.55)', shake:10 },
-    { badge:'RESULT',    emoji:'💫',
-      title:'SYSTEMS OFFLINE',    sub:'Nothing but smoke remains.',
-      color:'#ffe060', bg:'#080800', dur:700 },
-    { badge:'VICTORY',   emoji:`🏆${pEmoji}`,
-      title:'VICTORY!',           sub:'The storm clears.',
-      color:'#ffd700', bg:'#080800', dur:950 },
-  ];
-  const container = document.getElementById('cutsceneOverlay');
-  audio.victory();
-  spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 52);
-  runCutsceneFrames(frames, container, () => {
-    btEnemySprite.classList.add('faint');
-    onEnemyFaint();
+  const C = '#ffe060'; const C2 = '#a0ccff';
+  const pc = _fin.sprite(stage, pX, pY, pEmoji, 74);
+  const ec = _fin.sprite(stage, eX, eY, eEmoji, 64);
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  _fin.showOv('FINISHER', '⚡', 'LIGHTNING STORM', `${eNm} targeted...`, C, '#0a0a00');
+
+  // reveal + jitter charge-up
+  at(800, () => {
+    _fin.hideOv(); pc.style.filter=`drop-shadow(0 0 24px ${C}) brightness(1.5)`;
+    let jEnd = Date.now()+420;
+    (function jit(){ if(Date.now()>jEnd){pc.style.transform='scale(1.35)';return;} pc.style.transform=`scale(1.3) translate(${(Math.random()-.5)*10}px,${(Math.random()-.5)*8}px) rotate(${(Math.random()-.5)*8}deg)`; requestAnimationFrame(jit); })();
+    _fin.flash(stage,`${C}15`,1,520);
   });
+  // BOLT 1
+  at(500, () => { const s=_fin.boltTo(stage,pX,pY,eX,eY,C,3); _fin.flash(stage,`${C}30`,1,120); _fin.clearBolts(s,130); });
+  at(145, () => { _fin.impactFrame(stage,1,C,42); _fin.sw(stage,eX,eY,C,7,300,86); _fin.shake(ec,12,200); });
+  // BOLT 2 (forked)
+  at(340, () => {
+    const mx=(pX+eX)/2+(Math.random()-.5)*55, my=(pY+eY)/2-38;
+    const s1=_fin.boltTo(stage,pX,pY,mx,my,C2,2); const s2=_fin.boltTo(stage,mx,my,eX,eY,C,3);
+    _fin.flash(stage,`${C}28`,1,110); _fin.clearBolts(s1,120); _fin.clearBolts(s2,125);
+  });
+  at(135, () => { _fin.impactFrame(stage,2,'#ffffff',46); _fin.sw(stage,eX,eY,C2,9,310,86); _fin.shake(ec,17,230); _fin.shake(stage,8,200); });
+  // FINAL: player surges, 4-bolt simultaneous salvo
+  at(380, () => { pc.style.transition='transform .18s,filter .18s'; pc.style.transform='scale(1.65)'; pc.style.filter=`drop-shadow(0 0 44px #fff) drop-shadow(0 0 22px ${C}) brightness(2.4)`; _fin.flash(stage,'#ffffff22',1,260); });
+  at(300, () => {
+    const offs=[[-28,-18],[18,-28],[0,4],[-14,22]];
+    const segs=offs.map(([ox,oy])=>_fin.boltTo(stage,pX+ox*.4,pY+oy*.4,eX+ox,eY+oy,ox===0?C:C2,ox===-14?2:3));
+    _fin.flash(stage,'#ffffff44',1,180); segs.forEach((s,i)=>_fin.clearBolts(s,140+i*12));
+  });
+  at(160, () => {
+    _fin.impactFrame(stage,4,'#ffffff',52); _fin.sw(stage,eX,eY,'#ffffff',14,540,94); _fin.sw(stage,eX,eY,C,11,650,89); _fin.sw(stage,eX,eY,C2,8,720,85);
+    _fin.shake(ec,28,600); _fin.shake(stage,18,520);
+    for(let i=0;i<3;i++) setTimeout(()=>{ const bx=eX+(Math.random()-.5)*80; const bs=_fin.lightning(stage,bx,0,eY+20,i%2?C:C2,2); setTimeout(()=>bs.forEach(s=>{s.style.opacity='0';setTimeout(()=>s.remove(),180);}),140); },i*85);
+    ec.style.opacity='0.18'; ec.style.transition='opacity .5s'; ec.style.filter='brightness(3) sepia(1) hue-rotate(200deg)';
+  });
+  at(700, () => { [pc,ec].forEach(el=>{try{el.remove();}catch(e){}}); audio.victory(); spawnConfetti(W/2,H/2,68); _fin.showOv('VICTORY',`🏆${pEmoji}`,'VICTORY!','The storm clears.','#ffd700','#080800'); });
+  at(1200, () => { _fin.hideOv(); });
+  at(200,  () => { if(stage) stage.style.transform=''; btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
 // ── 3. INFERNO SUPERNOVA (fire) ───────────────────────────
 function triggerInfernoSupernova() {
   const b = state.battle; if (!b || b.ended) return;
-  const { pEmoji } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
   const eEmoji = btEnemySprite.textContent.trim() || '👾';
   const eNm = (b.enemy?.n || 'ENEMY').toUpperCase();
   battleLog(`🔥 <b style="color:#ff7030;letter-spacing:4px">INFERNO SUPERNOVA</b> — Cataclysm unleashed!`);
-  const frames = [
-    { badge:'FINISHER',  emoji:'🔥',
-      title:'INFERNO SUPERNOVA',   sub:`${eNm} targeted...`,
-      color:'#ff6020', bg:'#1a0300', dur:800 },
-    { badge:'SURGE',     emoji:`${pEmoji}🔥`,
-      title:'HEAT OVERLOAD!',      sub:'Temperature: CRITICAL.',
-      color:'#ff8030', bg:'#200500', dur:900 },
-    { badge:'IGNITION',  emoji:'🌋',
-      title:'IGNITION!',           sub:'The air itself catches fire.',
-      color:'#ffffff',  bg:'#300800', dur:650,
-      flash:'rgba(255,96,0,0.55)', shake:7 },
-    { badge:'SUPERNOVA', emoji:'💥🔥💥',
-      title:'SUPERNOVA BURST!',    sub:'A star-level explosion.',
-      color:'#ff4000', bg:'#280600', dur:800,
-      shake:11 },
-    { badge:'IMPACT',    emoji:`🔥${eEmoji}🔥`,
-      title:'INCINERATED!',        sub:`${eNm} turned to cinders!`,
-      color:'#ff2000', bg:'#1a0200', dur:750,
-      flash:'rgba(255,80,0,0.6)', shake:9 },
-    { badge:'RESULT',    emoji:'✨',
-      title:'ASH & EMBERS',        sub:'Only dust remains.',
-      color:'#ff6020', bg:'#0f0200', dur:700 },
-    { badge:'VICTORY',   emoji:`🏆${pEmoji}`,
-      title:'VICTORY!',            sub:'The inferno subsides.',
-      color:'#ffd700', bg:'#0a0400', dur:1000 },
-  ];
-  const container = document.getElementById('cutsceneOverlay');
-  audio.victory();
-  spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 52);
-  runCutsceneFrames(frames, container, () => {
-    btEnemySprite.classList.add('faint');
-    onEnemyFaint();
+  const C = '#ff6020'; const C2 = '#ff9040';
+  const pc = _fin.sprite(stage, pX, pY, pEmoji, 74);
+  const ec = _fin.sprite(stage, eX, eY, eEmoji, 64);
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  _fin.showOv('FINISHER', '🔥', 'INFERNO SUPERNOVA', `${eNm} targeted...`, C, '#1a0300');
+
+  // reveal + player grows with fire aura
+  at(800, () => { _fin.hideOv(); pc.style.transition='transform .38s cubic-bezier(.22,1.4,.64,1),filter .38s'; pc.style.transform='scale(2.2)'; pc.style.filter=`drop-shadow(0 0 36px #ff4400) drop-shadow(0 0 18px #ffaa00) brightness(1.8)`; _fin.sw(stage,pX,pY,C,8,420,84); _fin.flash(stage,'#ff440012',1,520); });
+  // heat pulses
+  at(560, () => { let c=0; const iv=setInterval(()=>{ if(++c>5){clearInterval(iv);return;} pc.style.transform=c%2?'scale(2.35)':'scale(2.1)'; },88); });
+  // LAUNCH — rocket charge across stage
+  at(530, () => { _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); _fin.ghost(stage,pc,74); [30,60,90].forEach(d=>setTimeout(()=>_fin.ghost(stage,pc,74),d)); _fin.mv(pc,eX,eY,74,100,'scale(2.6) rotate(-4deg)'); });
+  // EXPLOSION IMPACT
+  at(115, () => {
+    _fin.impactFrame(stage,3,'#ff6600',60); _fin.impactFrame(stage,1,'#ffffff',45);
+    _fin.sw(stage,eX,eY,'#ffffff',15,580,95); _fin.sw(stage,eX,eY,C,13,680,90); _fin.sw(stage,eX,eY,C2,10,760,86); _fin.sw(stage,eX,eY,'#ffcc00',7,820,83);
+    _fin.shake(ec,30,650); _fin.shake(stage,22,600); _fin.flash(stage,'#ff660044',1,360);
+    const sr=stage.getBoundingClientRect(); spawnConfetti(sr.left+eX,sr.top+eY,35);
+    ec.style.filter='brightness(4) sepia(1) hue-rotate(-20deg)'; ec.style.opacity='0.2'; ec.style.transition='opacity .55s,filter .55s';
   });
+  at(200, () => { _fin.ghost(stage,pc,74); _fin.mv(pc,pX,pY,74,250,'scale(1)'); pc.style.filter=''; });
+  at(780, () => { [pc,ec].forEach(el=>{try{el.remove();}catch(e){}}); audio.victory(); spawnConfetti(W/2,H/2,72); _fin.showOv('VICTORY',`🏆${pEmoji}`,'VICTORY!','The inferno subsides.','#ffd700','#0a0400'); });
+  at(1200, () => { _fin.hideOv(); });
+  at(200,  () => { if(stage) stage.style.transform=''; btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
 // ── 4. ABSOLUTE ZERO (ice) ────────────────────────────────
 function triggerFrozenWorld() {
   const b = state.battle; if (!b || b.ended) return;
-  const { pEmoji } = _fin.bootstrap(b);
+  const { stage, W, H, pX, pY, eX, eY, pEmoji } = _fin.bootstrap(b);
   const eEmoji = btEnemySprite.textContent.trim() || '👾';
   const eNm = (b.enemy?.n || 'ENEMY').toUpperCase();
   battleLog(`❄ <b style="color:#88ccff;letter-spacing:4px">ABSOLUTE ZERO</b> — Time stops. Then shatters.`);
-  const frames = [
-    { badge:'FINISHER',    emoji:'❄️',
-      title:'ABSOLUTE ZERO',       sub:`${eNm} targeted...`,
-      color:'#5bcefa', bg:'#00050f', dur:800 },
-    { badge:'FREEZE',      emoji:`${pEmoji}❄️`,
-      title:'FREEZING...',         sub:'Temperature dropping fast.',
-      color:'#5bcefa', bg:'#00060f', dur:900 },
-    { badge:'CRYSTALLIZE', emoji:'🧊',
-      title:'CRYSTALLIZING!',      sub:'Molecules locking in place.',
-      color:'#ffffff',  bg:'#000814', dur:650,
-      flash:'rgba(91,206,250,0.5)', shake:6 },
-    { badge:'ZERO',        emoji:'❄️💎❄️',
-      title:'TIME STOPS.',         sub:'Absolute zero achieved.',
-      color:'#40b0ff', bg:'#00040c', dur:800,
-      shake:9 },
-    { badge:'IMPACT',      emoji:`💎${eEmoji}💎`,
-      title:'CRYSTALLIZED!',       sub:`${eNm} frozen solid!`,
-      color:'#5bcefa', bg:'#00030a', dur:750,
-      flash:'rgba(64,176,255,0.55)', shake:10 },
-    { badge:'RESULT',      emoji:'💥🧊',
-      title:'SHATTERED!',          sub:'A thousand frozen pieces.',
-      color:'#40b0ff', bg:'#000308', dur:700 },
-    { badge:'VICTORY',     emoji:`🏆${pEmoji}`,
-      title:'VICTORY!',            sub:'The ice melts. You stand.',
-      color:'#ffd700', bg:'#000408', dur:1000 },
-  ];
-  const container = document.getElementById('cutsceneOverlay');
-  audio.victory();
-  spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 52);
-  runCutsceneFrames(frames, container, () => {
-    btEnemySprite.classList.add('faint');
-    onEnemyFaint();
+  const C = '#5bcefa'; const C2 = '#88ccff';
+  const pc = _fin.sprite(stage, pX, pY, pEmoji, 74);
+  const ec = _fin.sprite(stage, eX, eY, eEmoji, 64);
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  _fin.showOv('FINISHER', '❄️', 'ABSOLUTE ZERO', `${eNm} targeted...`, C, '#00050f');
+
+  // reveal + blue time-slow veil
+  at(800, () => {
+    _fin.hideOv();
+    const veil=_fin.mk('position:absolute;inset:0;z-index:82;pointer-events:none;background:rgba(0,40,80,0.2);opacity:0;transition:opacity .6s ease-out;',stage);
+    void veil.offsetWidth; veil.style.opacity='1';
+    pc.style.transition='transform .3s,filter .3s'; pc.style.transform='scale(1.35)'; pc.style.filter=`drop-shadow(0 0 26px ${C}) drop-shadow(0 0 12px #fff8) brightness(1.5)`;
+    setTimeout(()=>{ veil.style.opacity='0'; setTimeout(()=>veil.remove(),700); }, 2400);
   });
+  // ice shard bolts toward enemy
+  at(420, () => { for(let i=0;i<3;i++) setTimeout(()=>{ const ox=(Math.random()-.5)*50,oy=(Math.random()-.5)*40; const s=_fin.boltTo(stage,pX,pY,eX+ox,eY+oy,i%2?C:C2,2); _fin.clearBolts(s,115); },i*95); _fin.flash(stage,`${C}22`,1,320); });
+  // enemy freezes
+  at(380, () => { ec.style.transition='filter .3s'; ec.style.filter=`brightness(1.4) hue-rotate(185deg) saturate(2.2) drop-shadow(0 0 18px ${C})`; pc.style.transform='scale(1.5)'; _fin.sw(stage,eX,eY,C,8,360,86); _fin.flash(stage,`${C2}30`,1,220); });
+  // ice crystal materialises at enemy
+  at(340, () => {
+    const cryst=_fin.mk(`position:absolute;left:${eX}px;top:${eY}px;font-size:54px;line-height:1;text-align:center;transform:translate(-50%,-50%) scale(0.08) rotate(-30deg);z-index:89;pointer-events:none;transition:transform .35s cubic-bezier(.22,1.4,.64,1);filter:drop-shadow(0 0 16px ${C});`,stage);
+    cryst.textContent='❄'; void cryst.offsetWidth; cryst.style.transform='translate(-50%,-50%) scale(1.5) rotate(0deg)';
+    // SHATTER
+    setTimeout(()=>{
+      cryst.style.transition='transform .25s ease-in,opacity .25s ease-in'; cryst.style.transform='translate(-50%,-50%) scale(2.8) rotate(50deg)'; cryst.style.opacity='0';
+      _fin.impactFrame(stage,4,'#aaddff',50); _fin.impactFrame(stage,2,'#ffffff',40);
+      _fin.sw(stage,eX,eY,'#ffffff',14,560,95); _fin.sw(stage,eX,eY,C,12,660,90); _fin.sw(stage,eX,eY,C2,9,740,86);
+      _fin.shake(ec,26,600); _fin.shake(stage,18,520);
+      for(let i=0;i<9;i++) setTimeout(()=>{
+        const ang=Math.random()*Math.PI*2, dist=44+Math.random()*58;
+        const sh=_fin.mk(`position:absolute;left:${eX+Math.cos(ang)*8}px;top:${eY+Math.sin(ang)*8}px;width:7px;height:7px;background:${i%2?C:C2};border-radius:1px;z-index:89;pointer-events:none;transform:translate(-50%,-50%) rotate(${Math.random()*180}deg);box-shadow:0 0 5px ${C};transition:left .38s ease-out,top .38s ease-out,opacity .38s ease-out;`,stage);
+        void sh.offsetWidth; sh.style.left=(eX+Math.cos(ang)*dist)+'px'; sh.style.top=(eY+Math.sin(ang)*dist)+'px'; sh.style.opacity='0';
+        setTimeout(()=>sh.remove(),480);
+      },i*28);
+      ec.style.opacity='0.15'; ec.style.filter='brightness(3) hue-rotate(185deg) saturate(3)';
+      setTimeout(()=>cryst.remove(),400);
+    }, 420);
+  });
+  at(1120, () => { [pc,ec].forEach(el=>{try{el.remove();}catch(e){}}); audio.victory(); spawnConfetti(W/2,H/2,65); _fin.showOv('VICTORY',`🏆${pEmoji}`,'VICTORY!','The ice melts. You stand.','#ffd700','#000408'); });
+  at(1200,  () => { _fin.hideOv(); });
+  at(200,   () => { if(stage) stage.style.transform=''; btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
 function setBattleMenu(kind) {
