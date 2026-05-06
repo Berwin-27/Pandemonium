@@ -2022,13 +2022,18 @@ body { background: var(--bg-void) !important; }
         <div style="color:#444;font-size:10px;margin-top:10px;letter-spacing:2px;">PRESS ENTER TO SUBMIT &bull; ESC TO CANCEL</div>
       </div>
     </div>
-    <div id="galleryOverlay" style="display:none;position:absolute;inset:0;z-index:48;background:rgba(4,4,14,0.94);flex-direction:column;overflow-y:auto;padding:20px 16px;">
-      <div style="max-width:560px;margin:0 auto;width:100%;">
-        <div style="color:#f4c165;font-size:13px;letter-spacing:5px;text-align:center;margin-bottom:4px;">✨ SECRET GALLERY ✨</div>
-        <div style="color:#555;font-size:9px;letter-spacing:3px;text-align:center;margin-bottom:18px;">WALK TO THE DOOR TO LEAVE &bull; E TO REOPEN</div>
-        <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div>
-        <div style="text-align:center;margin-top:18px;"><span onclick="hideGalleryOverlay()" style="color:#5bcefa;font-size:10px;letter-spacing:3px;cursor:pointer;border:1px solid #5bcefa;padding:5px 14px;border-radius:2px;">[ EXPLORE ROOM ]</span></div>
+    <div id="galleryOverlay" style="display:none;position:absolute;inset:0;z-index:48;background:#04040e;align-items:center;justify-content:center;flex-direction:column;">
+      <div style="color:#f4c165;font-size:11px;letter-spacing:5px;margin-bottom:10px;">✨ SECRET GALLERY ✨</div>
+      <div style="position:relative;width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;box-sizing:border-box;">
+        <button onclick="galleryNav(-1)" style="background:none;border:1px solid #333;color:#aaa;font-size:22px;padding:6px 10px;cursor:pointer;border-radius:2px;flex-shrink:0;">‹</button>
+        <div style="flex:1;min-width:0;position:relative;">
+          <img id="galleryImg" src="" alt="" style="width:100%;max-height:220px;object-fit:contain;display:block;border:1px solid #222;border-radius:2px;background:#0a0a18;">
+          <div id="galleryLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#444;font-size:10px;letter-spacing:2px;">LOADING...</div>
+        </div>
+        <button onclick="galleryNav(1)" style="background:none;border:1px solid #333;color:#aaa;font-size:22px;padding:6px 10px;cursor:pointer;border-radius:2px;flex-shrink:0;">›</button>
       </div>
+      <div id="galleryCounter" style="color:#555;font-size:9px;letter-spacing:3px;margin-top:10px;">— / —</div>
+      <div style="color:#333;font-size:9px;letter-spacing:2px;margin-top:6px;">← → ARROW KEYS &bull; ESC TO EXPLORE ROOM &bull; E TO REOPEN</div>
     </div>
     <div id="adminPrompt" style="display:none;position:absolute;inset:0;z-index:25;background:rgba(6,6,16,0.85);align-items:center;justify-content:center;flex-direction:column;">
       <div style="background:linear-gradient(180deg,rgba(20,20,42,0.97),rgba(14,14,32,0.97));border:2px solid #f067ff;border-radius:4px;padding:24px 32px;text-align:center;box-shadow:0 0 30px rgba(240,103,255,0.3);">
@@ -3328,22 +3333,58 @@ function submitLakePassword() {
   }
 }
 
+let _galleryPhotos = [];
+let _galleryIdx = 0;
+
 function buildGalleryGrid() {
-  const grid = document.getElementById('galleryGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  // Loads gallery1.jpg through gallery12.jpg — upload these files to your GitHub repo
-  for (let i = 1; i <= 12; i++) {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'border:1px solid #333;border-radius:3px;overflow:hidden;background:#0a0a18;';
-    const img = document.createElement('img');
-    img.src = `./gallery${i}.jpg`;
-    img.alt = `Photo ${i}`;
-    img.style.cssText = 'width:100%;height:140px;object-fit:cover;display:block;';
-    img.onerror = () => { wrap.style.display = 'none'; };
-    wrap.appendChild(img);
-    grid.appendChild(wrap);
+  // Probe gallery1.jpg … gallery50.jpg; collect those that load successfully
+  _galleryPhotos = [];
+  _galleryIdx = 0;
+  let checked = 0;
+  const MAX = 50;
+  for (let i = 1; i <= MAX; i++) {
+    const probe = new Image();
+    const src = `./gallery${i}.jpg`;
+    probe.onload  = () => { _galleryPhotos.push(src); _galleryPhotos.sort(); if (++checked === MAX) _galleryReady(); };
+    probe.onerror = () => { if (++checked === MAX) _galleryReady(); };
+    probe.src = src;
   }
+}
+
+function _galleryReady() {
+  _galleryPhotos.sort((a, b) => {
+    const na = parseInt(a.match(/\d+/)[0]), nb = parseInt(b.match(/\d+/)[0]);
+    return na - nb;
+  });
+  _galleryIdx = 0;
+  _renderGallerySlide();
+}
+
+function _renderGallerySlide() {
+  const img     = document.getElementById('galleryImg');
+  const counter = document.getElementById('galleryCounter');
+  const loading = document.getElementById('galleryLoading');
+  if (!img) return;
+  if (_galleryPhotos.length === 0) {
+    loading.textContent = 'NO PHOTOS YET — SEE INSTRUCTIONS';
+    loading.style.display = 'flex';
+    img.style.display = 'none';
+    counter.textContent = '0 / 0';
+    return;
+  }
+  loading.style.display = 'flex';
+  loading.textContent = 'LOADING...';
+  img.style.display = 'block';
+  img.src = _galleryPhotos[_galleryIdx];
+  img.onload  = () => { loading.style.display = 'none'; };
+  img.onerror = () => { loading.textContent = 'COULD NOT LOAD'; };
+  counter.textContent = `${_galleryIdx + 1} / ${_galleryPhotos.length}`;
+}
+
+function galleryNav(dir) {
+  if (_galleryPhotos.length === 0) return;
+  _galleryIdx = (_galleryIdx + dir + _galleryPhotos.length) % _galleryPhotos.length;
+  _renderGallerySlide();
 }
 
 function showGalleryOverlay() {
@@ -4628,12 +4669,16 @@ function onKeyDown(e) {
     return;
   }
 
-  // Gallery overlay toggle
+  // Gallery slideshow controls (when overlay is visible)
   if (state.map === 'gallery') {
-    if (k === 'escape') { hideGalleryOverlay(); e.preventDefault(); return; }
-    if (k === 'e' || k === ' ' || k === 'enter') {
-      const go = document.getElementById('galleryOverlay');
-      if (go && go.style.display === 'none') { showGalleryOverlay(); e.preventDefault(); return; }
+    const go = document.getElementById('galleryOverlay');
+    const overlayOpen = go && go.style.display !== 'none';
+    if (overlayOpen) {
+      if (k === 'arrowleft'  || k === 'a') { galleryNav(-1); e.preventDefault(); return; }
+      if (k === 'arrowright' || k === 'd') { galleryNav(1);  e.preventDefault(); return; }
+      if (k === 'escape') { hideGalleryOverlay(); e.preventDefault(); return; }
+    } else {
+      if (k === 'e' || k === ' ' || k === 'enter') { showGalleryOverlay(); e.preventDefault(); return; }
     }
   }
 
