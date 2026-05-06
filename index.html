@@ -3336,26 +3336,44 @@ function submitLakePassword() {
 let _galleryPhotos = [];
 let _galleryIdx = 0;
 
+const GALLERY_FILES = [
+  '241bda6f3e33ddd98d966300d3942c6f%20(1).jpeg',
+  '30dd58336a3b2f13723bd74f01c3a82c%20(1).jpeg',
+  '548a1be2231cddf6ff06e4b3a7ecdcb8%20(1).jpeg',
+  '6efb3e31423f2753e6100520b25f8d2a%20(1).jpeg',
+  '7e0e34013f3dfdcb344a987bdbe95f5f%20(2).jpeg',
+  'IMG_0235.png',
+  'IMG_0350.jpeg',
+  'IMG_1688.jpeg',
+  'IMG_1748%20(2).png',
+  'IMG_1879.png',
+  'IMG_1880.png',
+  'IMG_2037.png',
+  'IMG_2039.png',
+  'IMG_2672%20(2).jpeg',
+  'IMG_3953.jpeg',
+  'IMG_4371.jpeg',
+  'IMG_4372.jpeg',
+  'IMG_4374.jpeg',
+  'IMG_4715.png',
+  'IMG_4716.png',
+  'IMG_4717.png',
+  'IMG_6531.png',
+  'IMG_6785.jpeg',
+  'IMG_7749%20(1).jpeg',
+  'a18bef407f448501212ee5ae59828aea%20(1).jpeg',
+  'ac4847d1af947b89939be22ee69c2438.jpeg',
+  'b2368be3e74bd4435c7185539f8aeca0%20(2).jpeg',
+  'c32587069166908e16d3cc37662bb7cf%20(2).jpeg',
+];
+
 function buildGalleryGrid() {
-  // Probe gallery1.jpg … gallery50.jpg; collect those that load successfully
-  _galleryPhotos = [];
+  _galleryPhotos = GALLERY_FILES.map(f => './' + f);
   _galleryIdx = 0;
-  let checked = 0;
-  const MAX = 50;
-  for (let i = 1; i <= MAX; i++) {
-    const probe = new Image();
-    const src = `./gallery${i}.jpg`;
-    probe.onload  = () => { _galleryPhotos.push(src); _galleryPhotos.sort(); if (++checked === MAX) _galleryReady(); };
-    probe.onerror = () => { if (++checked === MAX) _galleryReady(); };
-    probe.src = src;
-  }
+  _renderGallerySlide();
 }
 
 function _galleryReady() {
-  _galleryPhotos.sort((a, b) => {
-    const na = parseInt(a.match(/\d+/)[0]), nb = parseInt(b.match(/\d+/)[0]);
-    return na - nb;
-  });
   _galleryIdx = 0;
   _renderGallerySlide();
 }
