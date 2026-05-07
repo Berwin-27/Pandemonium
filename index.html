@@ -6821,7 +6821,7 @@ const _fin = {
   hideOv(){
     const ov=document.getElementById('cutsceneOverlay');
     ov.style.transition='opacity .12s ease-out'; ov.style.opacity='0';
-    setTimeout(()=>{ov.classList.remove('show');ov.innerHTML='';ov.style.opacity='';ov.style.transition='';},165);
+    setTimeout(()=>{ov.classList.remove('show');ov.innerHTML='';ov.style.cssText='';},165);
   },
   clearBolts(segs,holdMs){
     holdMs=holdMs||120;
@@ -6852,7 +6852,6 @@ function triggerFinisher() {
 function _finBuildScene(pEmoji, eEmoji, C, bg) {
   const ov = document.getElementById('cutsceneOverlay');
   ov.innerHTML = '';
-  ov.style.cssText = 'display:flex;position:fixed;inset:0;z-index:9600;';
   ov.style.background = bg;
   ov.classList.add('show'); ov.style.opacity = '1';
   const fc = document.createElement('div');
@@ -8651,7 +8650,7 @@ function playCatchCutscene(onDone) {
 
   const ov = document.getElementById('cutsceneOverlay');
   ov.innerHTML = '';
-  ov.style.cssText = `display:flex;position:fixed;inset:0;z-index:9600;background:radial-gradient(ellipse at 50% 42%,${bg} 0%,#050510 100%);`;
+  ov.style.background = `radial-gradient(ellipse at 50% 42%,${bg} 0%,#050510 100%)`;
   ov.classList.add('show'); ov.style.opacity = '1';
 
   const fc = document.createElement('div');
@@ -8762,7 +8761,7 @@ function playCatchCutscene(onDone) {
     spawnConfetti(window.innerWidth/2, window.innerHeight/2, shiny?72:42);
     ov.style.transition='opacity 0.18s ease-out'; ov.style.opacity='0';
     setTimeout(()=>{
-      ov.classList.remove('show'); ov.innerHTML=''; ov.style.opacity=''; ov.style.transition=''; ov.style.transform='';
+      ov.classList.remove('show'); ov.innerHTML=''; ov.style.cssText='';
       if (onDone) setTimeout(onDone,150);
     },200);
   });
