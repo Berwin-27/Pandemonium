@@ -6928,13 +6928,13 @@ function triggerHundredSlashes() {
   let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
 
   at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='HUNDRED SLASHES'; fcCnt.style.opacity='1'; });
-  at(700, () => {
+  at(400, () => {
     fcT.style.opacity='0'; fcCnt.style.opacity='0';
     fcP.style.fontSize='150px'; fcP.style.filter=`drop-shadow(0 0 40px ${C}) brightness(1.9)`;
     imp(`rgba(212,175,55,0.15)`,500);
   });
   // DASH 1
-  at(350, () => { trail(64); fcP.style.transition='left 115ms ease-in'; fcP.style.left='64%'; });
+  at(200, () => { trail(64); fcP.style.transition='left 115ms ease-in'; fcP.style.left='64%'; });
   at(120, () => {
     imp('#ffffff',200); sl(66,45,-42,'#fff'); sl(62,58,25,C); sl(69,52,-70,'#ffe080');
     ring(75,57,3,C,0); shk(330);
@@ -6962,16 +6962,18 @@ function triggerHundredSlashes() {
     glow.style.cssText=`position:absolute;inset:0;z-index:14;pointer-events:none;background:radial-gradient(ellipse at 75% 57%,rgba(255,200,0,0.62) 0%,transparent 68%);opacity:1;transition:opacity 1.1s ease-out;`;
     fc.appendChild(glow); setTimeout(()=>glow.style.opacity='0',250); setTimeout(()=>glow.remove(),1500);
     fcCnt.style.opacity='1'; fcCnt.style.fontSize='42px'; fcCnt.textContent='×100';
+    ov.style.transition='transform 0.08s ease-in'; ov.style.transform='scale(1.05)';
+    setTimeout(()=>{ov.style.transition='transform 0.32s ease-out';ov.style.transform='scale(1)';},90);
   });
   at(420, () => {
     fcP.style.transition='left 240ms ease-out,font-size 240ms'; fcP.style.left='22%'; fcP.style.fontSize='110px'; fcP.style.filter='';
     fcE.style.opacity='0.14'; fcCnt.style.opacity='0';
   });
-  at(700, () => {
+  at(450, () => {
     audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,80);
     fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='One hundred cuts. No mercy.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
   });
-  at(1400, () => { _fin.hideOv(); });
+  at(650, () => { _fin.hideOv(); });
   at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
@@ -7003,7 +7005,7 @@ function triggerLightningStorm() {
   function kb(els,ms){setTimeout(()=>els.forEach(el=>{try{el.remove();}catch(e){}}),ms);}
 
   at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='LIGHTNING STORM'; fcCnt.style.opacity='1'; });
-  at(700, () => {
+  at(400, () => {
     fcT.style.opacity='0'; fcCnt.style.opacity='0';
     fcP.style.filter=`drop-shadow(0 0 32px ${C}) brightness(1.6)`;
     const jEnd=Date.now()+880;
@@ -7040,11 +7042,11 @@ function triggerLightningStorm() {
     ring(75,57,5,C,0); ring(75,57,4,C2,80); imp(C2,180); shk(800);
   });
   at(780, () => { fcE.style.opacity='0.12'; fcP.style.transition='opacity 0.3s'; fcP.style.opacity='0'; });
-  at(600, () => {
+  at(400, () => {
     audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,75);
     fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='The storm clears.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
   });
-  at(1300, () => { _fin.hideOv(); });
+  at(650, () => { _fin.hideOv(); });
   at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
@@ -7061,7 +7063,7 @@ function triggerInfernoSupernova() {
   let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
 
   at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='INFERNO SUPERNOVA'; fcCnt.style.opacity='1'; });
-  at(700, () => {
+  at(400, () => {
     fcT.style.opacity='0'; fcCnt.style.opacity='0';
     fcP.style.transition='font-size 0.4s cubic-bezier(.22,1.4,.64,1),filter 0.4s';
     fcP.style.fontSize='190px'; fcP.style.filter=`drop-shadow(0 0 52px #ff4400) drop-shadow(0 0 28px ${C2}) brightness(2.2)`;
@@ -7094,11 +7096,11 @@ function triggerInfernoSupernova() {
     fcP.style.transition='left 280ms ease-out,font-size 280ms'; fcP.style.left='22%'; fcP.style.fontSize='110px'; fcP.style.filter='';
     fcE.style.opacity='0.12';
   });
-  at(700, () => {
+  at(450, () => {
     audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,80);
     fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='The inferno subsides.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
   });
-  at(1300, () => { _fin.hideOv(); });
+  at(650, () => { _fin.hideOv(); });
   at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
@@ -7130,7 +7132,7 @@ function triggerFrozenWorld() {
   function kb(els,ms){setTimeout(()=>els.forEach(el=>{try{el.remove();}catch(e){}}),ms);}
 
   at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='ABSOLUTE ZERO'; fcCnt.style.opacity='1'; });
-  at(700, () => {
+  at(400, () => {
     fcT.style.opacity='0'; fcCnt.style.opacity='0';
     const veil=document.createElement('div');
     veil.style.cssText='position:absolute;inset:0;z-index:13;pointer-events:none;background:rgba(8,50,120,0);transition:background 600ms ease-in;';
@@ -7166,12 +7168,12 @@ function triggerFrozenWorld() {
       setTimeout(()=>cryst.remove(),350);
     },430);
   });
-  at(1220, () => { fcE.style.opacity='0.12'; fcP.style.transition='opacity 0.3s'; fcP.style.opacity='0'; });
-  at(620, () => {
+  at(800, () => { fcE.style.opacity='0.12'; fcP.style.transition='opacity 0.3s'; fcP.style.opacity='0'; });
+  at(400, () => {
     audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,70);
     fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='The ice melts. You stand.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
   });
-  at(1300, () => { _fin.hideOv(); });
+  at(650, () => { _fin.hideOv(); });
   at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
 }
 
@@ -8638,30 +8640,131 @@ function playBossIntro(boss, onDone) {
 }
 
 function playCatchCutscene(onDone) {
-  const b = state.battle;
-  const ent = entities.find(e => e.id === b.enemy);
-  const em    = ent ? ent.emoji : '⚙️';
-  const nm    = ent ? ent.name.toUpperCase() : 'APPLIANCE';
+  const b    = state.battle;
+  const em   = b.enemy?.e || btEnemySprite?.textContent?.trim() || '⚙️';
+  const nm   = (b.enemy?.n || 'APPLIANCE').toUpperCase();
   const shiny = b.enemyShiny;
-  const frames = [
-    { badge:'THROW',   emoji:'🪝',
-      title:'FORK DEPLOYED!',   sub:`Targeting ${nm}...`,
-      color:'#f4c165', bg:'#0d0a00', dur:380 },
-    { badge:'IMPACT',  emoji:`${em}💥`,
-      title:'DIRECT HIT!',      sub:'Appliance destabilizing...',
-      color:'#ff8c40', bg:'#1a0800', dur:360 },
-    { badge:'SECURE',  emoji:`⚙️${em}`,
-      title:'SECURING...',      sub: shiny ? '✨ Rare shiny variant! ✨' : 'Hold on...',
-      color:'#5bcefa', bg:'#00101a', dur:420 },
-    { badge:'SUCCESS', emoji: shiny ? `✨${em}✨` : em,
-      title:`${nm} CAUGHT!`,    sub:'Added to your PANDEX!',
-      color: shiny ? '#ffd700' : '#7edc8b',
-      bg:    shiny ? '#0a0800' : '#001a08', dur:580 },
-  ];
-  const container = document.getElementById('cutsceneOverlay');
-  runCutsceneFrames(frames, container, () => {
-    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, shiny ? 72 : 42);
-    if (onDone) setTimeout(onDone, 200);
+  const C    = shiny ? '#ffd700' : '#7edc8b';
+  const Clow = shiny ? 'rgba(255,215,0,0.38)' : 'rgba(126,220,139,0.38)';
+  const bg   = shiny ? '#0a0800' : '#001a08';
+  const pE   = btPlayerSprite?.textContent?.trim() || '🍳';
+
+  const ov = document.getElementById('cutsceneOverlay');
+  ov.innerHTML = '';
+  ov.style.cssText = `display:flex;position:fixed;inset:0;z-index:9600;background:radial-gradient(ellipse at 50% 42%,${bg} 0%,#050510 100%);`;
+  ov.classList.add('show'); ov.style.opacity = '1';
+
+  const fc = document.createElement('div');
+  fc.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
+  ov.appendChild(fc);
+
+  const fcP = document.createElement('div');
+  fcP.style.cssText = 'position:absolute;left:20%;top:55%;transform:translate(-50%,-50%);font-size:90px;line-height:1;z-index:10;pointer-events:none;transition:filter 0.35s,transform 0.35s;';
+  fcP.textContent = pE; fc.appendChild(fcP);
+
+  const fcE = document.createElement('div');
+  fcE.style.cssText = 'position:absolute;left:78%;top:55%;transform:translate(-50%,-50%);font-size:110px;line-height:1;z-index:10;pointer-events:none;transition:left 0.5s cubic-bezier(.4,0,.8,.3),font-size 0.5s ease-in,filter 0.3s,opacity 0.4s ease-in;';
+  fcE.textContent = em; fc.appendChild(fcE);
+
+  const fkEl = document.createElement('div');
+  fkEl.style.cssText = 'position:absolute;left:22%;top:55%;transform:translate(-50%,-50%);font-size:44px;line-height:1;z-index:15;pointer-events:none;transition:left 0.14s ease-in,opacity 0.1s;filter:drop-shadow(0 0 10px #f4c165);';
+  fkEl.textContent = '🪝'; fc.appendChild(fkEl);
+
+  const fcT = document.createElement('div');
+  fcT.style.cssText = `position:absolute;left:50%;top:12%;transform:translateX(-50%);font-size:13px;letter-spacing:8px;color:${C};font-family:monospace;opacity:0;transition:opacity 0.28s;z-index:15;text-shadow:0 0 20px ${C};`;
+  fc.appendChild(fcT);
+
+  const fcCnt = document.createElement('div');
+  fcCnt.style.cssText = `position:absolute;left:50%;top:19%;transform:translateX(-50%);font-size:36px;font-weight:900;letter-spacing:4px;color:${C};font-family:monospace;opacity:0;transition:opacity 0.28s;z-index:15;text-shadow:0 0 30px ${C},0 0 60px ${C};white-space:nowrap;`;
+  fc.appendChild(fcCnt);
+
+  const fcFl = document.createElement('div');
+  fcFl.style.cssText = 'position:absolute;inset:0;opacity:0;pointer-events:none;z-index:20;';
+  fc.appendChild(fcFl);
+
+  function imp(col, ms) {
+    fcFl.style.cssText = `position:absolute;inset:0;z-index:20;pointer-events:none;background:${col};opacity:1;`;
+    setTimeout(() => { fcFl.style.transition=`opacity ${ms}ms ease-out`; fcFl.style.opacity='0'; }, 55);
+  }
+  function mkRing(lPct, tPct, n, col, d0) {
+    for (let i=0;i<n;i++) setTimeout(()=>{
+      const r=document.createElement('div'); const sz=18+i*26;
+      r.style.cssText=`position:absolute;left:${lPct}%;top:${tPct}%;width:${sz}px;height:${sz}px;border-radius:50%;border:3px solid ${col};transform:translate(-50%,-50%) scale(0.05);z-index:15;pointer-events:none;box-shadow:0 0 16px ${col};transition:transform 480ms ease-out,opacity 480ms ease-out;`;
+      fc.appendChild(r); void r.offsetWidth;
+      r.style.transform=`translate(-50%,-50%) scale(${16-i*2})`; r.style.opacity='0';
+      setTimeout(()=>r.remove(),660);
+    },(d0||0)+i*55);
+  }
+
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  at(0, () => { fcT.textContent='CAPTURE'; fcT.style.opacity='1'; });
+
+  at(320, () => {
+    for (let g=0;g<5;g++) {
+      const lp=22+(78-22)*g/8;
+      const gh=document.createElement('div');
+      gh.style.cssText=`position:absolute;left:${lp}%;top:55%;transform:translate(-50%,-50%);font-size:44px;opacity:${(0.35-g*0.05).toFixed(2)};z-index:9;pointer-events:none;transition:opacity 0.18s;`;
+      gh.textContent='🪝'; fc.appendChild(gh);
+      setTimeout(()=>{gh.style.opacity='0';},25+g*18); setTimeout(()=>gh.remove(),350);
+    }
+    fkEl.style.left='78%';
+  });
+
+  at(155, () => {
+    fkEl.style.opacity='0';
+    imp('#ffffff',180);
+    fcE.style.filter=`brightness(2.5) saturate(0.25) drop-shadow(0 0 28px ${C})`;
+    const shEnd=Date.now()+360;
+    (function shk(){if(Date.now()>shEnd)return;fcE.style.transform=`translate(-50%,-50%) translate(${(Math.random()-.5)*20}px,${(Math.random()-.5)*14}px)`;requestAnimationFrame(shk);})();
+    mkRing(78,55,3,'#ffffff',0);
+  });
+
+  at(400, () => {
+    for (let i=0;i<14;i++) {
+      const ang=i/14*Math.PI*2;
+      const ex=78+Math.cos(ang)*10, ey=55+Math.sin(ang)*7;
+      const p=document.createElement('div');
+      p.style.cssText=`position:absolute;left:${ex}%;top:${ey}%;font-size:${8+Math.random()*8}px;opacity:0.85;z-index:14;pointer-events:none;transition:left 0.48s ease-in,top 0.48s ease-in,opacity 0.48s ease-out;`;
+      p.textContent=['✦','∗','·','◈'][i%4]; fc.appendChild(p); void p.offsetWidth;
+      p.style.left='20%'; p.style.top='55%'; p.style.opacity='0';
+      setTimeout(()=>p.remove(),600);
+    }
+    fcE.style.left='22%';
+    fcE.style.fontSize='30px';
+    fcE.style.opacity='0.15';
+    fcP.style.filter=`drop-shadow(0 0 38px ${C}) brightness(1.7)`;
+    fcP.style.transform='translate(-50%,-50%) scale(1.25)';
+    imp(Clow,320);
+  });
+
+  at(540, () => {
+    imp(C,150);
+    mkRing(20,55,4,C,0);
+    fcT.textContent='CAUGHT!';
+    fcCnt.textContent = shiny ? `✨ ${nm} ✨` : nm;
+    fcCnt.style.opacity='1';
+    fcP.style.filter=`drop-shadow(0 0 55px ${C}) drop-shadow(0 0 22px #fff) brightness(2.0)`;
+    fcP.style.transform='translate(-50%,-50%) scale(1.5)';
+    ov.style.transition='transform 0.07s ease-in'; ov.style.transform='scale(1.04)';
+    setTimeout(()=>{ov.style.transition='transform 0.22s ease-out';ov.style.transform='scale(1)';},80);
+    spawnConfetti(window.innerWidth/2, window.innerHeight/2, shiny?60:36);
+  });
+
+  at(360, () => {
+    const sub=document.createElement('div');
+    sub.style.cssText=`position:absolute;left:50%;top:28%;transform:translateX(-50%);font-size:11px;letter-spacing:5px;color:#999;font-family:monospace;opacity:0;transition:opacity 0.25s;z-index:15;`;
+    sub.textContent='Added to your PANDEX'; fc.appendChild(sub); void sub.offsetWidth;
+    sub.style.opacity='1';
+  });
+
+  at(420, () => {
+    spawnConfetti(window.innerWidth/2, window.innerHeight/2, shiny?72:42);
+    ov.style.transition='opacity 0.18s ease-out'; ov.style.opacity='0';
+    setTimeout(()=>{
+      ov.classList.remove('show'); ov.innerHTML=''; ov.style.opacity=''; ov.style.transition=''; ov.style.transform='';
+      if (onDone) setTimeout(onDone,150);
+    },200);
   });
 }
 
