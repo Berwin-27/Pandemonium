@@ -51,9 +51,13 @@ canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; 
 }
 #filmgrain {
   position:absolute; inset:0; pointer-events:none; z-index:6;
-  opacity:0.10; mix-blend-mode:overlay;
+  opacity:0.05;  /* plain alpha — mix-blend-mode:overlay forced a full-screen
+                    blend pass every frame and capped the whole game's fps */
   animation: grainShift 0.12s steps(1) infinite;
 }
+/* while a finisher plays, its opaque overlay covers everything — stop
+   compositing the stage post-fx layers underneath it */
+body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette { display:none; }
 @keyframes grainShift {
   0%{transform:translate(0,0)} 10%{transform:translate(-3%,-5%)} 20%{transform:translate(-6%,3%)}
   30%{transform:translate(4%,-2%)} 40%{transform:translate(-4%,6%)} 50%{transform:translate(-1%,-4%)}
@@ -1653,32 +1657,9 @@ body { background: var(--bg-void) !important; }
 }
 #impactFinisher.show { display:block; }
 .if-layer { position:absolute; inset:0; pointer-events:none; }
-/* manga radial speed lines — drawn with conic gradient, masked to leave a center hole */
-.if-speedlines {
-  position:absolute; left:50%; top:50%; width:240vmax; height:240vmax;
-  transform:translate(-50%,-50%);
-  background:repeating-conic-gradient(from 0deg at 50% 50%,
-    transparent 0deg 4.2deg, currentColor 4.2deg 5.8deg,
-    transparent 5.8deg 11deg, currentColor 11deg 11.9deg);
-  -webkit-mask:radial-gradient(circle at 50% 50%, transparent 0 14%, #000 34% 100%);
-  mask:radial-gradient(circle at 50% 50%, transparent 0 14%, #000 34% 100%);
-}
-@keyframes ifLinesJitter {
-  0%{transform:translate(-50%,-50%) rotate(0deg) scale(1)}
-  25%{transform:translate(-50%,-50%) rotate(2.4deg) scale(1.02)}
-  50%{transform:translate(-50%,-50%) rotate(-1.8deg) scale(1)}
-  75%{transform:translate(-50%,-50%) rotate(1.2deg) scale(1.03)}
-  100%{transform:translate(-50%,-50%) rotate(0deg) scale(1)}
-}
-.if-speedlines.jitter { animation:ifLinesJitter .42s steps(4) infinite; }
-/* horizontal dash streaks for dash cuts */
-.if-streaks {
-  position:absolute; inset:-20%;
-  background:repeating-linear-gradient(var(--if-ang,0deg),
-    transparent 0 26px, currentColor 26px 29px, transparent 29px 64px, currentColor 64px 66px);
-  animation:ifStreaksFly .14s linear infinite;
-}
-@keyframes ifStreaksFly { from{transform:translateX(0)} to{transform:translateX(-130px)} }
+/* speed lines are stroked onto the finisher's persistent canvas (see
+   _ifDrawLines) — CSS gradient layers were too expensive to re-raster
+   at the 15fps flip cadence */
 .if-sil { position:absolute; line-height:1; transform:translate(-50%,-50%); user-select:none; }
 .if-sil.black { filter:brightness(0) saturate(0); }
 .if-sil.white { filter:brightness(0) saturate(0) invert(1); }
@@ -6753,6 +6734,8 @@ function _ifController(onDone) {
       root.classList.remove('show', 'shaking');
       root.innerHTML = '';
       root.style.cssText = '';
+      root._ifBg = root._ifFx = root._ifCtx = null;
+      document.body.classList.remove('if-active');
       _ifActive = null;
       if (onDone) onDone();
     }
@@ -6760,8 +6743,65 @@ function _ifController(onDone) {
   root.innerHTML = '<div class="if-skiphint">SPACE — SKIP</div>';
   root.style.cssText = 'background:#000;opacity:1;';
   root.classList.add('show');
+  // Persistent render layers: one solid-color bg div + one canvas that all
+  // speed lines are stroked onto. (CSS-gradient speed lines rasterized a
+  // ~2500px masked layer on every flip frame — that was the jank source.
+  // Canvas strokes cost well under a millisecond, so the page holds 60+fps.)
+  const bgEl = document.createElement('div');
+  bgEl.style.cssText = 'position:absolute;inset:0;background:#000;z-index:8;';
+  root.appendChild(bgEl);
+  const fx = document.createElement('canvas');
+  fx.width = root.clientWidth || window.innerWidth;
+  fx.height = root.clientHeight || window.innerHeight;
+  fx.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none;';
+  root.appendChild(fx);
+  root._ifBg = bgEl;
+  root._ifFx = fx;
+  root._ifCtx = fx.getContext('2d');
+  document.body.classList.add('if-active');
   _ifActive = ctl;
   return { ctl, root };
+}
+
+// stroke radial manga spokes or dash streaks onto the finisher canvas
+function _ifDrawLines(root, o) {
+  const ctx = root._ifCtx; if (!ctx) return;
+  const w = root._ifFx.width, h = root._ifFx.height;
+  ctx.clearRect(0, 0, w, h);
+  if (!o || !o.lines || o.lines === 'none') return;
+  ctx.strokeStyle = o.lineColor || '#fff';
+  const cx = w / 2, cy = h / 2;
+  if (o.lines === 'radial') {
+    const rot = (o.lineAng || 0) * Math.PI / 180;
+    const rOut = Math.hypot(cx, cy) + 30;
+    const rInBase = Math.min(w, h) * 0.16;
+    const SP = 56;
+    for (let i = 0; i < SP; i++) {
+      const a = (i / SP) * Math.PI * 2 + rot;
+      const rIn = rInBase * (0.8 + (((i * 7919) % 100) / 100) * 0.9);
+      ctx.lineWidth = i % 3 === 0 ? 3.5 : 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * rIn, cy + Math.sin(a) * rIn);
+      ctx.lineTo(cx + Math.cos(a) * rOut, cy + Math.sin(a) * rOut);
+      ctx.stroke();
+    }
+  } else if (o.lines === 'streak') {
+    const ang = (o.lineAng || 0) * Math.PI / 180;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+    const L = Math.hypot(w, h);
+    let row = 0;
+    for (let y = -L / 2; y < L / 2; y += 44, row++) {
+      const off = ((row * 977) % 97) * 3;
+      ctx.lineWidth = row % 2 === 0 ? 3 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-L / 2 - off, y);
+      ctx.lineTo(L / 2 - off * 0.3, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 // visual builders -----------------------------------------------------
@@ -6777,12 +6817,6 @@ function _ifFrame(root, color, holdMs, z) {
   const el = _ifMk(root, `position:absolute;inset:0;background:${color};z-index:${z || 40};`);
   setTimeout(() => { try { el.remove(); } catch (e) {} }, holdMs);
   return el;
-}
-// full-screen monochrome panel: solid bg + radial manga speed lines
-function _ifPanel(root, bg, lineColor, jitter) {
-  const p = _ifMk(root, `position:absolute;inset:0;background:${bg};z-index:10;overflow:hidden;`, 'if-layer');
-  const lines = _ifMk(p, `color:${lineColor};`, 'if-speedlines' + (jitter ? ' jitter' : ''));
-  return p;
 }
 function _ifSlash(parent, angDeg, color, thickPx, xPct, yPct) {
   const el = _ifMk(parent, `left:${xPct == null ? 50 : xPct}%;top:${yPct == null ? 50 : yPct}%;height:${thickPx || 7}px;background:linear-gradient(90deg,transparent 4%,${color || '#fff'} 28%,${color || '#fff'} 72%,transparent 96%);transform:translate(-50%,-50%) rotate(${angDeg}deg);z-index:30;box-shadow:0 0 18px ${color || '#fff'};`, 'if-slash');
@@ -6813,14 +6847,12 @@ function _ifFill(color) {
   if (color === '#fff' || color === 'white') return 'brightness(0) invert(1)';
   return `brightness(0) invert(1) sepia(1) saturate(7) hue-rotate(${(_ifHue(color) - 50 + 360) % 360}deg) brightness(1.15)`;
 }
-// one full impact frame: solid bg, speed lines, jittered silhouettes, optional slash/label
+// one full impact frame: solid bg + canvas speed lines (persistent layers),
+// plus a throwaway container holding this frame's silhouettes/slash/label
 function _ifFlipPanel(root, o) {
-  const p = _ifMk(root, `position:absolute;inset:0;background:${o.bg};z-index:12;overflow:hidden;`, 'if-layer');
-  if (o.lines === 'radial') {
-    _ifMk(p, `color:${o.lineColor};transform:translate(-50%,-50%) rotate(${o.lineAng || 0}deg);`, 'if-speedlines');
-  } else if (o.lines === 'streak') {
-    _ifMk(p, `color:${o.lineColor};--if-ang:${o.lineAng || 0}deg;opacity:.55;`, 'if-streaks');
-  }
+  if (root._ifBg) root._ifBg.style.background = o.bg || '#000';
+  _ifDrawLines(root, o);
+  const p = _ifMk(root, `position:absolute;inset:0;z-index:18;overflow:hidden;pointer-events:none;`, 'if-layer');
   for (const s of o.sils || []) {
     const el = _ifMk(p, `left:${s.x}%;top:${s.y}%;font-size:${s.size}px;z-index:20;filter:${s.fill};transform:translate(-50%,-50%) rotate(${s.rot || 0}deg) scale(${s.scale || 1});`, 'if-sil' + (s.rgb ? ' rgbsplit' : ''));
     el.textContent = s.emoji;
@@ -6968,8 +7000,9 @@ function _ifDefeatScene(theme, pEmoji, eEmoji, eName, onDone) {
   S(4650, () => {
     audio.boom(); _ifShake(root);
     const old = root.querySelector('[data-if-flip]'); if (old) old.remove();
-    const p = _ifPanel(root, '#fff', '#00000026');
-    p.style.zIndex = '14';
+    if (root._ifBg) root._ifBg.style.background = '#fff';
+    _ifDrawLines(root, { lines: 'radial', lineColor: 'rgba(0,0,0,0.15)' });
+    const p = _ifMk(root, 'position:absolute;inset:0;z-index:14;pointer-events:none;', 'if-layer');
     _ifShatter(p, 50, 50, '#000', 18);
     _ifShatter(p, 50, 50, C, 9);
   });
@@ -10385,9 +10418,13 @@ function tick(now) {
       else if (keys['arrowright'] || keys['d']) tryMove(1, 0, 'right');
     }
   }
-  updateCamera();
-  render();
-  renderHud();
+  // the finisher overlay is opaque and full-screen — skip world rendering
+  // underneath it so the impact-frame barrage gets the whole frame budget
+  if (!_ifActive) {
+    updateCamera();
+    render();
+    renderHud();
+  }
   requestAnimationFrame(tick);
 }
 
