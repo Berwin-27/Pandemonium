@@ -433,6 +433,57 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
 }
 #miniVolleyInfo { display:flex; justify-content:space-between; margin-top:6px; color:#bbb; font-size:11px; letter-spacing:2px; }
 
+/* SLICE minigame */
+#miniSlice { display:none; margin-bottom:14px; }
+#miniSlice.show { display:block; }
+#miniSliceField {
+  position:relative; width:100%; height:90px;
+  background: linear-gradient(180deg, #160a0a, #28100f);
+  border:2px solid #444; border-radius:3px; overflow:hidden;
+}
+.sliceTarget { position:absolute; top:50%; transform:translate(-50%,-50%); font-size:30px; transition:none; }
+.sliceTarget.cut { opacity:0.22; filter:grayscale(1); transform:translate(-50%,-50%) rotate(40deg) scale(0.8); }
+#miniSliceBlade {
+  position:absolute; top:0; bottom:0; width:4px;
+  background:linear-gradient(180deg,#fff,#ffe44d,#fff);
+  box-shadow:0 0 12px rgba(255,228,77,0.8);
+}
+#miniSliceInfo { display:flex; justify-content:space-between; margin-top:6px; color:#bbb; font-size:11px; letter-spacing:2px; }
+#miniSliceTimer { height:6px; background:#0a0a18; border:1px solid #333; border-radius:2px; overflow:hidden; margin-top:4px; }
+#miniSliceTimerFill { height:100%; background:linear-gradient(90deg, #7edc8b, #f4c165, #f06a6a); width:100%; }
+
+/* MEMORY minigame */
+#miniMemory { display:none; margin-bottom:14px; }
+#miniMemory.show { display:block; }
+#miniMemoryRow { display:flex; gap:10px; justify-content:center; min-height:54px; flex-wrap:wrap; }
+.memKey {
+  width:46px; height:46px; border:2px solid #444; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; color:#666; background:#0a0a18; transition:all .1s;
+}
+.memKey.flash { border-color:#ffe44d; color:#ffe44d; background:rgba(255,228,77,0.18); box-shadow:0 0 14px rgba(255,228,77,0.5); transform:scale(1.12); }
+.memKey.hit { border-color:#7edc8b; color:#7edc8b; background:rgba(126,220,139,0.15); }
+.memKey.miss { border-color:#f06a6a; color:#f06a6a; background:rgba(240,106,106,0.15); }
+#miniMemoryStatus { text-align:center; color:#bbb; font-size:11px; letter-spacing:2px; margin-top:8px; }
+
+/* SPIN minigame */
+#miniSpin { display:none; margin-bottom:14px; }
+#miniSpin.show { display:block; }
+#miniSpinWheel {
+  position:relative; width:170px; height:170px; margin:0 auto;
+  border-radius:50%; border:3px solid #444; background:#0a0a18;
+  box-shadow: inset 0 0 24px rgba(0,0,0,0.6);
+}
+#miniSpinZone { position:absolute; inset:0; border-radius:50%; }
+#miniSpinPointer {
+  position:absolute; left:50%; top:50%; width:4px; height:78px;
+  background:linear-gradient(180deg,#fff,#ffe44d);
+  transform-origin:50% 100%; transform:translate(-50%,-100%) rotate(0deg);
+  border-radius:2px; box-shadow:0 0 10px rgba(255,228,77,0.7);
+}
+#miniSpinHub { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:22px; }
+#miniSpinInfo { text-align:center; color:#bbb; font-size:11px; letter-spacing:2px; margin-top:8px; }
+
 /* Intro / Ending */
 #intro, #ending {
   position:absolute; inset:0; z-index: 40;
@@ -1661,6 +1712,17 @@ body { background: var(--bg-void) !important; }
    _ifDrawLines) — CSS gradient layers were too expensive to re-raster
    at the 15fps flip cadence */
 .if-sil { position:absolute; line-height:1; transform:translate(-50%,-50%); user-select:none; }
+.if-bam {
+  position:absolute; transform:translate(-50%,-50%) rotate(var(--bam-rot,-8deg));
+  font-family:Impact,'Arial Black',sans-serif; font-weight:900; letter-spacing:2px;
+  user-select:none; white-space:nowrap; z-index:46;
+  animation:ifBamIn .18s cubic-bezier(.2,1.4,.4,1) forwards;
+}
+@keyframes ifBamIn {
+  0%{transform:translate(-50%,-50%) rotate(var(--bam-rot,-8deg)) scale(2.6);opacity:0}
+  45%{transform:translate(-50%,-50%) rotate(var(--bam-rot,-8deg)) scale(.9);opacity:1}
+  100%{transform:translate(-50%,-50%) rotate(var(--bam-rot,-8deg)) scale(1.06)}
+}
 .if-sil.black { filter:brightness(0) saturate(0); }
 .if-sil.white { filter:brightness(0) saturate(0) invert(1); }
 .if-sil.rgbsplit { text-shadow:-6px 0 0 rgba(255,0,60,.8), 6px 0 0 rgba(0,160,255,.8); }
@@ -1966,6 +2028,28 @@ body { background: var(--bg-void) !important; }
           <div id="miniVolleyInfo"><span id="miniVolleyCount">RALLY: 0</span><span id="miniVolleyLabel">PRESS SPACE WHEN BALL IS ON YOUR SIDE</span></div>
         </div>
 
+        <div id="miniSlice">
+          <div id="miniSliceField">
+            <div id="miniSliceBlade"></div>
+          </div>
+          <div id="miniSliceInfo"><span id="miniSliceCount">0 / 0</span><span>SPACE TO SLICE ON TARGET</span></div>
+          <div id="miniSliceTimer"><div id="miniSliceTimerFill"></div></div>
+        </div>
+
+        <div id="miniMemory">
+          <div id="miniMemoryRow"></div>
+          <div id="miniMemoryStatus">WATCH THE PATTERN...</div>
+        </div>
+
+        <div id="miniSpin">
+          <div id="miniSpinWheel">
+            <div id="miniSpinZone"></div>
+            <div id="miniSpinPointer"></div>
+            <div id="miniSpinHub">🎯</div>
+          </div>
+          <div id="miniSpinInfo">SPACE TO STOP THE NEEDLE IN THE GREEN</div>
+        </div>
+
         <div id="miniPrompt">&gt; PRESS SPACE &lt;</div>
         <div id="miniResult"></div>
       </div>
@@ -2030,7 +2114,7 @@ body { background: var(--bg-void) !important; }
       <h1>PANDEMONIUM</h1>
       <p style="color:#f4c165;letter-spacing:3px;font-size:13px;">&mdash; GOTTA COOK 'EM ALL &mdash;</p>
       <p>For as long as anyone remembers, the world has been home to wild, living kitchenware &mdash; mischievous <b>Appliances</b> that roam the homes, markets, caves, and crystal dimensions of the realm.</p>
-      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>63 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And two ULTRA entities whispered about only in chef's lore.</p>
+      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>81 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And three ULTRA entities whispered about only in chef's lore.</p>
       <p>Catching an Appliance requires skill. Time your strikes, hammer buttons, hold your nerve, follow precise sequences, and take careful aim. Rarer Appliances demand sharper technique.</p>
       <div class="keys">
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
@@ -2311,6 +2395,10 @@ const PAL = {
   'I': { base:'#a8d4e8', dk:'#80b0c8', hl:'#d0eaf4' },          // ice
   'J': { base:'#9a7a50', dk:'#7a5a30', hl:'#ba9a68' },          // dock/pier
   'n': { base:'#d4b888', dk:'#b09868', hl:'#e8d4a8' },          // dry sand (beach)
+  'v': { base:'#3a2422', dk:'#261412', hl:'#5c3830' },          // volcanic ash
+  'g': { base:'#2e3a26', dk:'#1e2818', hl:'#46503a' },          // bog mud
+  'y': { base:'#1a1a2e', dk:'#10101e', hl:'#34345a' },          // neon street
+  'z': { base:'#c8d4e8', dk:'#a0b0cc', hl:'#eef4ff' },          // cloud stone
 };
 
 // ======================================================================
@@ -2515,14 +2603,14 @@ const maps = {
     tiles: [
       "############################",
       "#RRRRoooooooooooooRRRRRRRRR#",
-      "#RRoooooIIIIoooooooooRRRRRR#",
+      "#RRoooooIEIIoooooooooRRRRRR#",
       "#RooooIIIIIIIIoooooooooRRRR#",
       "#oooIIIIIIIIIIIIooooooooRRR#",
       "#oooIIIIRRIIIIIIooooooooRRR#",
       "#ooooIIIRRRIIIooooooRRooooo#",
       "#oooooIIIIIIooooooRRRRRooooo",
-      "#ooooooIIIooooooooRRRRoooooo",
-      "#oooooooooooooooooooRRoooooo",
+      "oooooooIIIooooooooRRRRoooooo",
+      "ooooooooooooooooooooRRoooooo",
       "#oooRRRoooooIIIIoooooooooooo",
       "#ooRRRRRooIIIIIIIIoooRRooooo",
       "#oooRRRoooIIIIIIIooRRRRoooo#",
@@ -2618,6 +2706,93 @@ const maps = {
       ",,,,,,,,,,,,,,,,,,,,,,,,,,,,",
       ",,,,,,,,,,,,,,,,,,,,,,,,,,,,"
     ]
+  },
+  // ================ EMBER CALDERA (west of mountain) ================
+  volcano: {
+    w: 28, h: 16, music:'volcano',
+    tiles: [
+      "############################",
+      "#vvvvvvvvLLvvvvvvvvvvRRvvvv#",
+      "#vvLLLvvvvvvvvvRRRvvvvvvLLv#",
+      "#vvLLvvvvvvvvvvRRvvvvvvLLLv#",
+      "#vvvvvvvRRvvvvvvvvvvvvvvLLv#",
+      "#vRRvvvvRRRvvvLLvvvvvvvvvvv#",
+      "#vRRRvvvvvvvvLLLLvvvvvvvvvv#",
+      "#vvvvvvvvvvvLLLLLvvvvRRvvvvv",
+      "#vvvLLvvvvvvvLLLLvvvvRRRvvvv",
+      "#vvLLLLvvvvvvvLLLvvvvvRRvvvv",
+      "#vvvLLvvvvRRvvvvvvvvvvvvvvv#",
+      "#vvvvvvvvRRRvvvvvLLvvvvvvvv#",
+      "#vvvvvvvvvRvvvvvLLLvvvvLLvv#",
+      "#vvvvvvvvvvvvvvvvLLvvvvvvvv#",
+      "#vvvvvvvvvvvvvvvvvvvvvvvvvv#",
+      "############################"
+    ]
+  },
+  // ================ MURKMIRE SWAMP (south of fungal) ================
+  swamp: {
+    w: 28, h: 16, music:'swamp',
+    tiles: [
+      "gggggggggggggggggggggggggggg",
+      "ggTTggggwwwgggggggggwwggTTgg",
+      "gTTTTgg~~~~ggggww~~~~ggTTTTg",
+      "ggTTgg~~~~~~ggggw~~~~~gggTTg",
+      "gggggg~~~~~~~ggggg~~~~gggggg",
+      "ggwwggg~~~~~gggggggggggwwggg",
+      "gwwwwgggg~~~ggggTTggggwwwwgg",
+      "ggwwgggggggggggTTTTgggggwwgg",
+      "ggggggTTgggggggggTTggggggggg",
+      "ggg~~~gggwwwggggggggg~~~gggg",
+      "gg~~~~~ggwwwwggggggg~~~~~ggg",
+      "ggg~~~ggggwwggggggggg~~~gggg",
+      "gggggggggggggggggggggggggggg",
+      "ggTTggggggggTTTTggggggggTTgg",
+      "gTTTTggggggTTTTTTggggggTTTTg",
+      "TTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+    ]
+  },
+  // ================ NEON DISTRICT (east of beach) ================
+  neon: {
+    w: 30, h: 18, music:'neon',
+    tiles: [
+      "##############################",
+      "#yyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "#y####y####y####y####y####yyy#",
+      "yy####y####y####y####y####yyy#",
+      "yyyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "yrrrrrrrrrrrrrrrrrrrrrrrrrrry#",
+      "yy!yyyyy!yyyyyy!yyyyyy!yyyyyy#",
+      "#yyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "#y####y####y####y####yyyyyyyy#",
+      "#y####y####y####y####yyyyyyyy#",
+      "#yyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "yrrrrrrrrrrrrrrrrrrrrrrrrrrry#",
+      "yy!yyyyy!yyyyyy!yyyyyy!yyyyyy#",
+      "yyyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "#y####y####y####y####y####yyy#",
+      "#y####y####y####y####y####yyy#",
+      "#yyyyyyyyyyyyyyyyyyyyyyyyyyyy#",
+      "##############################"
+    ]
+  },
+  // ================ CELESTIAL KITCHEN (mountain summit portal) ================
+  sky: {
+    w: 22, h: 13, music:'sky',
+    tiles: [
+      "######################",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zz&&zzzzzzzzzzzz&&zz#",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zzzzzz&&zzzzzz&&zzzz#",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zz&&zzzzzzzzzzzzz&&z#",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zzzz&&zzzzzzzz&&zzzz#",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zzzzzzzzzzzzzzzzzzzz#",
+      "#zzzzzzzzzEzzzzzzzzzz#",
+      "######################"
+    ]
   }
 };
 
@@ -2650,7 +2825,11 @@ const ELEM_MAP = {
   50:'ice', 51:'neutral', 52:'neutral', 53:'neutral',
   54:'fire', 55:'fire',
   56:'neutral', 57:'neutral', 58:'electric', 59:'ice',
-  60:'electric', 61:'neutral', 62:'neutral', 63:'electric'
+  60:'electric', 61:'neutral', 62:'neutral', 63:'electric',
+  64:'fire', 65:'fire', 66:'fire', 67:'fire', 68:'fire',
+  69:'neutral', 70:'ice', 71:'neutral', 72:'ice',
+  73:'electric', 74:'electric', 75:'electric', 76:'electric', 77:'electric',
+  78:'ice', 79:'ice', 80:'electric', 81:'neutral'
 };
 function getElement(id) { return ELEM_MAP[id] || 'neutral'; }
 
@@ -2843,7 +3022,7 @@ function isBuffActive(buffName) {
 
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
-const TOTAL_DEX = 63;
+const TOTAL_DEX = 81;
 
 // ======================================================================
 // ENTITIES
@@ -3006,6 +3185,50 @@ const entities = [
   { id:63, n:'Salvageon',  e:'\uD83D\uDD27', rarity:'epic',   mg:'AIM',      m:'scrapyard', x:16, y:9,  habitat:'SCRAPYARD',
     dex:'Rebuilt from seven broken appliances. Has identity issues but excellent torque.' },
 
+  // =================== EMBER CALDERA (5) ===================
+  { id:64, n:'Lavaladle',  e:'🥄', rarity:'rare',      mg:'HOLD',   m:'volcano', x:4,  y:4,  habitat:'CALDERA',
+    dex:'Scoops molten rock like soup. Serves it anyway. Customers have stopped complaining.' },
+  { id:65, n:'Charcoaler', e:'♨️', rarity:'epic',      mg:'SLICE',  m:'volcano', x:20, y:5,  habitat:'CALDERA',
+    dex:'Blackens everything to "perfection." Insists this is intentional. It is not.' },
+  { id:66, n:'Embergrill', e:'🍖', rarity:'rare',      mg:'MASH',   m:'volcano', x:22, y:2,  habitat:'CALDERA',
+    dex:'Grills with volcanic embers. Its sear marks are visible from space.' },
+  { id:67, n:'Pyrowok',    e:'🥘', rarity:'epic',      mg:'SPIN',   m:'volcano', x:10, y:13, habitat:'CALDERA',
+    dex:'Stir-fries inside an active caldera. The wok hand technique is literally flaming.' },
+  { id:68, n:'Magmapot',   e:'🌶', rarity:'legendary', mg:'AIM',    m:'volcano', x:14, y:10, habitat:'CALDERA',
+    dex:'A pressure cooker fueled by the planet’s core. Whistles in seismic frequencies.' },
+
+  // =================== MURKMIRE SWAMP (4) ===================
+  { id:69, n:'Bogbrewer',  e:'🫖', rarity:'common', mg:'MEMORY',   m:'swamp', x:5,  y:5,  habitat:'MURKMIRE',
+    dex:'Brews tea from swamp water. The flavor is described as "haunted." Refills are free.' },
+  { id:70, n:'Mosskettle', e:'🍵', rarity:'rare',   mg:'SEQUENCE', m:'swamp', x:20, y:8,  habitat:'MURKMIRE',
+    dex:'Covered in centuries of moss. The moss is now load-bearing. Do not clean it.' },
+  { id:71, n:'Gumbomat',   e:'🍲', rarity:'rare',   mg:'SLICE',    m:'swamp', x:18, y:12, habitat:'MURKMIRE',
+    dex:'Auto-dispenses gumbo to anything that moves. Including predators. Especially predators.' },
+  { id:72, n:'Swampsieve', e:'🥣', rarity:'epic',   mg:'DODGE',    m:'swamp', x:10, y:10, habitat:'MURKMIRE',
+    dex:'Strains the bog for delicacies. Has found three rings, a boot, and something that blinked.' },
+
+  // =================== NEON DISTRICT (5) ===================
+  { id:73, n:'Discoblender', e:'🪩', rarity:'rare',      mg:'SPIN',   m:'neon', x:5,  y:4,  habitat:'NEON DISTRICT',
+    dex:'Blends to the beat. Its smoothies have a BPM. Banned from three nightclubs for overcrowding.' },
+  { id:74, n:'Fridgefunk',   e:'🕺', rarity:'epic',      mg:'RHYTHM', m:'neon', x:15, y:7,  habitat:'NEON DISTRICT',
+    dex:'A refrigerator that learned to dance. Keeps the groove ice cold. Literally.' },
+  { id:75, n:'Synthsizzle',  e:'📻', rarity:'rare',      mg:'MEMORY', m:'neon', x:22, y:10, habitat:'NEON DISTRICT',
+    dex:'Half synthesizer, half griddle. Drops sick beats and hash browns simultaneously.' },
+  { id:76, n:'Arcadius',     e:'🕹', rarity:'epic',      mg:'VOLLEY', m:'neon', x:25, y:13, habitat:'NEON DISTRICT',
+    dex:'An arcade cabinet that cooks. Insert coin for soup. High score holders eat free.' },
+  { id:77, n:'Gigafryer',    e:'💡', rarity:'legendary', mg:'SLICE',  m:'neon', x:27, y:16, habitat:'NEON DISTRICT',
+    dex:'Draws power from the entire city grid. When it fries, streetlights dim for blocks.' },
+
+  // =================== CELESTIAL KITCHEN (4) ===================
+  { id:78, n:'Cloudwhisk',  e:'☁️',  rarity:'rare',      mg:'TIMING', m:'sky', x:4,  y:3, habitat:'CELESTIAL',
+    dex:'Whips clouds into actual meringue. The sky above the summit is 3% dessert.' },
+  { id:79, n:'Zephyrblade', e:'🌪',  rarity:'epic',      mg:'SPIN',   m:'sky', x:17, y:5, habitat:'CELESTIAL',
+    dex:'A food processor powered by bottled wind. Juliennes at hurricane speed.' },
+  { id:80, n:'Halogenie',   e:'😇',  rarity:'legendary', mg:'MEMORY', m:'sky', x:10, y:7, habitat:'CELESTIAL',
+    dex:'A halogen lamp that grants exactly three perfectly-lit dinner parties.' },
+  { id:81, n:'Astrochef',   e:'🌟',  rarity:'ultra',     mg:'AIM',    m:'sky', x:11, y:9, habitat:'CELESTIAL',
+    dex:'The third ULTRA. Cooks with starlight and plates on constellations. Reservations take light-years.' },
+
   // =================== NPCS ===================
   { m:'town', x:23, y:6, n:'Professor Bouillabaisse', e:'\uD83D\uDC68\u200D\uD83C\uDF73', npc:true, prof:true,
     desc:'' },
@@ -3077,6 +3300,56 @@ const entities = [
   { m:'lake', x:14, y:0, n:'Scrap Warden', e:'👷', npc:true, gate:'scrapyard',
     desc:'A grizzled mechanic guards the path north. "The Scrapyard ain\'t no playground, kid. Bring me proof you caught a Boatsworth and I\'ll let you through."' },
 
+  // =================== VOLCANO NPCS ===================
+  { m:'volcano', x:3, y:13, n:'Vulcanologist', e:'🌡️', npc:true,
+    desc:'"This caldera registers 1,200 degrees at the rim. The Appliances here COOK WITH IT. I watched a wok do a backflip through a lava plume. I\'m never leaving."' },
+  { m:'volcano', x:22, y:12, n:'Sweaty Tourist', e:'🥵', npc:true,
+    desc:'"The brochure said \'warm springs.\' WARM. SPRINGS. My shoes melted an hour ago and a ladle keeps offering me soup made of rocks."' },
+  { m:'volcano', x:14, y:1, n:'Magma Lord Cinder', e:'👹', npc:true, elite:'volcano',
+    desc:'' },
+
+  // =================== SWAMP NPCS ===================
+  { m:'swamp', x:3, y:8, n:'Frog Chorus', e:'🐸', npc:true,
+    desc:'Seventeen frogs sit in a perfect row. They croak in four-part harmony. The bass frog nods at you. You feel oddly honored.' },
+  { m:'swamp', x:22, y:5, n:'Swamp Hermit', e:'🧓', npc:true,
+    desc:'"Been living off bog tea for forty years. The Bogbrewer makes it. Tastes like regret and pond. I\'ve never been healthier. Or weirder."' },
+  { m:'swamp', x:14, y:8, n:'Bog Witch Brackish', e:'🧙', npc:true, elite:'swamp',
+    desc:'' },
+
+  // =================== NEON NPCS ===================
+  { m:'neon', x:3, y:7, n:'Street Vendor', e:'🌭', npc:true,
+    desc:'"Hot dogs! Get your hot dogs! Cooked by an actual sentient deep fryer! Is that legal? Don\'t know! Is it delicious? ABSOLUTELY!"' },
+  { m:'neon', x:20, y:4, n:'Breakdancer', e:'🤸', npc:true,
+    desc:'"That fridge over there? Better moves than me. I challenged it to a dance battle and it hit a windmill WHILE dispensing ice. I have to respect it."' },
+  { m:'neon', x:8, y:13, n:'Lost Raver', e:'🎉', npc:true,
+    desc:'"The party never ends here, man. The blenders DJ, the streetlights strobe, and last night an arcade machine beat me at my own high score. Best city ever."' },
+  { m:'neon', x:15, y:10, n:'DJ Voltage', e:'🎧', npc:true, elite:'neon',
+    desc:'' },
+
+  // =================== SKY NPCS ===================
+  { m:'sky', x:3, y:9, n:'Cloud Shepherd', e:'🐑', npc:true,
+    desc:'"I herd the cumulus flocks. The Cloudwhisk keeps whipping my sheep into dessert. They don\'t mind. They come back fluffier."' },
+  { m:'sky', x:18, y:3, n:'Star Sommelier', e:'🍷', npc:true,
+    desc:'"Tonight\'s pairing: braised nebula with a 4-billion-year vintage of starlight. The Astrochef\'s tasting menu has a waitlist measured in lifetimes."' },
+  { m:'sky', x:10, y:4, n:'Seraph Sous-Chef', e:'👼', npc:true, elite:'sky',
+    desc:'' },
+
+  // =================== EXTRA TOWN/MARKET NPCS ===================
+  { m:'town', x:8, y:11, n:'Street Performer', e:'🎻', npc:true,
+    desc:'"I used to play for coins. Now I play for the Appliances. The kettles whistle harmony. The blenders keep time. We\'re booked for the harvest festival."' },
+  { m:'market', x:20, y:12, n:'Coupon Goblin', e:'🧌', npc:true,
+    desc:'"FORTY PERCENT OFF! Expired in 2019! I DON\'T CARE! The register Appliance accepts them out of fear! HAHAHA!"' },
+
+  // =================== NEW AREA GATE NPCS ===================
+  { m:'mountain', x:2, y:7, n:'Lava Watcher', e:'🌋', npc:true, gate:'volcano',
+    desc:'A scorched ranger blocks the western pass. "The caldera melts boots and pride. Show me a Freezbert and I\'ll believe you can take the heat."' },
+  { m:'fungal', x:20, y:12, n:'Bog Guide', e:'🐸', npc:true, gate:'swamp',
+    desc:'A frog in a tiny hat blocks the southern trail. "The Murkmire swallows the unprepared, ribbit. Catch a Shroomix to prove you know your spores."' },
+  { m:'beach', x:29, y:4, n:'City Bouncer', e:'🕶️', npc:true, gate:'neon',
+    desc:'A bouncer in sunglasses guards the eastern boardwalk. "Neon District\'s VIP only. Catch a Coconutter and you\'re on the list."' },
+  { m:'mountain', x:7, y:2, n:'Summit Monk', e:'🧘', npc:true, gate:'sky',
+    desc:'A monk meditates beside the glowing portal. "The Celestial Kitchen accepts only the attuned. Catch a Frostifry and the gate shall know you."' },
+
   // =================== SHRINE ===================
   { m:'wild', x:13, y:20, n:'The Shrine', e:'', shrine:true,
     desc:'Old stones, older than language. Weighing what you carry.' }
@@ -3087,7 +3360,7 @@ const entities = [
 // ======================================================================
 const CYCLE_NPCS = [
   { id:'cnpc_chef',     m:'house',     x:5,  y:2,  e:'👨‍🍳', n:'Chef Blanc',
-    lines:['The Legendary Pot Roast dwells deep in the void — no Appliance has ever cooked it twice.','I once caught a shiny Kettleton. The hue was wrong. The hum was perfect. It changed me.','Catch all 63. Every last one. The Pandex does not forgive gaps.'] },
+    lines:['The Legendary Pot Roast dwells deep in the void — no Appliance has ever cooked it twice.','I once caught a shiny Kettleton. The hue was wrong. The hum was perfect. It changed me.','Catch all 81. Every last one. The Pandex does not forgive gaps.'] },
   { id:'cnpc_hiker',    m:'wild',      x:12, y:8,  e:'🧭', n:'Trail Scout',
     lines:['A hidden item glitters near the old riverbed. Look where the grass thins.','Electric types are weak to Ice — and too proud to admit it.','I spotted a Shiny Blendax once. Just once. I still dream about it.'] },
   { id:'cnpc_tinker',   m:'market',    x:22, y:14, e:'🔧', n:'Tinker Rue',
@@ -3102,6 +3375,14 @@ const CYCLE_NPCS = [
     lines:['Something glimmers at the bottom. I can\'t reach it. Maybe you can.','Boatsworth taught me everything I know about dignity and leaking.','Catch rate goes up when they\'re weakened. Don\'t sleep on that mechanic.'] },
   { id:'cnpc_merchant', m:'scrapyard', x:6,  y:10, e:'🛒', n:'Scrap Merchant',
     lines:['Everything in here was once someone\'s prize catch. A tragedy, truly.','The Salvageon is rebuilt from seven broken units. Still counts as one catch.','A shiny among the rust... I saw it once. Blinked. Gone.'] },
+  { id:'cnpc_smith',    m:'volcano',   x:20, y:13, e:'⚒️', n:'Forge Hermit',
+    lines:['Magma Lord Cinder guards the rim. Beat him and the caldera itself bows to you.','Fire types forged here hit harder. It\'s in the ash. Don\'t ask me how.','I once shod a Lavaladle. It paid me in soup. The soup was rocks.'] },
+  { id:'cnpc_witchcat', m:'swamp',     x:8,  y:12, e:'🐈‍⬛', n:'Witch\'s Cat',
+    lines:['The witch is stronger than she looks. The bog does what she says.','Mrrow. The reeds hide more than frogs. Step through the tall grass and see.','Nine lives. I\'ve spent four on swamp gumbo. Worth every one.'] },
+  { id:'cnpc_hacker',   m:'neon',      x:10, y:16, e:'💻', n:'Net Runner',
+    lines:['DJ Voltage\'s sound system can stop a heart. Or restart one. Depends on the track.','I traced the Gigafryer\'s power draw once. The grid operator cried.','There\'s a Shiny Lure stashed somewhere on these streets. Finders keepers.'] },
+  { id:'cnpc_oracle',   m:'sky',       x:15, y:9,  e:'🔭', n:'Sky Oracle',
+    lines:['Astrochef plates on constellations. Catch it and the Pandex nears completion.','The Seraph Sous-Chef has never lost. Be the first. I\'ll watch.','From up here you can see every region you\'ve conquered. Look down. Be proud.'] },
 ];
 
 // ======================================================================
@@ -3126,6 +3407,18 @@ const HIDDEN_ITEMS = [
   { map:'scrapyard',  x:14, y:8,  item:'Max Ration',   oneTime:true,
     msg:'Max Ration! Fully restored HP!',
     effect(){ state.playerHp = state.playerMaxHp; } },
+  { map:'volcano',    x:25, y:14, item:'Golden Fork',  oneTime:true,
+    msg:'A Golden Fork glints in the ash! +25 max HP permanently!',
+    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
+  { map:'swamp',      x:14, y:12, item:'Max Ration',   oneTime:true,
+    msg:'A Max Ration preserved in bog amber! Fully restored HP!',
+    effect(){ state.playerHp = state.playerMaxHp; } },
+  { map:'neon',       x:28, y:16, item:'Shiny Lure',   oneTime:true,
+    msg:'A Shiny Lure under the neon glow! Next encounter has 50% shiny chance!',
+    effect(){ state.shinyLureActive = true; } },
+  { map:'sky',        x:20, y:10, item:'Golden Fork',  oneTime:true,
+    msg:'A Golden Fork forged from starlight! +25 max HP permanently!',
+    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
 ];
 
 function checkHiddenItems() {
@@ -3595,6 +3888,22 @@ const audio = (() => {
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(_) { ac = null; }
     return ac;
   }
+  // ── shared output bus: gentle glue compressor + a touch of high "air".
+  // Everything (music + SFX) routes through this so layered sounds never clip
+  // and the whole game shares one cohesive master tone.
+  let _bus = null;
+  function bus() {
+    const a = ensure(); if (!a) return null;
+    if (_bus) return _bus;
+    const comp = a.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 22; comp.ratio.value = 3.5;
+    comp.attack.value = 0.004; comp.release.value = 0.24;
+    const shelf = a.createBiquadFilter();
+    shelf.type = 'highshelf'; shelf.frequency.value = 7800; shelf.gain.value = 2.5;
+    shelf.connect(comp); comp.connect(a.destination);
+    _bus = shelf;
+    return _bus;
+  }
   function play(notes, type, vol) {
     const a = ensure(); if (!a) return;
     if (a.state === 'suspended') a.resume();
@@ -3605,13 +3914,65 @@ const audio = (() => {
       const [f, d] = n;
       const o = a.createOscillator(); o.type = type || 'square'; o.frequency.value = f;
       const g = a.createGain();
-      o.connect(g); g.connect(a.destination);
+      o.connect(g); g.connect(bus());
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(v, t + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d - 0.01);
       o.start(t); o.stop(t + d);
       t += d;
     }
+  }
+  // one-shot enveloped tone: pitch glide, optional lowpass + stereo pan + delay
+  function tone(o) {
+    const a = ensure(); if (!a) return;
+    if (a.state === 'suspended') a.resume();
+    const t = a.currentTime + 0.01 + (o.delay || 0);
+    const osc = a.createOscillator(); osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(Math.max(1, o.f0), t);
+    if (o.f1 && o.f1 !== o.f0) osc.frequency.exponentialRampToValueAtTime(Math.max(1, o.f1), t + o.dur);
+    let node = osc;
+    if (o.lp) { const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; node.connect(f); node = f; }
+    const g = a.createGain();
+    const v = Math.min(1, (o.vol || 0.1) * VOL_MULT);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + (o.attack || 0.005));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
+    node.connect(g);
+    let out = g;
+    if (o.pan && a.createStereoPanner) { const p = a.createStereoPanner(); p.pan.value = o.pan; g.connect(p); out = p; }
+    out.connect(bus());
+    osc.start(t); osc.stop(t + o.dur + 0.05);
+  }
+  // strummed chord stab built from tone()
+  function chordStab(freqs, o) {
+    freqs.forEach((f, i) => tone(Object.assign({}, o, {
+      f0: f, f1: o.glide ? f * o.glide : f,
+      delay: (o.delay || 0) + (o.strum || 0) * i,
+      pan: (o.pan || 0) + (i - (freqs.length - 1) / 2) * (o.spread || 0)
+    })));
+  }
+  // filtered one-shot noise burst: {dur, vol, kind:'hp'|'bp'|'lp', f, q, delay, pan}
+  function noiseHit(o) {
+    const a = ensure(); if (!a) return;
+    if (a.state === 'suspended') a.resume();
+    const t = a.currentTime + 0.01 + (o.delay || 0);
+    const len = Math.ceil(a.sampleRate * o.dur);
+    const buf = a.createBuffer(1, len, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(); src.buffer = buf;
+    const f = a.createBiquadFilter();
+    f.type = o.kind === 'bp' ? 'bandpass' : (o.kind === 'lp' ? 'lowpass' : 'highpass');
+    f.frequency.value = o.f || 2000;
+    if (o.q) f.Q.value = o.q;
+    const g = a.createGain();
+    g.gain.setValueAtTime(Math.min(1, o.vol * VOL_MULT), t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + o.dur);
+    src.connect(f); f.connect(g);
+    let out = g;
+    if (o.pan && a.createStereoPanner) { const p = a.createStereoPanner(); p.pan.value = o.pan; g.connect(p); out = p; }
+    out.connect(bus());
+    src.start(t); src.stop(t + o.dur + 0.01);
   }
 
   function genericLoop(songDef, volMult) {
@@ -3620,27 +3981,42 @@ const audio = (() => {
     const master = a.createGain();
     master.gain.setValueAtTime(0.0001, a.currentTime);
     master.gain.linearRampToValueAtTime(Math.min(1.0, (songDef.vol || 0.14) * (volMult || VOL_MULT)), a.currentTime + 0.5);
-    master.connect(a.destination);
-    // ── hall reverb send: two cross-fed lowpassed delays. This is what makes
-    // the orchestral palette sound like a room instead of dry oscillators.
+    master.connect(bus());
+    // ── hall reverb send: three cross-fed lowpassed delays at mutually prime
+    // times. This is what makes the orchestral palette sound like a hall
+    // instead of dry oscillators.
     const wetNodes = [];
     {
-      const send = a.createGain(); send.gain.value = 0.30;
-      const hpW = a.createBiquadFilter(); hpW.type = 'highpass'; hpW.frequency.value = 200;
+      const send = a.createGain(); send.gain.value = 0.32;
+      const hpW = a.createBiquadFilter(); hpW.type = 'highpass'; hpW.frequency.value = 190;
       master.connect(send); send.connect(hpW);
-      const mk = (time, fbAmt) => {
+      const mk = (time, fbAmt, panPos) => {
         const d = a.createDelay(1.0); d.delayTime.value = time;
         const fb = a.createGain(); fb.gain.value = fbAmt;
-        const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800;
+        const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3100;
         d.connect(lp); lp.connect(fb); fb.connect(d);
-        const out = a.createGain(); out.gain.value = 0.5;
-        lp.connect(out); out.connect(a.destination);
-        wetNodes.push(d, fb, lp, out);
+        const out = a.createGain(); out.gain.value = 0.42;
+        // spread the reverb tails across the stereo field for width
+        if (a.createStereoPanner) {
+          const pn = a.createStereoPanner(); pn.pan.value = panPos;
+          lp.connect(out); out.connect(pn); pn.connect(bus());
+          wetNodes.push(d, fb, lp, out, pn);
+        } else {
+          lp.connect(out); out.connect(bus());
+          wetNodes.push(d, fb, lp, out);
+        }
         return d;
       };
-      const d1 = mk(0.149, 0.38), d2 = mk(0.223, 0.34);
-      hpW.connect(d1); hpW.connect(d2);
+      const d1 = mk(0.149, 0.36, -0.45), d2 = mk(0.223, 0.32, 0.45), d3 = mk(0.311, 0.28, 0);
+      hpW.connect(d1); hpW.connect(d2); hpW.connect(d3);
       wetNodes.push(send, hpW);
+    }
+    // per-voice stereo placement helper — returns a node feeding master
+    function panTo(p) {
+      if (!p || !a.createStereoPanner) return master;
+      const pn = a.createStereoPanner(); pn.pan.value = Math.max(-1, Math.min(1, p));
+      pn.connect(master);
+      return pn;
     }
     const bpm = songDef.bpm; const s16 = 60 / bpm / 4;
     const LEN = songDef.len;
@@ -3649,18 +4025,21 @@ const audio = (() => {
 
     function note(freq, type, gain, when, dur) {
       const o = a.createOscillator(); o.type = type; o.frequency.value = freq;
-      const g = a.createGain(); o.connect(g); g.connect(master);
-      g.gain.setValueAtTime(gain, when);
+      // soften raw chip leads through a gentle lowpass so they sit in the mix
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(9000, freq * 8);
+      const g = a.createGain(); o.connect(lp); lp.connect(g); g.connect(panTo(0.12));
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.linearRampToValueAtTime(gain, when + 0.008);
       g.gain.exponentialRampToValueAtTime(0.001, when + dur);
       o.start(when); o.stop(when + dur + 0.01);
     }
-    function noise(when, dur, vol) {
+    function noise(when, dur, vol, hpFreq) {
       const len = Math.ceil(a.sampleRate * dur);
       const buf = a.createBuffer(1, len, a.sampleRate);
       const d = buf.getChannelData(0);
       for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
       const src = a.createBufferSource(); src.buffer = buf;
-      const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+      const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = hpFreq || 7000;
       const g = a.createGain(); src.connect(hp); hp.connect(g); g.connect(master);
       g.gain.setValueAtTime(vol, when);
       g.gain.exponentialRampToValueAtTime(0.001, when + dur);
@@ -3674,43 +4053,81 @@ const audio = (() => {
       g.gain.setValueAtTime(0.45, when);
       g.gain.exponentialRampToValueAtTime(0.001, when + 0.12);
       o.start(when); o.stop(when + 0.15);
+      // beater click for definition on small speakers
+      noise(when, 0.018, 0.10, 3000);
     }
     function snare(when) {
-      noise(when, 0.11, 0.16);
+      // bandpassed body crack instead of plain white hiss
+      const len = Math.ceil(a.sampleRate * 0.13);
+      const buf = a.createBuffer(1, len, a.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(); src.buffer = buf;
+      const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8;
+      const ng = a.createGain(); src.connect(bp); bp.connect(ng); ng.connect(master);
+      ng.gain.setValueAtTime(0.20, when);
+      ng.gain.exponentialRampToValueAtTime(0.001, when + 0.13);
+      src.start(when); src.stop(when + 0.14);
+      noise(when, 0.07, 0.07, 6500);   // wire sizzle on top
       const o = a.createOscillator(); o.type = 'triangle';
-      o.frequency.setValueAtTime(200, when);
-      o.frequency.exponentialRampToValueAtTime(80, when + 0.06);
+      o.frequency.setValueAtTime(210, when);
+      o.frequency.exponentialRampToValueAtTime(85, when + 0.06);
       const g = a.createGain(); o.connect(g); g.connect(master);
       g.gain.setValueAtTime(0.20, when);
       g.gain.exponentialRampToValueAtTime(0.001, when + 0.1);
       o.start(when); o.stop(when + 0.12);
     }
+    // string ensemble: detuned sawtooth section through a slowly opening
+    // lowpass, voices spread across the stereo field, slow vibrato. Basses
+    // get a tighter darker voicing so the low end stays clean.
     function strings(freq, when, dur, vol) {
-      const lfo = a.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5.2;
-      const lfoG = a.createGain(); lfoG.gain.value = freq * 0.007; lfo.connect(lfoG);
-      const mg = a.createGain(); mg.connect(master);
-      [[1,0.50],[1.003,0.30],[0.997,0.30],[2,0.12]].forEach(([ratio,blend]) => {
-        const o = a.createOscillator(); o.type = 'sine'; o.frequency.value = freq * ratio;
+      const bassy = freq < 120;
+      const lfo = a.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 4.6 + Math.random() * 0.8;
+      const lfoG = a.createGain(); lfoG.gain.value = freq * 0.006; lfo.connect(lfoG);
+      const mg = a.createGain();
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4;
+      lp.frequency.setValueAtTime(freq * (bassy ? 5 : 4.5), when);
+      lp.frequency.linearRampToValueAtTime(freq * (bassy ? 7 : 8), when + Math.min(1.2, dur * 0.5));
+      mg.connect(lp); lp.connect(master);
+      const voices = bassy
+        ? [[1, 0.55, 0], [0.997, 0.30, -0.25], [1.004, 0.30, 0.25]]
+        : [[1, 0.34, 0], [1.006, 0.22, -0.5], [0.994, 0.22, 0.5], [1.012, 0.13, -0.22], [0.988, 0.13, 0.22], [2.002, 0.05, 0]];
+      voices.forEach(([ratio, blend, panPos]) => {
+        const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq * ratio;
         lfoG.connect(o.frequency);
-        const og = a.createGain(); og.gain.value = blend;
-        o.connect(og); og.connect(mg);
+        const og = a.createGain(); og.gain.value = blend * 0.55;   // saws are hot — trim into the old level
+        if (panPos && a.createStereoPanner) {
+          const pn = a.createStereoPanner(); pn.pan.value = panPos;
+          o.connect(og); og.connect(pn); pn.connect(mg);
+        } else { o.connect(og); og.connect(mg); }
         o.start(when); o.stop(when + dur + 0.02);
       });
-      const atk = Math.min(dur * 0.2, 0.15);
+      const atk = Math.min(dur * 0.22, 0.18);
       mg.gain.setValueAtTime(0, when);
       mg.gain.linearRampToValueAtTime(vol, when + atk);
       mg.gain.setValueAtTime(vol * 0.88, when + dur - 0.06);
       mg.gain.exponentialRampToValueAtTime(0.001, when + dur);
       lfo.start(when); lfo.stop(when + dur + 0.02);
     }
+    // flute: harmonic sine stack + breath chiff + expressive DELAYED vibrato
+    // (straight tone for the first beat, then it blooms — the Evan Call move)
     function woodwind(freq, when, dur, vol) {
-      const mg = a.createGain(); mg.connect(master);
+      const mg = a.createGain(); mg.connect(panTo(0.14));
+      const vib = a.createOscillator(); vib.type = 'sine'; vib.frequency.value = 5.1;
+      const vibG = a.createGain();
+      const vibOn = Math.min(0.22, dur * 0.35);
+      vibG.gain.setValueAtTime(0, when);
+      vibG.gain.setValueAtTime(0, when + vibOn);
+      vibG.gain.linearRampToValueAtTime(freq * 0.011, when + Math.min(0.6, vibOn + 0.3));
+      vib.connect(vibG);
       [[1,0.55],[2,0.22],[3,0.10],[4,0.04]].forEach(([harmonic,blend]) => {
         const o = a.createOscillator(); o.type = 'sine'; o.frequency.value = freq * harmonic;
+        vibG.connect(o.frequency);
         const og = a.createGain(); og.gain.value = blend;
         o.connect(og); og.connect(mg);
         o.start(when); o.stop(when + dur + 0.01);
       });
+      vib.start(when); vib.stop(when + dur + 0.02);
       mg.gain.setValueAtTime(0, when);
       mg.gain.linearRampToValueAtTime(vol, when + 0.03);
       mg.gain.setValueAtTime(vol * 0.88, when + dur - 0.04);
@@ -3725,18 +4142,25 @@ const audio = (() => {
       bvol.gain.exponentialRampToValueAtTime(0.001, when + 0.07);
       bsrc.start(when); bsrc.stop(when + 0.08);
     }
+    // brass section: two detuned saws + the classic closed→open filter "wah"
     function brass(freq, when, dur, vol) {
-      const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq;
       const peak = a.createBiquadFilter(); peak.type = 'peaking'; peak.frequency.value = freq * 3.5; peak.gain.value = 9; peak.Q.value = 1.2;
-      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = freq * 9;
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(freq * 2.4, when);
+      lp.frequency.exponentialRampToValueAtTime(freq * 9, when + Math.min(0.09, dur * 0.4));
       const g = a.createGain();
-      o.connect(peak); peak.connect(lp); lp.connect(g); g.connect(master);
+      peak.connect(lp); lp.connect(g); g.connect(panTo(-0.1));
+      [[1, 0.62], [1.005, 0.45]].forEach(([r, b]) => {
+        const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq * r;
+        const og = a.createGain(); og.gain.value = b;
+        o.connect(og); og.connect(peak);
+        o.start(when); o.stop(when + dur + 0.01);
+      });
       g.gain.setValueAtTime(0, when);
       g.gain.linearRampToValueAtTime(vol * 1.15, when + 0.012);
       g.gain.exponentialRampToValueAtTime(vol * 0.80, when + 0.05);
       g.gain.setValueAtTime(vol * 0.80, when + dur - 0.04);
       g.gain.exponentialRampToValueAtTime(0.001, when + dur);
-      o.start(when); o.stop(when + dur + 0.01);
     }
     function timpani(when, freqVal) {
       const f = freqVal || 80;
@@ -3752,14 +4176,28 @@ const audio = (() => {
       g.gain.exponentialRampToValueAtTime(0.001, when + 0.50);
       o.start(when); o.stop(when + 0.55);
       o2.start(when); o2.stop(when + 0.15);
+      // mallet felt thump — low filtered noise makes it read as a real drum
+      const len = Math.ceil(a.sampleRate * 0.09);
+      const buf = a.createBuffer(1, len, a.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(); src.buffer = buf;
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 320;
+      const ng = a.createGain(); src.connect(lp); lp.connect(ng); ng.connect(master);
+      ng.gain.setValueAtTime(0.5, when);
+      ng.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
+      src.start(when); src.stop(when + 0.1);
     }
-    // plucked harp: detuned triangles through a closing lowpass, natural decay
+    // plucked harp: detuned triangles through a closing lowpass, natural
+    // decay, pluck chiff, and pitch-based stereo placement (low strings left,
+    // high strings right, like sitting in front of the instrument)
     function harp(freq, when, dur, vol) {
+      const pp = Math.max(-0.55, Math.min(0.55, Math.log2(freq / 440) * 0.35));
       const mg = a.createGain();
       const lp = a.createBiquadFilter(); lp.type = 'lowpass';
       lp.frequency.setValueAtTime(Math.min(9000, freq * 7), when);
       lp.frequency.exponentialRampToValueAtTime(Math.max(500, freq * 1.6), when + 0.4);
-      mg.connect(lp); lp.connect(master);
+      mg.connect(lp); lp.connect(panTo(pp));
       [[1, 0.62], [1.004, 0.30], [2.003, 0.10]].forEach(([r, b]) => {
         const o = a.createOscillator(); o.type = 'triangle'; o.frequency.value = freq * r;
         const g = a.createGain(); g.gain.value = b;
@@ -3770,22 +4208,53 @@ const audio = (() => {
       mg.gain.setValueAtTime(0, when);
       mg.gain.linearRampToValueAtTime(vol, when + 0.006);
       mg.gain.exponentialRampToValueAtTime(0.001, when + decay);
+      // fingertip pluck chiff
+      const len = Math.ceil(a.sampleRate * 0.02);
+      const buf = a.createBuffer(1, len, a.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(); src.buffer = buf;
+      const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(8000, freq * 5); bp.Q.value = 1.5;
+      const ng = a.createGain(); src.connect(bp); bp.connect(ng); ng.connect(master);
+      ng.gain.setValueAtTime(vol * 0.5, when);
+      ng.gain.exponentialRampToValueAtTime(0.001, when + 0.02);
+      src.start(when); src.stop(when + 0.03);
     }
     // French horn: sawtooth through a dark lowpass + sine core, slow bloom
     function horn(freq, when, dur, vol) {
       const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq;
       const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq;
+      const vib = a.createOscillator(); vib.type = 'sine'; vib.frequency.value = 4.4;
+      const vibG = a.createGain();
+      vibG.gain.setValueAtTime(0, when);
+      vibG.gain.setValueAtTime(0, when + Math.min(0.3, dur * 0.4));
+      vibG.gain.linearRampToValueAtTime(freq * 0.007, when + Math.min(0.8, dur * 0.7));
+      vib.connect(vibG); vibG.connect(o.frequency); vibG.connect(o2.frequency);
       const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = freq * 3.4; lp.Q.value = 0.7;
       const g = a.createGain(); const g2 = a.createGain(); g2.gain.value = 0.55;
       o.connect(lp); lp.connect(g);
       o2.connect(g2); g2.connect(g);
-      g.connect(master);
+      g.connect(panTo(-0.18));
       g.gain.setValueAtTime(0, when);
       g.gain.linearRampToValueAtTime(vol, when + Math.min(0.09, dur * 0.3));
       g.gain.setValueAtTime(vol * 0.85, when + Math.max(0.02, dur - 0.06));
       g.gain.exponentialRampToValueAtTime(0.001, when + dur);
       o.start(when); o.stop(when + dur + 0.02);
       o2.start(when); o2.stop(when + dur + 0.02);
+      vib.start(when); vib.stop(when + dur + 0.02);
+    }
+    // celesta / music box: inharmonic bell partials with fast natural decay
+    function bell(freq, when, dur, vol) {
+      const pp = Math.max(-0.4, Math.min(0.4, Math.log2(freq / 880) * 0.3));
+      [[1, 1.0, 2.0], [2.76, 0.32, 0.9], [5.4, 0.10, 0.4]].forEach(([r, b, dk]) => {
+        const o = a.createOscillator(); o.type = 'sine'; o.frequency.value = freq * r;
+        const g = a.createGain();
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.linearRampToValueAtTime(vol * b, when + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.35, Math.min(dur * 2.2, dk)));
+        o.connect(g); g.connect(panTo(pp));
+        o.start(when); o.stop(when + dk + 0.05);
+      });
     }
 
     function sched() {
@@ -3799,16 +4268,21 @@ const audio = (() => {
           if (!v) { idx; continue; }
           if (tr.type === 'kick') { kick(w); continue; }
           if (tr.type === 'snare') { snare(w); continue; }
-          if (tr.type === 'hat') { noise(w, 0.05, tr.vol || 0.08); continue; }
+          if (tr.type === 'hat') { noise(w, 0.035, tr.vol || 0.08, 9000); continue; }
           if (tr.type === 'noise') { noise(w, s16 * 0.5, tr.vol || 0.03); continue; }
-          if (tr.type === 'clap') { noise(w, 0.08, tr.vol || 0.12); continue; }
+          if (tr.type === 'clap') { noise(w, 0.08, tr.vol || 0.12, 1500); continue; }
           const dur = tr.sustain ? s16 * tr.sustain : s16 * 0.9;
+          // humanize the "played" voices: ±4ms timing slop + ±8% velocity so
+          // long loops breathe like a performance instead of a sequencer grid
+          const hw = w + (Math.random() - 0.5) * 0.008;
+          const hv = 0.92 + Math.random() * 0.16;
           if (tr.type === 'strings') { strings(v, w, dur, tr.vol || 0.10); continue; }
-          if (tr.type === 'woodwind') { woodwind(v, w, dur, tr.vol || 0.09); continue; }
+          if (tr.type === 'woodwind') { woodwind(v, hw, dur, (tr.vol || 0.09) * hv); continue; }
           if (tr.type === 'brass') { brass(v, w, dur, tr.vol || 0.12); continue; }
-          if (tr.type === 'harp') { harp(v, w, dur, tr.vol || 0.10); continue; }
+          if (tr.type === 'harp') { harp(v, hw, dur, (tr.vol || 0.10) * hv); continue; }
           if (tr.type === 'horn') { horn(v, w, dur, tr.vol || 0.10); continue; }
           if (tr.type === 'timpani') { timpani(w, v); continue; }
+          if (tr.type === 'bell' || tr.type === 'triangle') { bell(v, hw, dur, (tr.vol || 0.07) * hv); continue; }
           note(v, tr.type, tr.vol, w, dur);
         }
         idx++;
@@ -4262,6 +4736,84 @@ const audio = (() => {
           { type:'strings', vol:0.035, sustain:11, notes: bars(A.map(c=>c[3]), 12) }
         ]
       };
+    })(),
+
+    // VOLCANO — "Forge of the Caldera": D minor, timpani + brass war-march.
+    volcano: (() => {
+      const A = [CH.Dm, CH.Bb, CH.Gm, CH.A, CH.Dm, CH.Bb, CH.F, CH.A];
+      const B = [CH.Gm, CH.Dm, CH.Bb, CH.A, CH.Dm, CH.F, CH.Gm, CH.Dm];
+      return {
+        bpm: 78, vol: 0.17, len: 96,
+        tracks: [
+          ...folkBed(A, B, { harpVol: 0.08 }),
+          { type:'timpani', vol:0.5, notes: arp(A, [[0,0],[7,0],[10,0]], 12), altNotes: arp(B, [[0,0],[6,0]], 12) },
+          { type:'brass', vol:0.10, sustain:9,
+            notes: seq(96, [[0,n.D4],[24,n.F4],[48,n.A4],[72,n.G4]]),
+            altNotes: seq(96, [[0,n.G4],[24,n.D4],[48,n.Bb4],[72,n.A4]]) },
+          { type:'woodwind', vol:0.13, sustain:4,
+            notes: seq(96, [[0,n.D5],[8,n.E5],[12,n.F5],[24,n.A4],[36,n.D5],[48,n.A5],[52,n.G5],[60,n.F5],[72,n.E5],[84,n.D5]]),
+            altNotes: seq(96, [[0,n.F5],[12,n.G5],[24,n.A5],[36,n.F5],[48,n.D5],[60,n.E5],[72,n.F5],[78,n.E5],[84,n.D5]]) }
+        ]
+      };
+    })(),
+
+    // SWAMP — "Murk and Lantern": E minor, slow drifting lament with drips.
+    swamp: (() => {
+      const A = [CH.Em, CH.C, CH.Am, CH.Bm, CH.Em, CH.C, CH.D, CH.Em];
+      const B = [CH.Am, CH.Em, CH.C, CH.Bm, CH.Am, CH.C, CH.Bm, CH.Em];
+      const pat = [[0,0],[3,2],[6,1],[9,3]];
+      return {
+        bpm: 62, vol: 0.16, len: 96,
+        tracks: [
+          { type:'harp', vol:0.09, sustain:2.6, notes: arp(A, pat, 12), altNotes: arp(B, pat, 12) },
+          { type:'strings', vol:0.05, sustain:11, notes: bars(A.map(c=>c[3]), 12), altNotes: bars(B.map(c=>c[3]), 12) },
+          { type:'strings', vol:0.13, sustain:11, notes: bars(A.map(c=>c[0]), 12), altNotes: bars(B.map(c=>c[0]), 12) },
+          { type:'woodwind', vol:0.11, sustain:8,
+            notes: seq(96, [[6,n.B4],[18,n.G4],[30,n.E4],[42,n.Fs4],[54,n.A4],[66,n.B4],[78,n.G4],[88,n.E4]]),
+            altNotes: seq(96, [[6,n.E5],[18,n.C5],[30,n.B4],[42,n.A4],[54,n.G4],[66,n.Fs4],[78,n.B4],[88,n.E4]]) },
+          { type:'noise', vol:0.018, notes: arp(ONES, [[5,0]], 12) }
+        ]
+      };
+    })(),
+
+    // NEON — "Circuit Bazaar": A minor chiptune-folk with kick + hat groove.
+    neon: (() => {
+      const A = [CH.Am, CH.F, CH.G, CH.Em, CH.Am, CH.F, CH.D, CH.E];
+      const B = [CH.F, CH.G, CH.Am, CH.Em, CH.F, CH.G, CH.E, CH.Am];
+      const bounce = [[0,0],[2,2],[4,3],[6,4],[8,2],[10,4]];
+      return {
+        bpm: 118, vol: 0.16, len: 96,
+        tracks: [
+          { type:'harp', vol:0.10, sustain:1.6, notes: arp(A, bounce, 12), altNotes: arp(B, bounce, 12) },
+          { type:'strings', vol:0.12, sustain:11, notes: bars(A.map(c=>c[0]), 12), altNotes: bars(B.map(c=>c[0]), 12) },
+          { type:'square', vol:0.045, sustain:1.6,
+            notes: seq(96, [[0,n.E5],[4,n.C5],[8,n.A4],[12,n.B4],[16,n.C5],[20,n.E5],[24,n.D5],[30,n.B4],
+                            [36,n.C5],[40,n.A4],[48,n.E5],[52,n.G5],[56,n.E5],[60,n.D5],[72,n.C5],[76,n.B4],[84,n.E5]]),
+            altNotes: seq(96, [[0,n.A4],[6,n.C5],[12,n.E5],[18,n.D5],[24,n.C5],[36,n.B4],[48,n.A4],[54,n.C5],
+                               [60,n.E5],[66,n.D5],[72,n.E5],[78,n.G5],[84,n.A5]]) },
+          { type:'kick', vol:0.5, notes: arp(ONES, [[0,0],[6,0]], 12) },
+          { type:'hat', vol:0.030, notes: arp(ONES, [[3,0],[9,0]], 12) }
+        ]
+      };
+    })(),
+
+    // SKY — "Above the Clouds": A major music-box bells over slow harp.
+    sky: (() => {
+      const A = [CH.A, CH.D, CH.Fsm, CH.E, CH.A, CH.D, CH.E, CH.A];
+      const B = [CH.D, CH.A, CH.Bm, CH.E, CH.D, CH.Fsm, CH.E, CH.A];
+      return {
+        bpm: 80, vol: 0.15, len: 96,
+        tracks: [
+          ...folkBed(A, B, { harpVol: 0.10 }),
+          { type:'triangle', vol:0.06, sustain:3,
+            notes: seq(96, [[0,n.E5],[6,n.Cs5],[12,n.A5],[24,n.Fs5],[30,n.D5],[36,n.E5],[48,n.A5],[54,n.E5],
+                            [60,n.Cs5],[72,n.B4],[78,n.D5],[84,n.E5]]),
+            altNotes: seq(96, [[0,n.A5],[12,n.Fs5],[24,n.D5],[36,n.Cs5],[48,n.B4],[60,n.E5],[72,n.Fs5],[84,n.A5]]) },
+          { type:'horn', vol:0.07, sustain:10,
+            notes: seq(96, [[12,n.A4],[36,n.D4],[60,n.E4],[84,n.A4]]),
+            altNotes: seq(96, [[12,n.Fs4],[36,n.A4],[60,n.E4],[84,n.Cs5]]) }
+        ]
+      };
     })()
   };
 
@@ -4311,7 +4863,7 @@ const audio = (() => {
     for (let j = 0; j < len; j++) d[j] = Math.random() * 2 - 1;
     const src = a.createBufferSource(); src.buffer = buf;
     const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = hpFreq || 2000;
-    const g = a.createGain(); src.connect(hp); hp.connect(g); g.connect(a.destination);
+    const g = a.createGain(); src.connect(hp); hp.connect(g); g.connect(bus());
     g.gain.setValueAtTime(Math.min(1.0, vol * VOL_MULT), t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     src.start(t); src.stop(t + dur + 0.01);
@@ -4328,98 +4880,176 @@ const audio = (() => {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(Math.min(1, (vol || 0.10) * VOL_MULT), t + dur * 0.7);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(a.destination);
+    o.connect(g); g.connect(bus());
     o.start(t); o.stop(t + dur + 0.05);
   }
 
   return {
-    encounter() { play([[523,0.08],[0,0.03],[659,0.08],[0,0.03],[784,0.1],[1047,0.18]], 'square', 0.14); },
+    // dramatic encounter sting: low boom + rising panned brass-y chord
+    encounter() {
+      tone({ f0:98, f1:62, dur:0.35, type:'sine', vol:0.16 });
+      noiseHit({ dur:0.2, vol:0.05, kind:'lp', f:500 });
+      [523,659,784,1047].forEach((f,i)=>tone({ f0:f, dur:0.1+(i===3?0.16:0), type:'square', vol:0.05, lp:5000, delay:0.05+i*0.085, pan:(i%2?0.25:-0.25) }));
+      tone({ f0:1047, f1:1319, dur:0.22, type:'square', vol:0.045, lp:6000, delay:0.42 });
+    },
     // ── finisher / cinematic SFX ──
-    riser(dur) { sweep(110, 1760, dur || 1.1, 'sawtooth', 0.07); sweep(55, 880, dur || 1.1, 'square', 0.05); },
+    riser(dur) {
+      sweep(110, 1760, dur || 1.1, 'sawtooth', 0.07);
+      sweep(55, 880, dur || 1.1, 'square', 0.05);
+      sweep(880, 3520, dur || 1.1, 'sine', 0.025);
+    },
     boom() {
       sweep(160, 38, 0.5, 'sine', 0.22);
-      sfxNoise(0.30, 0.12, 900);
-      play([[55,0.30]], 'triangle', 0.18);
+      noiseHit({ dur:0.5, vol:0.10, kind:'lp', f:420 });
+      noiseHit({ dur:0.18, vol:0.06, kind:'bp', f:1400, q:0.6 });
+      tone({ f0:55, dur:0.45, type:'triangle', vol:0.18 });
     },
     slamHit() {
-      play([[196,0.04],[131,0.05],[98,0.09]], 'square', 0.2);
-      sfxNoise(0.12, 0.1, 1600);
-      sweep(120, 50, 0.22, 'sine', 0.16);
+      tone({ f0:150, f1:45, dur:0.2, type:'sine', vol:0.20 });
+      tone({ f0:196, f1:98, dur:0.09, type:'square', vol:0.09, lp:2200 });
+      noiseHit({ dur:0.12, vol:0.10, kind:'bp', f:1800, q:0.7 });
+      noiseHit({ dur:0.05, vol:0.06, kind:'hp', f:5500 });
     },
-    clack() { play([[1318,0.03],[0,0.02],[659,0.05]], 'square', 0.12); },
-    swoosh() { sfxNoise(0.18, 0.07, 700); sweep(900, 220, 0.18, 'triangle', 0.05); },
+    clack() {
+      noiseHit({ dur:0.03, vol:0.07, kind:'bp', f:2600, q:2 });
+      tone({ f0:1318, f1:880, dur:0.05, type:'square', vol:0.05, lp:4000 });
+    },
+    swoosh() {
+      noiseHit({ dur:0.2, vol:0.06, kind:'bp', f:1000, q:0.4 });
+      noiseHit({ dur:0.14, vol:0.04, kind:'bp', f:2400, q:0.5, delay:0.04 });
+      tone({ f0:900, f1:200, dur:0.2, type:'triangle', vol:0.04 });
+    },
     stinger() {
-      play([[1047,0.07],[0,0.03],[1319,0.07],[0,0.03],[1568,0.1],[0,0.05],[2093,0.32]], 'square', 0.15);
-      play([[262,0.12],[392,0.12],[523,0.3]], 'triangle', 0.11);
+      chordStab([1046.5,1318.5,1568,2093], { dur:0.3, type:'square', vol:0.05, strum:0.014, spread:0.18 });
+      chordStab([261.6,392,523.25], { dur:0.35, type:'triangle', vol:0.08, strum:0.01 });
+      noiseHit({ dur:0.35, vol:0.04, kind:'hp', f:6500 });
     },
     // ── overworld polish SFX ──
-    bump() { play([[98,0.05],[73,0.07]], 'triangle', 0.10); sfxNoise(0.04, 0.03, 600); },
-    splash() { sfxNoise(0.16, 0.06, 1100); play([[330,0.05],[262,0.07]], 'sine', 0.06); },
-    rustle() { sfxNoise(0.07, 0.035, 4200); },
-    lowHpBeep() { play([[988,0.07],[0,0.10],[988,0.07]], 'square', 0.07); },
-    blip() { play([[660,0.018]], 'square', 0.035); },
-    catchSuccess() { play([[523,0.08],[659,0.08],[784,0.08],[1047,0.1],[1319,0.22]], 'square', 0.16); },
-    catchFail() { play([[392,0.12],[349,0.12],[294,0.12],[196,0.28]], 'sawtooth', 0.12); },
-    step() { play([[880,0.04]], 'triangle', 0.03); },
-    portal() { play([[262,0.1],[330,0.1],[392,0.1],[523,0.1],[659,0.1],[784,0.2],[1047,0.3]], 'square', 0.14); },
-    heal() { play([[523,0.06],[659,0.06],[784,0.08],[1047,0.14]], 'triangle', 0.12); },
+    bump() {
+      tone({ f0:95, f1:55, dur:0.09, type:'sine', vol:0.12 });
+      noiseHit({ dur:0.05, vol:0.03, kind:'lp', f:400 });
+    },
+    splash() {
+      noiseHit({ dur:0.18, vol:0.05, kind:'bp', f:1300, q:0.7 });
+      tone({ f0:520, f1:240, dur:0.12, type:'sine', vol:0.05 });
+      tone({ f0:300, f1:700, dur:0.1, type:'sine', vol:0.035, delay:0.07 });   // droplet rebound
+    },
+    rustle() { noiseHit({ dur:0.07, vol:0.035, kind:'bp', f:3800 + Math.random()*1600, q:0.5 }); },
+    lowHpBeep() { play([[988,0.07],[0,0.10],[988,0.07]], 'triangle', 0.07); },
+    blip() { tone({ f0:660, dur:0.025, type:'square', vol:0.03, lp:3000 }); },
+    tik() { tone({ f0:1760, dur:0.015, type:'square', vol:0.018, lp:5000 }); },
+    subBoom() {
+      sweep(90, 24, 0.9, 'sine', 0.26);
+      noiseHit({ dur:0.7, vol:0.10, kind:'lp', f:300 });
+      noiseHit({ dur:0.2, vol:0.05, kind:'bp', f:900, q:0.5 });
+      tone({ f0:36, dur:0.8, type:'sine', vol:0.22 });
+    },
+    gliss() {
+      const ns = [392, 440, 523, 587, 659, 784, 880, 1047];
+      ns.forEach((f, i) => {
+        tone({ f0:f, dur:0.25, type:'sine', vol:0.05, delay:i*0.045, pan:(i/7-0.5)*0.7 });
+        tone({ f0:f*2.76, dur:0.1, type:'sine', vol:0.012, delay:i*0.045 });
+      });
+    },
+    catchSuccess() {
+      [523,659,784,1047].forEach((f,i)=>tone({ f0:f, dur:0.1, type:'square', vol:0.05, lp:6000, delay:i*0.07 }));
+      chordStab([1046.5,1318.5,1568], { dur:0.4, type:'triangle', vol:0.06, strum:0.02, delay:0.30, spread:0.2 });
+      noiseHit({ dur:0.3, vol:0.03, kind:'hp', f:7000, delay:0.30 });
+    },
+    catchFail() {   // sad trombone womp: detuned saw slide + sub
+      tone({ f0:392, f1:185, dur:0.5, type:'sawtooth', vol:0.07, lp:1200, attack:0.02 });
+      tone({ f0:396, f1:188, dur:0.5, type:'sawtooth', vol:0.05, lp:1000 });
+      tone({ f0:98, f1:55, dur:0.5, type:'sine', vol:0.10 });
+    },
+    step() {
+      noiseHit({ dur:0.035, vol:0.025, kind:'bp', f:1100 + Math.random()*500, q:1.2 });
+      tone({ f0:170 + Math.random()*40, f1:120, dur:0.045, type:'sine', vol:0.035 });
+    },
+    portal() {
+      [262,330,392,523,659,784,1047].forEach((f,i)=>tone({ f0:f, dur:0.3, type:'triangle', vol:0.05, delay:i*0.07, pan:Math.sin(i)*0.5 }));
+      sweep(200, 1600, 0.6, 'sine', 0.04);
+      noiseHit({ dur:0.5, vol:0.025, kind:'hp', f:5000, delay:0.2 });
+    },
+    heal() {   // warm bell arpeggio over a soft pad chord
+      [523.25,659.25,784,1046.5].forEach((f,i)=>{
+        tone({ f0:f, dur:0.5, type:'sine', vol:0.06, delay:i*0.09, pan:(i-1.5)*0.15 });
+        tone({ f0:f*2.76, dur:0.18, type:'sine', vol:0.012, delay:i*0.09 });
+      });
+      chordStab([261.6,329.6,392], { dur:0.7, type:'triangle', vol:0.035, strum:0.02, attack:0.05, delay:0.1 });
+    },
 
+    // ── battle impacts: layered sub-thump + mid punch + filtered crack ──
     glance() {
-      play([[131,0.06],[98,0.08]], 'triangle', 0.10);
-      sfxNoise(0.06, 0.04, 4000);
+      tone({ f0:140, f1:90, dur:0.08, type:'triangle', vol:0.08 });
+      noiseHit({ dur:0.05, vol:0.03, kind:'hp', f:4000 });
     },
     hit() {
-      play([[220,0.04],[165,0.06],[131,0.08]], 'square', 0.16);
-      sfxNoise(0.08, 0.07, 2500);
+      tone({ f0:180, f1:55, dur:0.12, type:'sine', vol:0.16 });
+      tone({ f0:220, f1:130, dur:0.07, type:'square', vol:0.07, lp:2500 });
+      noiseHit({ dur:0.08, vol:0.07, kind:'bp', f:2400, q:0.8 });
     },
     cleanHit() {
-      play([[330,0.04],[262,0.05],[196,0.06],[165,0.08]], 'square', 0.18);
-      sfxNoise(0.10, 0.09, 2000);
+      tone({ f0:200, f1:50, dur:0.16, type:'sine', vol:0.20 });
+      tone({ f0:330, f1:165, dur:0.08, type:'square', vol:0.08, lp:3000 });
+      noiseHit({ dur:0.10, vol:0.09, kind:'bp', f:2000, q:0.7 });
+      tone({ f0:880, f1:1760, dur:0.09, type:'sine', vol:0.03, delay:0.02 });
     },
     crit() {
-      play([[440,0.03],[660,0.04],[880,0.04],[1320,0.06],[1760,0.12]], 'sawtooth', 0.18);
-      sfxNoise(0.14, 0.12, 1500);
-      play([[220,0.04],[0,0.02],[330,0.04],[0,0.02],[440,0.06]], 'square', 0.10);
+      tone({ f0:240, f1:45, dur:0.22, type:'sine', vol:0.24 });
+      noiseHit({ dur:0.16, vol:0.12, kind:'bp', f:1700, q:0.6 });
+      noiseHit({ dur:0.06, vol:0.08, kind:'hp', f:6000 });
+      tone({ f0:440, f1:1760, dur:0.16, type:'sawtooth', vol:0.06, lp:5000 });
+      [1760,2217,2637].forEach((f,i)=>tone({ f0:f, dur:0.12, type:'sine', vol:0.035, delay:0.06+i*0.04, pan:(i-1)*0.3 }));
     },
     takeDmg() {
-      play([[196,0.05],[147,0.06],[110,0.10]], 'sawtooth', 0.14);
-      sfxNoise(0.12, 0.08, 3000);
-      play([[82,0.08]], 'sine', 0.20);
+      tone({ f0:196, f1:90, dur:0.16, type:'sawtooth', vol:0.09, lp:1800 });
+      tone({ f0:82, f1:50, dur:0.18, type:'sine', vol:0.18 });
+      noiseHit({ dur:0.12, vol:0.07, kind:'bp', f:2800, q:0.7 });
     },
+    battleHit() {
+      tone({ f0:200, f1:70, dur:0.08, type:'square', vol:0.10, lp:2000 });
+      tone({ f0:110, f1:60, dur:0.08, type:'sine', vol:0.13 });
+    },
+
+    // proper victory fanfare: chord stabs → ♭VI ♭VII → resolve + bass + crash
     victory() {
-      play([
-        [523,0.08],[0,0.04],[659,0.08],[0,0.04],[784,0.10],[0,0.04],
-        [1047,0.10],[0,0.06],[1319,0.12],[0,0.06],[1568,0.20],[0,0.08],[2093,0.30]
-      ], 'square', 0.16);
-      play([
-        [262,0.08],[0,0.04],[330,0.08],[0,0.04],[392,0.10],[0,0.04],
-        [523,0.10],[0,0.06],[659,0.12],[0,0.06],[784,0.20],[0,0.08],[1047,0.30]
-      ], 'triangle', 0.10);
+      const Cmaj = [523.25, 659.25, 784, 1046.5];
+      chordStab(Cmaj, { dur:0.09, type:'square', vol:0.055, strum:0.012, spread:0.2 });
+      chordStab(Cmaj, { dur:0.09, type:'square', vol:0.055, strum:0.012, spread:0.2, delay:0.16 });
+      chordStab([415.3, 523.25, 622.25, 830.6], { dur:0.14, type:'square', vol:0.055, strum:0.012, delay:0.34 });
+      chordStab([466.2, 587.3, 698.5, 932.3],  { dur:0.14, type:'square', vol:0.055, strum:0.012, delay:0.52 });
+      chordStab([523.25, 659.25, 784, 1046.5, 1318.5], { dur:0.55, type:'square', vol:0.06, strum:0.015, spread:0.15, delay:0.70 });
+      tone({ f0:130.8, dur:0.5, type:'triangle', vol:0.14, delay:0.70 });
+      tone({ f0:261.6, dur:0.5, type:'triangle', vol:0.10, delay:0.70 });
+      noiseHit({ dur:0.5, vol:0.05, kind:'hp', f:6000, delay:0.70 });
+      [1046.5,1318.5,1568,2093].forEach((f,i)=>tone({ f0:f, dur:0.22, type:'sine', vol:0.04, delay:0.78+i*0.06, pan:0.2 }));
     },
     defeat() {
-      play([
-        [392,0.12],[0,0.04],[349,0.14],[0,0.04],[294,0.16],[0,0.06],
-        [262,0.18],[0,0.06],[196,0.22],[0,0.08],[147,0.30],[0,0.10],[98,0.50]
-      ], 'sawtooth', 0.13);
-      play([[196,0.14],[0,0.04],[147,0.16],[0,0.06],[98,0.40]], 'sine', 0.16);
+      const steps = [392, 349, 294, 262, 196, 147, 98];
+      steps.forEach((f, i) => {
+        const last = i === steps.length - 1;
+        tone({ f0:f, f1:f*0.985, dur:last?0.6:0.18, type:'sawtooth', vol:0.05, lp:1400, delay:i*0.17, attack:0.01 });
+        tone({ f0:f*1.006,        dur:last?0.6:0.18, type:'sawtooth', vol:0.04, lp:1200, delay:i*0.17 });
+        tone({ f0:f/2, dur:0.2, type:'sine', vol:0.07, delay:i*0.17 });
+      });
     },
-    faint() { play([[392,0.12],[294,0.14],[196,0.18],[131,0.3]], 'sawtooth', 0.13); },
-    battleHit() {
-      play([[220,0.03],[165,0.04],[131,0.06]], 'square', 0.18);
-      play([[110,0.05]], 'sine', 0.14);
+    faint() {
+      [392,294,196,131].forEach((f,i)=>tone({ f0:f, f1:f*0.97, dur:i===3?0.35:0.14, type:'sawtooth', vol:0.05, lp:1600, delay:i*0.13 }));
     },
     evoFanfare() {
-      play([
-        [523,0.06],[659,0.06],[784,0.06],[1047,0.08],[1319,0.10],[0,0.04],
-        [1047,0.06],[1319,0.06],[1568,0.06],[2093,0.18]
-      ], 'square', 0.15);
-      play([
-        [262,0.06],[330,0.06],[392,0.06],[523,0.08],[659,0.10],[0,0.04],
-        [523,0.06],[659,0.06],[784,0.06],[1047,0.18]
-      ], 'triangle', 0.10);
+      const stab = (fs, d) => chordStab(fs, { dur:0.12, type:'square', vol:0.05, strum:0.012, delay:d, spread:0.15 });
+      stab([523.25, 659.25, 784], 0);
+      stab([587.3, 740, 880], 0.16);
+      stab([659.25, 830.6, 988], 0.32);
+      chordStab([784, 988, 1175, 1568], { dur:0.6, type:'square', vol:0.055, strum:0.015, spread:0.15, delay:0.5 });
+      tone({ f0:196, dur:0.6, type:'triangle', vol:0.13, delay:0.5 });
+      noiseHit({ dur:0.5, vol:0.05, kind:'hp', f:6000, delay:0.5 });
+      [1568,1976,2349,3136].forEach((f,i)=>tone({ f0:f, dur:0.2, type:'sine', vol:0.03, delay:0.6+i*0.05, pan:(i-1.5)*0.25 }));
     },
     zoneTransition() {
-      play([[196,0.08],[0,0.04],[262,0.08],[0,0.04],[330,0.10],[0,0.06],[392,0.12]], 'sawtooth', 0.10);
+      tone({ f0:196, f1:392, dur:0.3, type:'triangle', vol:0.06, attack:0.04 });
+      [392,494,587].forEach((f,i)=>tone({ f0:f, dur:0.14, type:'triangle', vol:0.05, delay:0.12+i*0.09, pan:(i-1)*0.3 }));
+      noiseHit({ dur:0.25, vol:0.02, kind:'hp', f:6000 });
     },
 
     startBattle, stopBattle,
@@ -4456,7 +5086,7 @@ function getMovesForAppliance(id) {
   if (MOVES[id]) return MOVES[id];
   const ent = entities.find(e => e.id === id);
   if (!ent) return [];
-  const allTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM','DODGE','RHYTHM','VOLLEY'];
+  const allTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM','DODGE','RHYTHM','VOLLEY','SLICE','MEMORY','SPIN'];
   const primary = ent.mg;
   const others = allTypes.filter(t => t !== primary);
   const picked = [];
@@ -4477,7 +5107,10 @@ function getMovesForAppliance(id) {
     AIM:      ['SHOT','BLAST','SNIPE','BEAM'],
     DODGE:    ['EVADE','SIDESTEP','WEAVE','FEINT'],
     RHYTHM:   ['BEAT','GROOVE','TEMPO','PULSE'],
-    VOLLEY:   ['RALLY','RETURN','BOUNCE','VOLLEY']
+    VOLLEY:   ['RALLY','RETURN','BOUNCE','VOLLEY'],
+    SLICE:    ['SLICE','CLEAVE','JULIENNE','DICE'],
+    MEMORY:   ['RECALL','ECHO','MIRROR','REPLAY'],
+    SPIN:     ['SPIN','CYCLONE','WHIRL','TORQUE']
   };
   const evoBonus = evoPowerBonus(id);
   const elem = getElement(id);
@@ -4543,6 +5176,10 @@ const WARP_POINTS = [
   { label:'BEACH',      map:'beach',     x:5,  y:5  },
   { label:'FUNGAL',     map:'fungal',    x:5,  y:5  },
   { label:'SCRAPYARD',  map:'scrapyard', x:5,  y:5  },
+  { label:'VOLCANO',    map:'volcano',   x:14, y:13 },
+  { label:'SWAMP',      map:'swamp',     x:5,  y:12 },
+  { label:'NEON CITY',  map:'neon',      x:15, y:13 },
+  { label:'SKY',        map:'sky',       x:5,  y:9  },
 ];
 function openFastTravel() {
   const opts = WARP_POINTS.map((w, i) =>
@@ -4640,8 +5277,8 @@ function onKeyDown(e) {
         e.preventDefault();
         return;
       }
-      // MASH: block key repeat so holding space doesn't count as mashing
-      if (state.mini.type === 'MASH' && (k === ' ' || k === 'enter') && e.repeat) {
+      // MASH/SLICE: block key repeat so holding space doesn't count as input
+      if ((state.mini.type === 'MASH' || state.mini.type === 'SLICE') && (k === ' ' || k === 'enter') && e.repeat) {
         e.preventDefault();
         return;
       }
@@ -4968,7 +5605,11 @@ function canWalk(m, x, y) {
 // Area gates: catching specific appliances unlocks passage
 const AREA_GATES = {
   fungal:    { need:[44], msg:'The Mushroom Farmer blocks the path. Catch a Mashley first!' },
-  scrapyard: { need:[51], msg:'The Scrap Warden won\'t budge. Catch a Boatsworth first!' }
+  scrapyard: { need:[51], msg:'The Scrap Warden won\'t budge. Catch a Boatsworth first!' },
+  volcano:   { need:[46], msg:'A wall of heat blocks the pass. Catch a Freezbert to withstand it!' },
+  swamp:     { need:[56], msg:'The bog bubbles ominously. Catch a Shroomix to brave the spores!' },
+  neon:      { need:[54], msg:'The city gate is locked. Catch a Coconutter to get on the list!' },
+  sky:       { need:[48], msg:'The summit portal is sealed. Catch a Frostifry to attune to it!' }
 };
 
 function checkGate(area, showToast) {
@@ -5001,6 +5642,15 @@ const EDGE_LINKS = [
   // lake south <-> scrapyard top
   { from:'lake',      edge:'south', to:'scrapyard', spawnY:1,  clampX:true },
   { from:'scrapyard', edge:'north', to:'lake',      spawnY:18, clampX:true },
+  // mountain west <-> volcano east
+  { from:'mountain', edge:'west',  to:'volcano',   spawnX:26, clampY:true },
+  { from:'volcano',  edge:'east',  to:'mountain',  spawnX:1,  clampY:true },
+  // fungal south <-> swamp top
+  { from:'fungal', edge:'south', to:'swamp',  spawnY:1,  clampX:true },
+  { from:'swamp',  edge:'north', to:'fungal', spawnY:12, clampX:true },
+  // beach east <-> neon west
+  { from:'beach', edge:'east', to:'neon',  spawnX:1,  clampY:true },
+  { from:'neon',  edge:'west', to:'beach', spawnX:30, clampY:true },
 ];
 
 function transitions(m, x, y) {
@@ -5020,6 +5670,12 @@ function transitions(m, x, y) {
   }
   if (m === 'cave' && x === 6 && y === 13) return { to:'wild', x:6, y:14 };
   if (m === 'dimension' && x === 9 && y === 10) return { to:'wild', x:13, y:19 };
+  // mountain summit portal <-> celestial kitchen
+  if (m === 'mountain' && x === 9 && y === 2) {
+    if (!checkGate('sky', true)) return null;
+    return { to:'sky', x:10, y:10 };
+  }
+  if (m === 'sky' && x === 10 && y === 11) return { to:'mountain', x:9, y:3 };
 
   // === Edge-based outdoor transitions ===
   let edge = null;
@@ -5075,6 +5731,7 @@ function tryMove(dx, dy, dirName) {
 }
 let _lastBumpSfx = 0;
 let _stepParity = false;
+let _grassSteps = 0;   // steps taken in tall grass since the last random encounter
 
 // ======================================================================
 // INTERACT
@@ -5096,6 +5753,7 @@ function interact() {
   if (e.prof)   return professorTalk();
   if (e.heal)   return healStation(e);
   if (e.gate)   return gateNpcTalk(e);
+  if (e.elite)  return startEliteBattle(e.elite);
   if (e.bulletin) return bulletinBoardInteract();
   if (e.lines)  return npcCycleTalk(e);   // cycling-dialogue NPC
   if (e.npc)    return openDialog(e.n, [e.desc]);
@@ -5271,8 +5929,46 @@ function startBattle(enemyEnt) {
   audio.startBattle();
 }
 
+// Optional elite bosses guarding each frontier region. One-time fights with
+// permanent rewards — interact with the boss NPC to challenge them.
+const ELITE_BOSSES = {
+  volcano: { id:'elite_volcano', name:'Magma Lord Cinder', emoji:'👹', element:'fire', hp:620, atk:26,
+    quote:'My kitchen burns at ten thousand degrees!',
+    intro:'Magma Lord Cinder erupts from the caldera rim! "Trespassers get FLAMBÉED!"',
+    defeat:'Cinder cools into obsidian and bows. "Your flame burns hotter than mine, chef." (+40 MAX HP!)',
+    rewardHp: 40 },
+  swamp: { id:'elite_swamp', name:'Bog Witch Brackish', emoji:'🧙', element:'ice', hp:540, atk:23,
+    quote:'The Murkmire stirs whatever I tell it to stir!',
+    intro:'Bog Witch Brackish rises from the murk on a ladle-shaped broom! "Another ingredient walks into my cauldron!"',
+    defeat:'Brackish cackles, oddly pleased. "Fine, FINE. The swamp likes you better." (+35 MAX HP!)',
+    rewardHp: 35 },
+  neon: { id:'elite_neon', name:'DJ Voltage', emoji:'🎧', element:'electric', hp:700, atk:30,
+    quote:'Drop the bass. Drop the CHALLENGER!',
+    intro:'DJ Voltage spins onto the stage, decks crackling with lightning! "This next track goes out to whoever loses!"',
+    defeat:'Voltage lifts one headphone. "Crowd\'s chanting your name. Encore\'s all yours." (+45 MAX HP!)',
+    rewardHp: 45 },
+  sky: { id:'elite_sky', name:'Seraph Sous-Chef', emoji:'👼', element:'neutral', hp:820, atk:34,
+    quote:'Heaven\'s kitchen has standards.',
+    intro:'The Seraph Sous-Chef descends in a column of light, wings dusted with flour! "Your audition begins NOW."',
+    defeat:'The Seraph nods once. "Heaven\'s kitchen will set a place for you." (+50 MAX HP!)',
+    rewardHp: 50 }
+};
+
+function startEliteBattle(key) {
+  const boss = ELITE_BOSSES[key]; if (!boss) return;
+  if (state.bossesDefeated[boss.id]) {
+    openDialog(boss.name, ['"You have already bested me, chef. This territory is yours."']);
+    return;
+  }
+  _startBossFight(boss);
+}
+
 function startBossBattle(starNum) {
   const boss = BOSSES[starNum]; if (!boss) return;
+  _startBossFight(boss);
+}
+
+function _startBossFight(boss) {
   audio.encounter();
   if (!state.activeAppliance) state.activeAppliance = state.starter;
   const active = entities.find(e => e.id === state.activeAppliance);
@@ -6682,6 +7378,13 @@ function _finLabel() {
 
 function triggerFinisher() {
   const b = state.battle; if (!b || b.ended) return;
+  // 45% of ults roll one of the universal cinematics for variety;
+  // otherwise the appliance's element picks its signature finisher.
+  if (Math.random() < 0.45) {
+    const extras = [triggerMeteorFeast, triggerGalaxySlash, triggerBlackHoleBanquet];
+    extras[Math.floor(Math.random() * extras.length)]();
+    return;
+  }
   const elem = getElement(state.activeAppliance);
   if      (elem === 'fire')     triggerInfernoSupernova();
   else if (elem === 'electric') triggerLightningStorm();
@@ -6696,13 +7399,13 @@ function triggerFinisher() {
 // ════════════════════════════════════════════════════════════════════
 const _IF_THEMES = {
   fire:     { c:'#ff7030', glyph:'🔥', kill:'INFERNO BREAK',  catch:'BLAZING BIND',
-              pal:['#ff7030','#ff2820','#ffb060','#ff2080','#ffe0a0'] },
+              pal:['#ff7030','#ff2820','#ffb060','#ff2080','#ffe0a0','#ff5500','#ffd040','#ff70b0'] },
   electric: { c:'#ffe060', glyph:'⚡', kill:'PLASMA RUPTURE', catch:'STATIC SNARE',
-              pal:['#ffe060','#80d0ff','#fff8c0','#c060ff','#40ffd0'] },
+              pal:['#ffe060','#80d0ff','#fff8c0','#c060ff','#40ffd0','#ff80f0','#a0ff60','#60a0ff'] },
   ice:      { c:'#7ec8ff', glyph:'❄',  kill:'ZERO HOUR',      catch:'PERMAFROST SEAL',
-              pal:['#7ec8ff','#e8f8ff','#40ffd8','#4060ff','#b0e8ff'] },
+              pal:['#7ec8ff','#e8f8ff','#40ffd8','#4060ff','#b0e8ff','#80fff0','#c0a0ff','#f0ffff'] },
   neutral:  { c:'#ffd24a', glyph:'⚔',  kill:'GRAND FINALE',   catch:'MASTER SEAL',
-              pal:['#ffd24a','#ff8040','#ff2860','#fff0c0','#d060ff'] }
+              pal:['#ffd24a','#ff8040','#ff2860','#fff0c0','#d060ff','#40e0c0','#ff60a0','#80c0ff'] }
 };
 
 let _ifActive = null;   // running finisher controller — onKeyDown uses it for SPACE-skip
@@ -6715,10 +7418,10 @@ function _ifController(onDone) {
     // absolute-time scheduling
     sched(ms, fn) { this.timers.push(setTimeout(() => { if (!this.finished) fn(); }, ms)); },
     // hard-cut frame flipper: calls builder(i,n) every ~frameMs from start for dur.
-    // Each frame replaces the previous one — this is what creates the 15fps
+    // Each frame replaces the previous one — this is what creates the 25fps
     // impact-frame barrage. builder returns the new panel element (or null).
     burst(start, dur, builder, frameMs) {
-      const FR = frameMs || 66;          // ≈15 frames per second
+      const FR = frameMs || 40;          // ≈25 frames per second
       const n = Math.max(1, Math.round(dur / FR));
       for (let i = 0; i < n; i++) this.sched(start + i * FR, () => {
         const old = this.rootEl.querySelector('[data-if-flip]');
@@ -6763,16 +7466,22 @@ function _ifController(onDone) {
   return { ctl, root };
 }
 
-// stroke radial manga spokes or dash streaks onto the finisher canvas
+// paint manga frame graphics onto the finisher canvas. o.lines is the main
+// pass; o.fx may hold extra passes [{kind,color,ang,width}, ...]
 function _ifDrawLines(root, o) {
   const ctx = root._ifCtx; if (!ctx) return;
   const w = root._ifFx.width, h = root._ifFx.height;
   ctx.clearRect(0, 0, w, h);
-  if (!o || !o.lines || o.lines === 'none') return;
-  ctx.strokeStyle = o.lineColor || '#fff';
+  if (!o) return;
+  if (o.lines && o.lines !== 'none') _ifPaint(ctx, w, h, { kind: o.lines, color: o.lineColor, ang: o.lineAng });
+  if (o.fx) for (const p of o.fx) _ifPaint(ctx, w, h, p);
+}
+function _ifPaint(ctx, w, h, p) {
   const cx = w / 2, cy = h / 2;
-  if (o.lines === 'radial') {
-    const rot = (o.lineAng || 0) * Math.PI / 180;
+  const col = p.color || '#fff';
+  const rot = (p.ang || 0) * Math.PI / 180;
+  ctx.strokeStyle = col; ctx.fillStyle = col;
+  if (p.kind === 'radial') {
     const rOut = Math.hypot(cx, cy) + 30;
     const rInBase = Math.min(w, h) * 0.16;
     const SP = 56;
@@ -6785,11 +7494,9 @@ function _ifDrawLines(root, o) {
       ctx.lineTo(cx + Math.cos(a) * rOut, cy + Math.sin(a) * rOut);
       ctx.stroke();
     }
-  } else if (o.lines === 'streak') {
-    const ang = (o.lineAng || 0) * Math.PI / 180;
+  } else if (p.kind === 'streak') {
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(ang);
+    ctx.translate(cx, cy); ctx.rotate(rot);
     const L = Math.hypot(w, h);
     let row = 0;
     for (let y = -L / 2; y < L / 2; y += 44, row++) {
@@ -6801,7 +7508,70 @@ function _ifDrawLines(root, o) {
       ctx.stroke();
     }
     ctx.restore();
+  } else if (p.kind === 'burst') {
+    // filled triangular wedges — heavier than spokes, for climax frames
+    const SP = 26, rIn = Math.min(w, h) * 0.13, rOut = Math.hypot(cx, cy) + 40;
+    for (let i = 0; i < SP; i++) {
+      const a = (i / SP) * Math.PI * 2 + rot;
+      const halfW = 0.012 + (((i * 31) % 10) / 10) * 0.02;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * rIn, cy + Math.sin(a) * rIn);
+      ctx.lineTo(cx + Math.cos(a - halfW) * rOut, cy + Math.sin(a - halfW) * rOut);
+      ctx.lineTo(cx + Math.cos(a + halfW) * rOut, cy + Math.sin(a + halfW) * rOut);
+      ctx.closePath(); ctx.fill();
+    }
+  } else if (p.kind === 'spiral') {
+    // logarithmic suction arms — vacuum / energy gathering
+    const arms = 4;
+    ctx.lineWidth = p.width || 3;
+    for (let m = 0; m < arms; m++) {
+      ctx.beginPath();
+      for (let t = 0; t <= 60; t++) {
+        const th = (t / 60) * Math.PI * 3 + m * (Math.PI * 2 / arms) + rot;
+        const r = 14 + Math.pow(t / 60, 1.6) * Math.hypot(cx, cy);
+        const x = cx + Math.cos(th) * r, y = cy + Math.sin(th) * r;
+        if (t) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (p.kind === 'halftone') {
+    // manga dot-tone, dots grow toward the edges
+    const step = 26, maxD = Math.hypot(cx, cy);
+    for (let y = step / 2; y < h; y += step) for (let x = step / 2; x < w; x += step) {
+      const r = Math.max(0, Math.hypot(x - cx, y - cy) / maxD - 0.25) * 6.5;
+      if (r > 0.4) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+    }
+  } else if (p.kind === 'rings') {
+    ctx.lineWidth = p.width || 4;
+    for (let i = 1; i <= 6; i++) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, (i / 6) * Math.hypot(cx, cy) * 0.95 + ((i * 53) % 17), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (p.kind === 'tear') {
+    // displaced horizontal bands — screen-tear glitch
+    for (let i = 0; i < 9; i++) {
+      const off = ((((i + 1) * 2654435761) >>> 8) % 160) - 80;
+      ctx.fillRect(off, (i / 9) * h, w, (h / 9) * 0.16);
+    }
   }
+}
+// manga onomatopoeia stamp — outlined Impact lettering that slams in,
+// punches for ~0.6s, then snaps away (holdMs overrides)
+function _ifBam(parent, text, xPct, yPct, color, sizePx, rotDeg, holdMs) {
+  const el = _ifMk(parent,
+    `left:${xPct}%;top:${yPct}%;font-size:${sizePx || 54}px;color:${color};` +
+    `--bam-rot:${rotDeg || -8}deg;text-shadow:3px 3px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,0 0 18px ${color};`,
+    'if-bam');
+  el.textContent = text;
+  setTimeout(() => {
+    try {
+      el.style.transition = 'opacity .12s ease-out, transform .12s ease-in';
+      el.style.opacity = '0';
+      setTimeout(() => { try { el.remove(); } catch (e) {} }, 140);
+    } catch (e) {}
+  }, holdMs || 620);
+  return el;
 }
 
 // visual builders -----------------------------------------------------
@@ -6854,7 +7624,7 @@ function _ifFlipPanel(root, o) {
   _ifDrawLines(root, o);
   const p = _ifMk(root, `position:absolute;inset:0;z-index:18;overflow:hidden;pointer-events:none;`, 'if-layer');
   for (const s of o.sils || []) {
-    const el = _ifMk(p, `left:${s.x}%;top:${s.y}%;font-size:${s.size}px;z-index:20;filter:${s.fill};transform:translate(-50%,-50%) rotate(${s.rot || 0}deg) scale(${s.scale || 1});`, 'if-sil' + (s.rgb ? ' rgbsplit' : ''));
+    const el = _ifMk(p, `left:${s.x}%;top:${s.y}%;font-size:${s.size}px;z-index:20;filter:${s.fill};${s.op != null ? 'opacity:' + s.op + ';' : ''}transform:translate(-50%,-50%) rotate(${s.rot || 0}deg) scale(${s.scale || 1});`, 'if-sil' + (s.rgb ? ' rgbsplit' : ''));
     el.textContent = s.emoji;
   }
   if (o.slash != null) _ifSlash(p, o.slash, o.slashColor || '#fff', o.slashThick || 7, o.slashX, o.slashY);
@@ -6885,7 +7655,7 @@ function _ifShatter(parent, xPct, yPct, color, count) {
   }
 }
 
-// ── DEFEAT / CAPTURE FINISHERS — ~7s of 15fps hard-cut impact frames ──
+// ── DEFEAT / CAPTURE / EVOLUTION FINISHERS — dense 15-22fps impact barrages ──
 function playImpactFinisher(kind, onDone) {
   const b = state.battle;
   const theme = _IF_THEMES[getElement(state.activeAppliance)] || _IF_THEMES.neutral;
@@ -6903,135 +7673,159 @@ function _ifDefeatScene(theme, pEmoji, eEmoji, eName, onDone) {
   const C = theme.c, PAL = theme.pal;
   const j = n => (Math.random() - 0.5) * n;
 
-  // 1 ── time-stop: white line splits the black (the only "slow" beat)
+  // 1 ── time-stop split
   S(0, () => {
     audio.swoosh();
-    const ln = _ifMk(root, `position:absolute;left:0;right:0;top:50%;height:2px;background:#fff;transform:scaleX(0);z-index:30;transition:transform .14s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
+    const ln = _ifMk(root, `position:absolute;left:0;right:0;top:50%;height:2px;background:#fff;transform:scaleX(0);z-index:30;transition:transform .13s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
     void ln.offsetWidth; ln.style.transform = 'scaleX(1)';
-    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 240);
+    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 220);
   });
 
-  // 2 ── 140-680: pre-impact flicker — enemy silhouette under rapid mono/color cuts
-  S(260, () => { audio.boom(); _ifShake(root); });
-  B(140, 540, (i) => {
+  // 2 ── 120-700: intro flicker (12 cuts @48ms) — halftone + ring frames mixed in
+  S(240, () => { audio.boom(); _ifShake(root); });
+  S(430, () => _ifBam(root, '!!', 72, 26, '#fff', 90, 8));
+  B(120, 580, (i) => {
     const bg = _ifRand(['#fff', '#000', PAL[0], '#fff', PAL[3] || PAL[1], '#000', PAL[1], '#fff'], i);
     const fg = bg === '#fff' ? '#000' : (bg === '#000' ? '#fff' : '#000');
     return _ifFlipPanel(root, {
-      bg, lines: 'radial', lineColor: fg, lineAng: j(10),
-      sils: [{ emoji: eEmoji, x: 58 + j(5), y: 49 + j(4), size: 168 + j(18), fill: _ifFill(fg), rot: j(9), rgb: i % 3 === 0 }]
+      bg, lines: i % 4 === 3 ? 'halftone' : 'radial', lineColor: fg, lineAng: j(12),
+      fx: i % 5 === 4 ? [{ kind: 'rings', color: fg, width: 3 }] : null,
+      sils: [{ emoji: eEmoji, x: 58 + j(6), y: 49 + j(5), size: 170 + j(22), fill: _ifFill(fg), rot: j(11), rgb: i % 3 === 0 }]
     });
-  });
+  }, 40);
 
-  // 3 ── 680-1780: title card (persists on top) over a flickering color storm
-  S(680, () => {
+  // 3 ── 700-1760: title card over a spiral storm
+  S(700, () => {
     audio.riser(1.05);
     const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
     ov.dataset.ifTitle = '1';
     _ifText(ov, 'FINISHER', 13, '#aaa', 33, false, 'letter-spacing:14px;');
     _ifText(ov, theme.glyph + ' ' + theme.kill + ' ' + theme.glyph, 50, C, 48, true);
   });
-  B(680, 1100, (i) => {
-    const colorFrame = i % 5 === 4;
+  B(700, 1060, (i) => {
+    const colorFrame = i % 3 === 2;
     const bg = colorFrame ? _ifRand(PAL, i) : (i % 2 ? '#0a0a14' : '#05050a');
     return _ifFlipPanel(root, {
-      bg, lines: 'radial',
+      bg, lines: i % 3 === 2 ? 'spiral' : 'radial',
       lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1),
-      lineAng: i * 5 + j(3)
+      lineAng: i * 9 + j(4)
     });
-  });
+  }, 40);
   S(1760, () => { const t = root.querySelector('[data-if-title]'); if (t) t.remove(); });
 
-  // 4 ── 1780-3100: dash montage — 4 dashes, every frame a discrete hard cut
-  for (let d = 0; d < 4; d++) {
-    const start = 1780 + d * 330;
+  // 4 ── 1780-3380: dash montage — 5 dashes × 6 cuts @53ms, ghosts + onomatopoeia
+  S(1780, () => {
+    const cb = _ifMk(root, 'position:absolute;left:4%;top:6%;z-index:52;pointer-events:none;font-family:Impact,sans-serif;font-size:30px;color:#fff;letter-spacing:3px;text-shadow:2px 2px 0 #000,0 0 14px ' + C + ';');
+    cb.dataset.ifCombo = '1';
+  });
+  const BAMS = ['SLAM!', 'CRACK!', 'WHAM!', 'SMASH!', 'BREAK!'];
+  for (let d = 0; d < 5; d++) {
+    const start = 1780 + d * 320;
     S(start, () => { audio.slamHit(); _ifShake(root); });
-    S(start + 132, () => audio.clack());
-    B(start, 330, (i, n) => {
-      const prog = i / Math.max(1, n - 1);
-      const cycle = [d % 2 ? '#000' : '#fff', _ifRand(PAL, d), d % 2 ? '#fff' : '#000', _ifRand(PAL, d + 2), '#fff'];
+    S(start + 106, () => audio.clack());
+    S(start + 160, () => {
+      const cb = root.querySelector('[data-if-combo]');
+      if (cb) { cb.textContent = 'COMBO ×' + (d + 1); cb.style.animation = 'none'; void cb.offsetWidth; cb.style.animation = 'ifBamIn .16s'; }
+      _ifBam(root, BAMS[d], 62 + j(14), 28 + j(10), _ifRand(PAL, d), 56 + d * 5, j(22));
+    });
+    B(start, 320, (i, n2) => {
+      const prog = i / Math.max(1, n2 - 1);
+      const cycle = [d % 2 ? '#000' : '#fff', _ifRand(PAL, d), d % 2 ? '#fff' : '#000', _ifRand(PAL, d + 2), '#fff', '#000'];
       const bg = cycle[i % cycle.length];
       const mono = bg === '#fff' ? '#000' : '#fff';
-      const hit = prog > 0.5;
+      const hit = prog > 0.45;
+      const ax = 8 + prog * 50;
       return _ifFlipPanel(root, {
-        bg, lines: 'streak', lineColor: mono, lineAng: -8 + d * 5 + j(4),
+        bg, lines: i % 4 === 3 ? 'tear' : 'streak', lineColor: mono, lineAng: -8 + d * 6 + j(5),
         sils: [
-          { emoji: pEmoji, x: 8 + prog * 50 + j(2), y: 44 + d * 3 + j(3), size: 152,
-            fill: _ifFill(i % 3 === 2 ? _ifRand(PAL, d + 1) : mono), rot: j(12) },
-          { emoji: eEmoji, x: 70 + (hit ? j(7) : 0), y: 50 + (hit ? j(6) : 0), size: 152,
-            fill: _ifFill(hit && i % 2 ? _ifRand(PAL, d + i) : mono), rot: hit ? j(26) : j(4), rgb: hit }
+          { emoji: pEmoji, x: ax + j(2), y: 44 + d * 2.5 + j(3), size: 154, fill: _ifFill(i % 3 === 2 ? _ifRand(PAL, d + 1) : mono), rot: j(13) },
+          { emoji: pEmoji, x: ax - 9, y: 44 + d * 2.5, size: 148, fill: _ifFill(mono), rot: j(6), op: 0.4 },
+          { emoji: pEmoji, x: ax - 18, y: 44 + d * 2.5, size: 142, fill: _ifFill(mono), rot: j(6), op: 0.18 },
+          { emoji: eEmoji, x: 70 + (hit ? j(8) : 0), y: 50 + (hit ? j(7) : 0), size: 154, fill: _ifFill(hit && i % 2 ? _ifRand(PAL, d + i) : mono), rot: hit ? j(30) : j(4), rgb: hit }
         ],
-        slash: hit ? -40 + d * 26 + j(12) : null,
-        slashColor: bg === '#fff' ? '#000' : _ifRand(PAL, d), slashX: 70, slashY: 50,
-        label: hit ? { text: 'HIT ' + (d + 1), color: C } : null
+        slash: hit ? -40 + d * 22 + j(14) : null,
+        slashColor: bg === '#fff' ? '#000' : _ifRand(PAL, d), slashX: 70, slashY: 50
       });
-    });
+    }, 40);
   }
+  S(3420, () => { const cb = root.querySelector('[data-if-combo]'); if (cb) cb.remove(); });
 
-  // 5 ── 3100-3950: charge — glyph grows in discrete steps, color frames pulse
-  S(3120, () => audio.riser(0.9));
-  B(3120, 830, (i, n) => {
-    const k = i / Math.max(1, n - 1);
-    const colorFrame = i % 4 === 3;
+  // 5 ── 3400-4260: charge — glyph swells over spiral/halftone cuts
+  S(3400, () => audio.riser(0.9));
+  B(3400, 860, (i, n2) => {
+    const k = i / Math.max(1, n2 - 1);
+    const colorFrame = i % 3 === 1;
     const bg = colorFrame ? _ifRand(PAL, i) : '#000';
     return _ifFlipPanel(root, {
-      bg, lines: 'radial', lineColor: colorFrame ? '#000' : _ifRand(PAL, i), lineAng: i * 8,
-      sils: [{ emoji: theme.glyph, x: 50 + j(3), y: 50 + j(3), size: 90 + k * 140,
-               fill: colorFrame ? _ifFill('#000') : _ifFill(_ifRand(PAL, i + 1)), rot: j(7), rgb: true }]
+      bg, lines: i % 3 === 2 ? 'halftone' : 'spiral',
+      lineColor: colorFrame ? '#000' : _ifRand(PAL, i), lineAng: i * 11,
+      fx: i % 4 === 0 ? [{ kind: 'rings', color: colorFrame ? '#00000055' : '#ffffff33', width: 2 }] : null,
+      sils: [{ emoji: theme.glyph, x: 50 + j(3 + k * 4), y: 50 + j(3 + k * 4), size: 90 + k * 150,
+               fill: colorFrame ? _ifFill('#000') : _ifFill(_ifRand(PAL, i + 1)), rot: j(8), rgb: true }]
     });
-  });
+  }, 40);
 
-  // 6 ── 3950-4650: MEGA IMPACT — full-field color strobe + double slash X
-  S(3970, () => { audio.boom(); _ifShake(root); });
-  S(4300, () => { audio.slamHit(); _ifShake(root); });
-  B(3970, 680, (i) => {
+  // 6 ── 4280-4940: MEGA IMPACT — 15 cuts @44ms, burst/tear strobe + triple slash
+  S(4280, () => { audio.subBoom(); _ifShake(root); });
+  S(4500, () => _ifBam(root, 'BOOM!!', 50, 22, '#fff', 86, -4));
+  S(4620, () => { audio.slamHit(); _ifShake(root); });
+  B(4280, 660, (i) => {
     const bg = _ifRand(['#fff', PAL[0], '#000', '#fff', PAL[1], '#000', PAL[2], '#fff', PAL[3] || PAL[0], '#000'], i);
     const mono = bg === '#fff' ? '#000' : '#fff';
     const p = _ifFlipPanel(root, {
-      bg, lines: 'radial', lineColor: mono, lineAng: j(24),
-      sils: [{ emoji: eEmoji, x: 50 + j(6), y: 50 + j(5), size: 205 + j(24), fill: _ifFill(mono), rot: j(18), rgb: true }],
-      slash: -35 + j(8), slashColor: mono, slashThick: 9, slashX: 50, slashY: 50
+      bg, lines: i % 3 === 0 ? 'burst' : (i % 3 === 1 ? 'radial' : 'tear'),
+      lineColor: i % 3 === 0 ? (bg === '#fff' ? '#00000028' : '#ffffff2e') : mono, lineAng: j(28),
+      sils: [{ emoji: eEmoji, x: 50 + j(7), y: 50 + j(6), size: 210 + j(28), fill: _ifFill(mono), rot: j(22), rgb: true }],
+      slash: -35 + j(10), slashColor: mono, slashThick: 10, slashX: 50, slashY: 50
     });
-    _ifSlash(p, 35 + j(8), mono, 9, 50, 50);
+    _ifSlash(p, 35 + j(10), mono, 10, 50, 50);
+    _ifSlash(p, 90 + j(8), mono, 6, 50, 50);
     if (i % 3 === 0) _ifRings(p, 50, 50, bg === '#fff' ? C : '#fff', 1);
     return p;
-  });
+  }, 40);
 
-  // 7 ── 4650-5650: shatter aftermath with translucent color washes flickering over it
-  S(4650, () => {
+  // 7 ── 4960-5650: shatter aftermath, two shard waves + flickering color washes
+  S(4960, () => {
     audio.boom(); _ifShake(root);
     const old = root.querySelector('[data-if-flip]'); if (old) old.remove();
     if (root._ifBg) root._ifBg.style.background = '#fff';
     _ifDrawLines(root, { lines: 'radial', lineColor: 'rgba(0,0,0,0.15)' });
     const p = _ifMk(root, 'position:absolute;inset:0;z-index:14;pointer-events:none;', 'if-layer');
-    _ifShatter(p, 50, 50, '#000', 18);
-    _ifShatter(p, 50, 50, C, 9);
+    p.dataset.ifShards = '1';
+    _ifShatter(p, 50, 50, '#000', 22);
+    _ifShatter(p, 50, 50, C, 10);
   });
-  B(4720, 620, (i) => _ifMk(root,
+  S(5150, () => {
+    const p = root.querySelector('[data-if-shards]');
+    if (p) { _ifShatter(p, 50, 50, '#000', 10); _ifShatter(p, 50, 50, _ifRand(PAL, 1), 6); }
+  });
+  B(5020, 600, (i) => _ifMk(root,
     `position:absolute;inset:0;z-index:15;pointer-events:none;background:${_ifRand(PAL, i)};opacity:${i % 2 ? 0.18 : 0.06};`,
-    'if-layer'), 88);
+    'if-layer'), 40);
 
-  // 8 ── 5650-6950: K.O. stamp over a gently pulsing line storm
+  // 8 ── 5650-7050: K.O. stamp + double confetti over a pulsing line storm
   S(5650, () => {
     root.querySelectorAll('.if-layer').forEach(el => el.remove());
-    root.style.background = '#05050a';
     audio.stinger(); audio.victory();
     const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
-    _ifText(ov, 'K.O.', 110, C, 44, true);
-    _ifText(ov, eName + ' IS DOWN', 16, '#ddd', 68, false, 'letter-spacing:6px;');
-    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 70);
+    _ifText(ov, 'K.O.', 116, C, 42, true);
+    _ifText(ov, eName + ' IS DOWN', 16, '#ddd', 67, false, 'letter-spacing:6px;');
+    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 44);
   });
-  B(5650, 1150, (i) => _ifFlipPanel(root, {
+  S(5980, () => spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.38, 30));
+  B(5650, 1300, (i) => _ifFlipPanel(root, {
     bg: '#05050a', lines: 'radial',
     lineColor: _ifRand([C + '66', C + '22', (PAL[1] || C) + '44', (PAL[2] || C) + '33'], i),
-    lineAng: i * 4
-  }), 110);
+    lineAng: i * 5,
+    fx: i % 4 === 0 ? [{ kind: 'rings', color: C + '22', width: 2 }] : null
+  }), 80);
 
-  // 9 ── fade out, hand control back
-  S(6950, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
-  S(7320, () => ctl.finish());
+  // 9 ── fade out
+  S(7050, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
+  S(7430, () => ctl.finish());
 }
 
-// ── CAPTURE FINISHER — same frame-barrage language, vacuum + wobbles ──
+// ── CAPTURE FINISHER — spiral suction + 4 escalating wobbles ──
 function _ifCaptureScene(theme, pEmoji, eEmoji, eName, onDone) {
   const { ctl, root } = _ifController(onDone);
   const S = (ms, fn) => ctl.sched(ms, fn);
@@ -7047,119 +7841,244 @@ function _ifCaptureScene(theme, pEmoji, eEmoji, eName, onDone) {
   // 1 ── vertical time-stop split
   S(0, () => {
     audio.swoosh();
-    const ln = _ifMk(root, `position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;transform:scaleY(0);z-index:30;transition:transform .14s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
+    const ln = _ifMk(root, `position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;transform:scaleY(0);z-index:30;transition:transform .13s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
     void ln.offsetWidth; ln.style.transform = 'scaleY(1)';
-    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 240);
+    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 220);
   });
 
-  // 2 ── 140-680: flicker intro on the target
-  S(260, () => { audio.boom(); _ifShake(root); });
-  B(140, 540, (i) => {
+  // 2 ── 120-700: target flicker
+  S(240, () => { audio.boom(); _ifShake(root); });
+  S(430, () => _ifBam(root, '!?', 74, 24, '#fff', 84, 10));
+  B(120, 580, (i) => {
     const bg = _ifRand(['#fff', '#000', PAL[0], '#fff', PAL[2], '#000', '#fff'], i);
     const fg = bg === '#fff' ? '#000' : (bg === '#000' ? '#fff' : '#000');
     return _ifFlipPanel(root, {
-      bg, lines: 'radial', lineColor: fg, lineAng: j(10),
-      sils: [{ emoji: eEmoji, x: 60 + j(5), y: 47 + j(4), size: 165 + j(16), fill: _ifFill(fg), rot: j(8), rgb: i % 3 === 0 }]
+      bg, lines: i % 4 === 3 ? 'halftone' : 'radial', lineColor: fg, lineAng: j(12),
+      fx: i % 5 === 4 ? [{ kind: 'rings', color: fg, width: 3 }] : null,
+      sils: [{ emoji: eEmoji, x: 60 + j(6), y: 47 + j(5), size: 168 + j(20), fill: _ifFill(fg), rot: j(10), rgb: i % 3 === 0 }]
     });
-  });
+  }, 40);
 
-  // 3 ── 680-1680: CAPTURE ART title over color storm
-  S(680, () => {
+  // 3 ── 700-1660: CAPTURE ART title over spiral storm
+  S(700, () => {
     audio.riser(0.95);
     const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
     ov.dataset.ifTitle = '1';
     _ifText(ov, 'CAPTURE ART', 13, '#aaa', 33, false, 'letter-spacing:14px;');
     _ifText(ov, theme.glyph + ' ' + theme.catch + ' ' + theme.glyph, 46, C, 48, true);
   });
-  B(680, 1000, (i) => {
-    const colorFrame = i % 5 === 4;
+  B(700, 960, (i) => {
+    const colorFrame = i % 3 === 2;
     const bg = colorFrame ? _ifRand(PAL, i) : (i % 2 ? '#0a0a14' : '#05050a');
-    return _ifFlipPanel(root, { bg, lines: 'radial', lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1), lineAng: i * 5 });
-  });
+    return _ifFlipPanel(root, {
+      bg, lines: i % 3 === 2 ? 'spiral' : 'radial',
+      lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1), lineAng: i * 8
+    });
+  }, 40);
   S(1660, () => { const t = root.querySelector('[data-if-title]'); if (t) t.remove(); });
 
-  // 4 ── 1680-2250: the throw — ball arcs in discrete frame steps
+  // 4 ── 1680-2240: the throw — 11 cuts @51ms with tear glitches
   S(1680, () => audio.swoosh());
-  B(1680, 560, (i, n) => {
-    const k = i / Math.max(1, n - 1);
+  B(1680, 560, (i, n2) => {
+    const k = i / Math.max(1, n2 - 1);
     const bx = 8 + k * 42, by = 78 - Math.sin(k * Math.PI) * 44;
     const bg = i % 4 === 3 ? _ifRand(PAL, i) : (i % 2 ? '#000' : '#0a0a12');
     const mono = (bg === '#000' || bg === '#0a0a12') ? '#fff' : '#000';
     const p = _ifFlipPanel(root, {
-      bg, lines: 'streak', lineColor: mono, lineAng: -6 + j(3),
+      bg, lines: i % 4 === 2 ? 'tear' : 'streak', lineColor: mono, lineAng: -6 + j(4),
       sils: [{ emoji: eEmoji, x: 68 + j(2), y: 46 + j(2), size: 158, fill: _ifFill(mono), rot: j(5) }]
     });
-    ball(p, bx, by, 56, i * 67);
+    ball(p, bx, by, 56, i * 74);
     return p;
-  });
+  }, 40);
 
-  // 5 ── 2250-3150: CONTACT + vacuum — target spins into the ball, frame by frame
-  S(2250, () => { audio.boom(); _ifShake(root); audio.riser(0.7); });
-  B(2250, 880, (i, n) => {
-    const k = i / Math.max(1, n - 1);
+  // 5 ── 2250-3160: CLANG + spiral suction — target spirals into the ball
+  S(2250, () => { audio.boom(); _ifShake(root); audio.riser(0.8); });
+  S(2290, () => _ifBam(root, 'CLANG!', 62, 26, _ifRand(PAL, 0), 64, -10));
+  B(2280, 880, (i, n2) => {
+    const k = i / Math.max(1, n2 - 1);
     const bg = _ifRand(['#fff', '#000', PAL[0], '#000', PAL[1], '#fff', PAL[3] || PAL[0], '#000'], i);
     const mono = bg === '#fff' ? '#000' : '#fff';
     const ex = 68 - k * 18, ey = 46 + k * 8;
     const p = _ifFlipPanel(root, {
-      bg, lines: 'radial', lineColor: mono, lineAng: i * 14,
-      sils: [{ emoji: eEmoji, x: ex + j(3), y: ey + j(3), size: 160 * (1 - k * 0.92), fill: _ifFill(k > 0.6 ? _ifRand(PAL, i) : mono), rot: i * 38, rgb: true }]
+      bg, lines: 'spiral', lineColor: mono, lineAng: i * 26,
+      fx: i % 3 === 0 ? [{ kind: 'rings', color: mono + '44', width: 2 }] : null,
+      sils: [{ emoji: eEmoji, x: ex + j(3), y: ey + j(3), size: 160 * (1 - k * 0.92), fill: _ifFill(k > 0.6 ? _ifRand(PAL, i) : mono), rot: i * 44, rgb: true }]
     });
-    ball(p, 50, 54, 64 + j(4), j(10));
+    ball(p, 50, 54, 64 + j(4), j(12));
     return p;
-  });
+  }, 40);
 
-  // 6 ── 3150-3500: ball slams down in 4 discrete frames
-  S(3150, () => { audio.slamHit(); _ifShake(root); });
-  B(3150, 330, (i, n) => {
-    const k = i / Math.max(1, n - 1);
-    const bg = i % 2 ? '#000' : '#0a0a12';
-    const p = _ifFlipPanel(root, { bg, lines: 'radial', lineColor: (i % 2 ? C : '#fff') + '55', lineAng: j(6) });
-    ball(p, 50, 38 + k * 22, 110, j(6));
-    if (i === n - 1) _ifRings(p, 50, 60, C, 2);
+  // 6 ── 3170-3470: ball slams down in 5 cuts
+  S(3170, () => { audio.slamHit(); _ifShake(root); });
+  B(3170, 300, (i, n2) => {
+    const k = i / Math.max(1, n2 - 1);
+    const p = _ifFlipPanel(root, {
+      bg: i % 2 ? '#000' : '#0a0a12', lines: 'radial',
+      lineColor: (i % 2 ? C : '#fff') + '55', lineAng: j(8)
+    });
+    ball(p, 50, 38 + k * 22, 110, j(7));
+    if (i === n2 - 1) _ifRings(p, 50, 60, C, 2);
     return p;
-  });
+  }, 40);
 
-  // 7 ── 3500-5450: three wobbles — each a micro-burst of tilted freeze frames
-  const tilts = [[-18, -7, 12, 4, -2], [16, 6, -13, -4, 2], [-20, 9, -8, 14, 0]];
-  for (let w = 0; w < 3; w++) {
-    const start = 3560 + w * 620;
-    S(start, () => audio.clack());
-    B(start, 540, (i) => {
-      const colorFrame = i % 4 === 3;
-      const bg = colorFrame ? _ifRand(PAL, w + i) + '30' : (i % 2 ? '#000' : '#05050a');
+  // 7 ── 3540-5780: FOUR wobbles, each a 5-cut freeze burst with rising tension
+  const tilts = [[-18, -7, 12, 4, -2], [16, 6, -13, -4, 2], [-21, 9, -10, 15, -3], [24, -12, 17, -8, 3]];
+  const marks = ['.', '..', '...', '!!!'];
+  for (let w = 0; w < 4; w++) {
+    const start = 3540 + w * 560;
+    S(start, () => { audio.clack(); if (w === 3) { audio.boom(); _ifShake(root); } });
+    if (w === 3) S(start + 60, () => _ifBam(root, '!!!', 50, 26, '#ff4040', 88, 6));
+    B(start, 480, (i) => {
+      const colorFrame = i % 3 === 1;
       const p = _ifFlipPanel(root, {
-        bg: colorFrame ? '#000' : bg, lines: 'radial',
-        lineColor: colorFrame ? _ifRand(PAL, i) + '66' : '#ffffff22', lineAng: j(4)
+        bg: i % 2 ? '#000' : '#05050a', lines: 'radial',
+        lineColor: colorFrame ? _ifRand(PAL, i) + '66' : '#ffffff22', lineAng: j(5 + w * 3)
       });
-      ball(p, 50 + j(1.5), 58 + j(1.5), 118, _ifRand(tilts[w], i) + j(4));
-      _ifText(p, '.'.repeat(w + 1), 64, '#fff', 30, false, 'letter-spacing:18px;');
+      ball(p, 50 + j(1.5 + w * 0.7), 58 + j(1.5 + w * 0.7), 118, _ifRand(tilts[w], i) + j(4 + w * 2));
+      _ifText(p, marks[w], 64, w === 3 ? '#ff7070' : '#fff', 30, false, 'letter-spacing:18px;');
       return p;
-    }, 108);
+    }, 72);
   }
 
-  // 8 ── 5450-6800: ✦ CAUGHT! ✦ star burst + flicker afterglow
-  S(5450, () => {
+  // 8 ── 5800-7150: ✦ CAUGHT! ✦ star burst + double confetti + harp gliss
+  S(5800, () => {
     root.querySelectorAll('.if-layer').forEach(el => el.remove());
-    audio.stinger(); audio.catchSuccess();
-    root.style.background = '#05050a';
+    audio.stinger(); audio.catchSuccess(); audio.gliss();
     const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
     const bp = _ifMk(ov, 'position:absolute;inset:0;');
     ball(bp, 50, 64, 92, 0);
-    _ifRings(ov, 50, 64, C, 4);
-    _ifShatter(ov, 50, 64, C, 12);
-    _ifText(ov, '✦ CAUGHT! ✦', 76, C, 34, true);
+    _ifRings(ov, 50, 64, C, 5);
+    _ifShatter(ov, 50, 64, C, 14);
+    _ifText(ov, '✦ CAUGHT! ✦', 78, C, 32, true);
     _ifText(ov, eName + ' REGISTERED TO PANDEX', 14, '#ddd', 86, false, 'letter-spacing:5px;');
-    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 80);
+    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 50);
   });
-  B(5450, 1150, (i) => _ifFlipPanel(root, {
+  S(6150, () => spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.4, 36));
+  B(5800, 1300, (i) => _ifFlipPanel(root, {
     bg: '#05050a', lines: 'radial',
     lineColor: _ifRand([C + '66', C + '22', (PAL[1] || C) + '44', (PAL[4] || C) + '33'], i),
-    lineAng: i * 4
-  }), 110);
+    lineAng: i * 5,
+    fx: i % 4 === 0 ? [{ kind: 'rings', color: C + '22', width: 2 }] : null
+  }), 80);
 
   // 9 ── fade out
-  S(6800, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
-  S(7170, () => ctl.finish());
+  S(7150, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
+  S(7530, () => ctl.finish());
+}
+
+// ── EVOLUTION FINISHER — metamorphosis with old⇄new flip-flop reveal ──
+function _ifEvolutionScene(fromName, toName, fromEmoji, toEmoji, col, hpGain) {
+  if (_ifActive) _ifActive.finish();
+  const { ctl, root } = _ifController(null);
+  const S = (ms, fn) => ctl.sched(ms, fn);
+  const B = (s, d, fn, fr) => ctl.burst(s, d, fn, fr);
+  const C = col || '#7edc8b';
+  const PAL = [C, '#ffffff', '#ffd24a', '#ff60a0', '#b0ffe0', '#80c0ff', C, '#40ffd0'];
+  const j = n => (Math.random() - 0.5) * n;
+
+  // 1 ── vertical time-stop split
+  S(0, () => {
+    audio.swoosh();
+    const ln = _ifMk(root, `position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;transform:scaleY(0);z-index:30;transition:transform .13s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
+    void ln.offsetWidth; ln.style.transform = 'scaleY(1)';
+    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 220);
+  });
+
+  // 2 ── 120-760: the old form trembles under mono/color cuts
+  S(260, () => { audio.boom(); _ifShake(root); });
+  B(120, 640, (i) => {
+    const bg = _ifRand(['#fff', '#000', C, '#000', '#fff', '#000'], i);
+    const fg = bg === '#fff' ? '#000' : (bg === '#000' ? '#fff' : '#000');
+    return _ifFlipPanel(root, {
+      bg, lines: i % 4 === 3 ? 'halftone' : 'radial', lineColor: fg, lineAng: j(10),
+      sils: [{ emoji: fromEmoji, x: 50 + j(4), y: 48 + j(4), size: 160 + j(16), fill: _ifFill(fg), rot: j(8), rgb: i % 3 === 0 }]
+    });
+  }, 40);
+
+  // 3 ── 760-1760: EVOLUTION title over spiral storm
+  S(760, () => {
+    audio.riser(1.0);
+    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
+    ov.dataset.ifTitle = '1';
+    _ifText(ov, 'EVOLUTION', 13, '#aaa', 33, false, 'letter-spacing:14px;');
+    _ifText(ov, '✦ ' + fromName.toUpperCase() + ' IS CHANGING ✦', 40, C, 48, true);
+  });
+  B(760, 1000, (i) => {
+    const colorFrame = i % 3 === 2;
+    const bg = colorFrame ? _ifRand(PAL, i) : (i % 2 ? '#0a140e' : '#05050a');
+    return _ifFlipPanel(root, {
+      bg, lines: i % 3 === 2 ? 'spiral' : 'radial',
+      lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1), lineAng: i * 8
+    });
+  }, 40);
+  S(1760, () => { const t = root.querySelector('[data-if-title]'); if (t) t.remove(); });
+
+  // 4 ── 1780-3080: energy gathering — silhouette swells, spiral arms tighten
+  S(1780, () => audio.riser(1.3));
+  for (let k2 = 0; k2 < 6; k2++) S(1900 + k2 * 208, () => audio.tik());
+  S(2700, () => _ifBam(root, '!!', 70, 24, '#fff', 84, 8));
+  B(1780, 1300, (i, n2) => {
+    const k = i / Math.max(1, n2 - 1);
+    const colorFrame = i % 3 === 1;
+    const bg = colorFrame ? _ifRand(PAL, i) : '#000';
+    return _ifFlipPanel(root, {
+      bg, lines: i % 3 === 2 ? 'rings' : 'spiral',
+      lineColor: colorFrame ? '#000' : _ifRand(PAL, i), lineAng: i * 14,
+      sils: [{ emoji: fromEmoji, x: 50 + j(2 + k * 5), y: 48 + j(2 + k * 5), size: 130 + k * 80,
+               fill: colorFrame ? _ifFill('#000') : _ifFill(_ifRand(PAL, i + 1)), rot: j(6 + k * 8), rgb: true }]
+    });
+  }, 52);
+
+  // 5 ── 3080-4130: FLIP-FLOP strobe — old and new forms alternate @44ms
+  S(3080, () => { audio.subBoom(); _ifShake(root); });
+  S(3500, () => _ifShake(root));
+  S(3900, () => _ifShake(root));
+  B(3080, 1050, (i) => {
+    const newForm = i % 2 === 1;
+    const bg = _ifRand(['#fff', '#000', C, '#000', '#fff'], i);
+    const mono = bg === '#fff' ? '#000' : '#fff';
+    return _ifFlipPanel(root, {
+      bg, lines: bg === '#fff' ? 'burst' : 'radial',
+      lineColor: bg === '#fff' ? '#00000026' : mono, lineAng: j(24),
+      sils: [{ emoji: newForm ? toEmoji : fromEmoji, x: 50 + j(4), y: 48 + j(4),
+               size: newForm ? 200 + j(18) : 150 + j(14),
+               fill: _ifFill(newForm ? (bg === '#000' ? C : '#000') : mono), rot: j(14), rgb: true }]
+    });
+  }, 40);
+
+  // 6 ── 4130-4330: white hold…
+  S(4130, () => { audio.boom(); _ifFrame(root, '#fff', 200, 44); });
+
+  // 7 ── 4330: REVEAL — new form blazes in over a golden line storm
+  S(4330, () => {
+    audio.gliss(); audio.evoFanfare(); _ifShake(root);
+    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:50;pointer-events:none;');
+    const sil = _ifMk(ov, `left:50%;top:46%;font-size:210px;z-index:20;filter:${_ifFill(C)};transition:transform .3s cubic-bezier(.2,1.5,.4,1);transform:translate(-50%,-50%) scale(.25);`, 'if-sil rgbsplit');
+    sil.textContent = toEmoji;
+    void sil.offsetWidth;
+    sil.style.transform = 'translate(-50%,-50%) scale(1)';
+    _ifRings(ov, 50, 46, C, 5);
+    _ifShatter(ov, 50, 46, C, 12);
+    _ifBam(ov, toName.toUpperCase() + '!', 50, 14, C, 64, -3, 2400);
+    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 50);
+  });
+  S(4900, () => {
+    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:56;pointer-events:none;');
+    _ifText(ov, '+' + (hpGain || 15) + ' HP', 40, '#7edc8b', 72, true);
+    _ifText(ov, 'NEW POWER UNLOCKED', 12, '#ccc', 84, false, 'letter-spacing:8px;');
+    audio.stinger();
+  });
+  B(4330, 1600, (i) => _ifFlipPanel(root, {
+    bg: '#05050a', lines: 'radial',
+    lineColor: _ifRand([C + '66', C + '22', '#ffd24a44', C + '33'], i),
+    lineAng: i * 5,
+    fx: i % 4 === 0 ? [{ kind: 'rings', color: C + '22', width: 2 }] : null
+  }), 80);
+
+  // 8 ── fade out
+  S(6050, () => { root.style.transition = 'opacity .4s ease-out'; root.style.opacity = '0'; });
+  S(6480, () => ctl.finish());
 }
 
 function triggerDefeatFinisher() {
@@ -7490,6 +8409,189 @@ function triggerFrozenWorld() {
   at(400, () => {
     audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,70);
     fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='The ice melts. You stand.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
+  });
+  at(650, () => { _fin.hideOv(); });
+  at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
+}
+
+// ── 5. METEOR FEAST (universal) ───────────────────────────
+function triggerMeteorFeast() {
+  const b = state.battle; if (!b || b.ended) return;
+  _fin.bootstrap(b);
+  const pEmoji = btPlayerSprite.textContent.trim() || '🍳';
+  const eEmoji = btEnemySprite.textContent.trim() || '👾';
+  battleLog(`☄ <b style="color:#ff9040;letter-spacing:4px">METEOR FEAST</b> — The sky delivers!`);
+  const C = '#ff9040';
+  const RAINBOW = ['#ff5050','#ff9040','#ffe44d','#7edc8b','#5bcefa','#b060e8','#ff60a0','#ffffff'];
+  const { ov, fc, fcP, fcE, fcCnt, fcT, imp, sl, shk, ring } = _finBuildScene(pEmoji, eEmoji, C, '#0a0408');
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  function meteor(emoji, fromLPct, delay, col) {
+    setTimeout(() => {
+      const mEl = document.createElement('div');
+      mEl.style.cssText = `position:absolute;left:${fromLPct}%;top:-14%;font-size:54px;line-height:1;z-index:17;pointer-events:none;filter:drop-shadow(0 0 16px ${col});transition:left 320ms ease-in,top 320ms ease-in;`;
+      mEl.textContent = emoji; fc.appendChild(mEl); void mEl.offsetWidth;
+      mEl.style.left = '73%'; mEl.style.top = '52%';
+      // streak trail
+      const tr = document.createElement('div');
+      tr.style.cssText = `position:absolute;left:${fromLPct}%;top:0;width:5px;height:42%;background:linear-gradient(180deg,transparent,${col});transform:rotate(${(73-fromLPct)>0?-24:24}deg);z-index:16;pointer-events:none;opacity:0.9;transition:opacity .4s;`;
+      fc.appendChild(tr); setTimeout(()=>tr.style.opacity='0',260); setTimeout(()=>tr.remove(),720);
+      setTimeout(() => {
+        imp(col, 40);                                       // 25/sec color impact frames
+        sl(73,55,(Math.random()-.5)*160,col); ring(75,57,2,col,0); shk(220);
+        mEl.remove();
+      }, 330);
+    }, delay);
+  }
+
+  at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='METEOR FEAST'; fcCnt.style.opacity='1'; });
+  at(420, () => {
+    fcT.style.opacity='0'; fcCnt.style.opacity='0';
+    fcP.style.fontSize='150px'; fcP.style.filter=`drop-shadow(0 0 40px ${C}) brightness(1.8)`;
+    imp('rgba(255,144,64,0.16)',420);
+  });
+  at(250, () => {
+    const FOODS = ['🍖','🍕','🧀','🍩','🌶️','🥘','🍳','🥖'];
+    for (let i = 0; i < 8; i++) meteor(FOODS[i], 10 + (i % 4) * 24, i * 165, RAINBOW[i % RAINBOW.length]);
+  });
+  at(1500, () => {
+    // grand impact: rapid-fire rainbow strobe at 25fps
+    for (let i = 0; i < 12; i++) setTimeout(() => imp(RAINBOW[i % RAINBOW.length], 38), i * 40);
+    ring(75,57,6,'#ffffff',0); ring(75,57,4,C,90); shk(760);
+    fcE.style.filter='brightness(2.4) saturate(2)';
+    fcCnt.style.opacity='1'; fcCnt.style.fontSize='40px'; fcCnt.textContent='FULL COURSE!';
+    ov.style.transition='transform .08s ease-in'; ov.style.transform='scale(1.06)';
+    setTimeout(()=>{ov.style.transition='transform .3s ease-out';ov.style.transform='scale(1)';},90);
+  });
+  at(680, () => { fcE.style.opacity='0.12'; fcCnt.style.opacity='0'; fcP.style.fontSize='110px'; fcP.style.filter=''; });
+  at(420, () => {
+    audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,85);
+    fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='Dinner is served. From orbit.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
+  });
+  at(650, () => { _fin.hideOv(); });
+  at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
+}
+
+// ── 6. GALAXY SLASH (universal) ───────────────────────────
+function triggerGalaxySlash() {
+  const b = state.battle; if (!b || b.ended) return;
+  _fin.bootstrap(b);
+  const pEmoji = btPlayerSprite.textContent.trim() || '🍳';
+  const eEmoji = btEnemySprite.textContent.trim() || '👾';
+  battleLog(`🌌 <b style="color:#c080ff;letter-spacing:4px">GALAXY SLASH</b> — Cut across the stars!`);
+  const C = '#c080ff';
+  const RAINBOW = ['#ff5050','#ffe44d','#7edc8b','#5bcefa','#c080ff','#ff60a0','#40ffd0','#ffffff'];
+  const { ov, fc, fcP, fcE, fcCnt, fcT, imp, sl, shk, ring } = _finBuildScene(pEmoji, eEmoji, C, '#070314');
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  // scatter starfield
+  at(0, () => {
+    for (let i = 0; i < 26; i++) {
+      const s = document.createElement('div');
+      s.style.cssText = `position:absolute;left:${Math.random()*100}%;top:${Math.random()*100}%;width:2px;height:2px;background:#fff;border-radius:50%;opacity:${(0.3+Math.random()*0.7).toFixed(2)};z-index:5;pointer-events:none;`;
+      fc.appendChild(s);
+    }
+    fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='GALAXY SLASH'; fcCnt.style.opacity='1';
+  });
+  at(430, () => {
+    fcT.style.opacity='0'; fcCnt.style.opacity='0';
+    fcP.style.fontSize='140px'; fcP.style.filter=`drop-shadow(0 0 38px ${C}) brightness(1.9)`;
+    imp('rgba(192,128,255,0.15)',420);
+  });
+  // 8 teleport slashes around the enemy — each a hard color impact frame
+  at(300, () => {
+    const spots = [[55,30],[92,40],[58,80],[90,76],[52,52],[94,57],[62,22],[88,88]];
+    spots.forEach(([lx,ly], i) => {
+      setTimeout(() => {
+        const col = RAINBOW[i % RAINBOW.length];
+        fcP.style.transition = 'none';
+        fcP.style.left = lx + '%'; fcP.style.top = ly + '%';
+        imp(col, 36);                                       // 25fps strobe cadence
+        sl(75 + (Math.random()-.5)*10, 57 + (Math.random()-.5)*14, i * 45 % 180 - 90, col);
+        if (i % 2) shk(140);
+      }, i * 150);
+    });
+  });
+  at(1350, () => {
+    // final cross-cut
+    fcP.style.transition='none'; fcP.style.left='22%'; fcP.style.top='57%';
+    fcP.style.fontSize='180px'; fcP.style.filter=`drop-shadow(0 0 60px #fff) drop-shadow(0 0 30px ${C}) brightness(2.6)`;
+    for (let i = 0; i < 10; i++) setTimeout(() => imp(RAINBOW[(i*3) % RAINBOW.length], 38), i * 40);
+    sl(75,57,-45,'#ffffff'); sl(75,57,45,C); sl(75,57,0,'#ffe44d'); sl(75,57,90,'#5bcefa');
+    ring(75,57,6,C,0); ring(75,57,4,'#ffffff',80); shk(800);
+    fcCnt.style.opacity='1'; fcCnt.style.fontSize='40px'; fcCnt.textContent='✦ STARFALL CROSS ✦';
+  });
+  at(620, () => { fcE.style.opacity='0.1'; fcCnt.style.opacity='0'; fcP.style.fontSize='110px'; fcP.style.filter=''; });
+  at(420, () => {
+    audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,80);
+    fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='Sliced along the constellations.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
+  });
+  at(650, () => { _fin.hideOv(); });
+  at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
+}
+
+// ── 7. BLACK HOLE BANQUET (universal) ─────────────────────
+function triggerBlackHoleBanquet() {
+  const b = state.battle; if (!b || b.ended) return;
+  _fin.bootstrap(b);
+  const pEmoji = btPlayerSprite.textContent.trim() || '🍳';
+  const eEmoji = btEnemySprite.textContent.trim() || '👾';
+  battleLog(`🕳 <b style="color:#9060ff;letter-spacing:4px">BLACK HOLE BANQUET</b> — The void is hungry.`);
+  const C = '#9060ff';
+  const RAINBOW = ['#9060ff','#ff60a0','#5bcefa','#ffe44d','#40ffd0','#ff5050','#ffffff','#c080ff'];
+  const { ov, fc, fcP, fcE, fcCnt, fcT, imp, shk, ring } = _finBuildScene(pEmoji, eEmoji, C, '#040208');
+  let t = 0; const at = (dt, fn) => { t += dt; setTimeout(fn, t); };
+
+  at(0, () => { fcT.textContent='FINISHER'; fcT.style.opacity='1'; fcCnt.textContent='BLACK HOLE BANQUET'; fcCnt.style.opacity='1'; });
+  at(430, () => {
+    fcT.style.opacity='0'; fcCnt.style.opacity='0';
+    fcP.style.fontSize='150px'; fcP.style.filter=`drop-shadow(0 0 40px ${C}) brightness(1.8)`;
+    imp('rgba(144,96,255,0.16)',420);
+  });
+  at(300, () => {
+    // the singularity forms
+    const hole = document.createElement('div');
+    hole.id = '_bhCore';
+    hole.style.cssText = `position:absolute;left:75%;top:57%;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:0 0 0 4px ${C},0 0 44px 18px rgba(144,96,255,0.7);transform:translate(-50%,-50%) scale(0.1);z-index:18;pointer-events:none;transition:transform .55s cubic-bezier(.22,1.4,.64,1);`;
+    fc.appendChild(hole); void hole.offsetWidth;
+    hole.style.transform='translate(-50%,-50%) scale(5)';
+    // accretion ring sweep
+    ring(75,57,4,C,0); ring(75,57,3,'#ff60a0',140); shk(320);
+    imp(C, 60);
+  });
+  at(620, () => {
+    // debris spirals in — colored sparks sucked toward the core
+    for (let i = 0; i < 18; i++) {
+      const ang = Math.random() * Math.PI * 2, dist = 18 + Math.random() * 20;
+      const d = document.createElement('div');
+      const col = RAINBOW[i % RAINBOW.length];
+      d.style.cssText = `position:absolute;left:${75+Math.cos(ang)*dist}%;top:${57+Math.sin(ang)*dist}%;width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;border-radius:50%;background:${col};box-shadow:0 0 10px ${col};z-index:17;pointer-events:none;transform:translate(-50%,-50%);transition:left 520ms ease-in,top 520ms ease-in,opacity 520ms;`;
+      fc.appendChild(d); void d.offsetWidth;
+      setTimeout(() => { d.style.left='75%'; d.style.top='57%'; d.style.opacity='0'; }, 20 + i * 28);
+      setTimeout(() => d.remove(), 1100);
+    }
+    // the enemy stretches and falls in
+    fcE.style.transition='transform .7s ease-in,opacity .7s ease-in,filter .7s';
+    fcE.style.transform='translate(-50%,-50%) scaleX(0.2) scaleY(2.4) rotate(25deg)';
+    fcE.style.filter='blur(2px) brightness(0.6)';
+    shk(620);
+  });
+  at(720, () => {
+    fcE.style.transform='translate(-50%,-50%) scale(0.02)'; fcE.style.opacity='0';
+    // collapse: 25fps rainbow strobe into a white snap
+    for (let i = 0; i < 11; i++) setTimeout(() => imp(RAINBOW[i % RAINBOW.length], 36), i * 40);
+    setTimeout(() => {
+      const hole = document.getElementById('_bhCore');
+      if (hole) { hole.style.transition='transform .16s ease-in,opacity .2s'; hole.style.transform='translate(-50%,-50%) scale(0.05)'; hole.style.opacity='0'; setTimeout(()=>hole.remove(),260); }
+      imp('#ffffff', 200);
+      ring(75,57,6,'#ffffff',0); ring(75,57,4,C,80); shk(700);
+    }, 460);
+    fcCnt.style.opacity='1'; fcCnt.style.fontSize='40px'; fcCnt.textContent='DEVOURED';
+  });
+  at(820, () => { fcCnt.style.opacity='0'; fcP.style.fontSize='110px'; fcP.style.filter=''; });
+  at(380, () => {
+    audio.victory(); const vr=ov.getBoundingClientRect(); spawnConfetti(vr.left+vr.width/2,vr.top+vr.height/2,75);
+    fcT.textContent='VICTORY'; fcT.style.opacity='1'; fcCnt.textContent='Not even crumbs escape.'; fcCnt.style.fontSize='24px'; fcCnt.style.opacity='1';
   });
   at(650, () => { _fin.hideOv(); });
   at(200, () => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
@@ -8079,6 +9181,18 @@ function miniScore(m) {
   if (m.type === 'VOLLEY') {
     return Math.max(0.15, m.volleyRallies / m.volleyTarget);
   }
+  if (m.type === 'SLICE') {
+    return Math.max(0.15, m.sliceCut / m.sliceTotal);
+  }
+  if (m.type === 'MEMORY') {
+    return Math.max(0.1, m.memIdx / m.memSeq.length);
+  }
+  if (m.type === 'SPIN') {
+    const center = m.spinWedgeStart + m.spinWedge / 2;
+    const d = Math.abs(((m.spinAngle - center) % 360 + 540) % 360 - 180);
+    if (d <= m.spinWedge / 2) return 1 - (d / (m.spinWedge / 2)) * 0.4;
+    return Math.max(0.12, 0.4 - d / 220);
+  }
   return 0.3;
 }
 
@@ -8246,7 +9360,7 @@ function playBossIntro(boss, onDone) {
     electric: ['#ffe060', '#0a0a00'],
     neutral:  ['#d4af37', '#0a0800'],
   };
-  const elem = getElement(boss.id) || 'neutral';
+  const elem = boss.element || getElement(boss.id) || 'neutral';
   const [col, bg] = PAL[elem] || PAL.neutral;
   const quote = boss.quote || 'You dare challenge me?';
   const frames = [
@@ -8295,9 +9409,16 @@ function onEnemyFaint() {
   audio.victory();
 
   if (b.isBoss && b.bossData) {
+    const firstKill = !state.bossesDefeated[b.bossData.id];
     state.bossesDefeated[b.bossData.id] = true;
     battleLog(`<b style="color:#ff6080;font-size:14px">★ BOSS DEFEATED ★</b>`);
     battleLog(b.bossData.defeat);
+    if (firstKill && b.bossData.rewardHp) {
+      state.playerMaxHp += b.bossData.rewardHp;
+      state.playerHp = Math.min(state.playerMaxHp, state.playerHp + b.bossData.rewardHp);
+      setTimeout(() => playHpGainFloat(b.bossData.rewardHp), 800);
+      toast(`★ ELITE DEFEATED! +${b.bossData.rewardHp} MAX HP! ★`);
+    }
     const prev = state.michelinStars;
     computeMichelin();
     if (state.michelinStars > prev) {
@@ -8754,32 +9875,7 @@ function moveInvSel(delta) {
 }
 
 function showEvoCutscene(activeId, fromName, toName, fromEmoji, toEmoji, evoColor, hpGain) {
-  const col = evoColor || '#f4c165';
-  const frames = [
-    { badge:'EVOLVING', emoji: fromEmoji,
-      title: `${fromName.toUpperCase()} IS CHANGING!`,
-      sub:   'Something incredible is happening...',
-      color: col,      bg:'#0a0510', dur:580 },
-    { badge:'SURGE',    emoji: '✨',
-      title: 'ENERGY SURGE',
-      sub:   'Power flowing through the circuits...',
-      color: '#ffffff', bg:'#10102a', dur:420 },
-    { badge:'REVEAL',   emoji: toEmoji,
-      title: toName.toUpperCase(),
-      sub:   'A new form emerges!',
-      color: col,      bg:'#050520', dur:680 },
-    { badge:'COMPLETE', emoji: toEmoji,
-      title: 'EVOLUTION COMPLETE',
-      sub:   `+${hpGain || 15} HP · New power unlocked`,
-      color: '#7edc8b', bg:'#001a05', dur:780 },
-  ];
-  const container = document.getElementById('evoModal');
-  container.innerHTML = '';
-  container.classList.add('show');
-  audio.evoFanfare();
-  runCutsceneFrames(frames, container, () => {
-    container.classList.remove('show');
-  });
+  _ifEvolutionScene(fromName, toName, fromEmoji, toEmoji, evoColor || '#f4c165', hpGain || 15);
 }
 
 function renderStatBars(ent) {
@@ -8963,6 +10059,20 @@ const miniVolley = document.getElementById('miniVolley');
 const miniVolleyField = document.getElementById('miniVolleyField');
 const miniVolleyBall = document.getElementById('miniVolleyBall');
 const miniVolleyCount = document.getElementById('miniVolleyCount');
+// SLICE
+const miniSlice = document.getElementById('miniSlice');
+const miniSliceField = document.getElementById('miniSliceField');
+const miniSliceBlade = document.getElementById('miniSliceBlade');
+const miniSliceCount = document.getElementById('miniSliceCount');
+const miniSliceTimerFill = document.getElementById('miniSliceTimerFill');
+// MEMORY
+const miniMemory = document.getElementById('miniMemory');
+const miniMemoryRow = document.getElementById('miniMemoryRow');
+const miniMemoryStatus = document.getElementById('miniMemoryStatus');
+// SPIN
+const miniSpin = document.getElementById('miniSpin');
+const miniSpinZone = document.getElementById('miniSpinZone');
+const miniSpinPointer = document.getElementById('miniSpinPointer');
 
 const ARROW_GLYPH = { up:'\u2191', down:'\u2193', left:'\u2190', right:'\u2192' };
 
@@ -8975,6 +10085,9 @@ function hideAllSub() {
   miniDodge.classList.remove('show');
   miniRhythm.classList.remove('show');
   miniVolley.classList.remove('show');
+  miniSlice.classList.remove('show');
+  miniMemory.classList.remove('show');
+  miniSpin.classList.remove('show');
 }
 
 function startMinigame(entity) {
@@ -8994,7 +10107,10 @@ function startMinigame(entity) {
     AIM:      { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}AIM. Press SPACE to lock HORIZONTAL, then VERTICAL, on the target.` },
     DODGE:    { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}DODGE. Press the matching ARROW KEY to dodge each incoming attack!` },
     RHYTHM:   { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}RHYTHM. Press SPACE when notes reach the gold line!` },
-    VOLLEY:   { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}VOLLEY. Press SPACE to return the ball when it reaches your side!` }
+    VOLLEY:   { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}VOLLEY. Press SPACE to return the ball when it reaches your side!` },
+    SLICE:    { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}SLICE. Press SPACE as the blade crosses each ingredient!` },
+    MEMORY:   { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}MEMORY. Watch the pattern, then repeat it with the ARROW KEYS!` },
+    SPIN:     { t:`\u2014 CATCH: ${entity.n.toUpperCase()} \u2014`, s:`${rlabel}SPIN. Press SPACE to stop the needle inside the green wedge!` }
   };
   miniTitle.textContent = labels[type].t;
   const el = activeElement();
@@ -9014,6 +10130,9 @@ function startMinigame(entity) {
   else if (type === 'DODGE')    setupDodge();
   else if (type === 'RHYTHM')   setupRhythm();
   else if (type === 'VOLLEY')   setupVolley();
+  else if (type === 'SLICE')    setupSlice();
+  else if (type === 'MEMORY')   setupMemory();
+  else if (type === 'SPIN')     setupSpin();
 
   miniEl.classList.add('show');
 }
@@ -9202,6 +10321,64 @@ function setupVolley() {
   miniPrompt.textContent = '> SPACE WHEN ON YOUR SIDE <';
 }
 
+function setupSlice() {
+  const m = state.mini;
+  miniSlice.classList.add('show');
+  const diff = rarityDiff();
+  const fw = miniSliceField.clientWidth || 580;
+  const total = Math.min(6, Math.floor(2 + diff * 1.5));
+  const fruits = ['🍉','🍅','🍋','🥕','🧅','🌶️'];
+  miniSliceField.querySelectorAll('.sliceTarget').forEach(el => el.remove());
+  const targets = [];
+  for (let i = 0; i < total; i++) {
+    const x = 50 + (i + 0.5) * ((fw - 100) / total) + (Math.random() - 0.5) * 24;
+    const el = document.createElement('div');
+    el.className = 'sliceTarget';
+    el.textContent = fruits[i % fruits.length];
+    el.style.left = x + 'px';
+    miniSliceField.appendChild(el);
+    targets.push({ x, cut: false, el });
+  }
+  m.sliceTargets = targets; m.sliceCut = 0; m.sliceTotal = total;
+  m.sliceX = 0; m.sliceDir = 1;
+  m.sliceSpeed = (250 + Math.random() * 80) * diff * elemSpeedMult();
+  m.sliceW = fw; m.sliceWin = Math.max(18, 36 - diff * 6);
+  m.sliceTime = Math.max(4, (8.5 - diff * 1.2) * elemTimeMult()); m.sliceTimeLeft = m.sliceTime;
+  miniSliceCount.textContent = `0 / ${total}`;
+  miniSliceTimerFill.style.width = '100%';
+  miniPrompt.textContent = '> SLICE WITH SPACE <';
+}
+
+function setupMemory() {
+  const m = state.mini;
+  miniMemory.classList.add('show');
+  const diff = rarityDiff();
+  const dirs = ['up','down','left','right'];
+  const len = Math.min(8, Math.floor(3 + diff * 1.5));
+  const seqArr = [];
+  for (let i = 0; i < len; i++) seqArr.push(dirs[Math.floor(Math.random()*4)]);
+  m.memSeq = seqArr; m.memIdx = 0; m.memPhase = 'show'; m.memTimer = 0;
+  m.memFlashTime = Math.max(0.34, 0.58 - diff * 0.07) / (activeElement() === 'fire' ? 1.15 : 1);
+  miniMemoryRow.innerHTML = seqArr.map((k,i) => `<div class="memKey" data-idx="${i}">?</div>`).join('');
+  miniMemoryStatus.textContent = 'WATCH THE PATTERN...';
+  miniPrompt.textContent = '> MEMORIZE <';
+}
+
+function setupSpin() {
+  const m = state.mini;
+  miniSpin.classList.add('show');
+  const diff = rarityDiff();
+  const wedge = Math.max(22, Math.floor((72 - diff * 14) * elemZoneMult()));
+  const wedgeStart = 20 + Math.random() * 320;
+  m.spinAngle = 0;
+  m.spinSpeed = (230 + Math.random() * 110) * diff * elemSpeedMult();
+  m.spinWedgeStart = wedgeStart; m.spinWedge = wedge;
+  miniSpinZone.style.background =
+    `conic-gradient(transparent 0deg ${wedgeStart}deg, rgba(126,220,139,0.5) ${wedgeStart}deg ${wedgeStart + wedge}deg, transparent ${wedgeStart + wedge}deg 360deg)`;
+  miniSpinPointer.style.transform = 'translate(-50%,-100%) rotate(0deg)';
+  miniPrompt.textContent = '> SPACE TO STOP <';
+}
+
 function miniTick(dt) {
   const m = state.mini; if (!m || m.done) return;
   const ds = dt / 1000;
@@ -9215,6 +10392,11 @@ function miniTick(dt) {
     } else if (m.type === 'AIM') {
       if (m.aimStage === 'x') m.cx += (Math.random() - 0.5) * 40;
       else if (m.aimStage === 'y') m.cy += (Math.random() - 0.5) * 25;
+    } else if (m.type === 'SPIN') {
+      m.spinAngle += (Math.random() - 0.5) * 34;
+    } else if (m.type === 'SLICE') {
+      m.sliceX += (Math.random() - 0.5) * m.sliceW * 0.08;
+      m.sliceX = Math.max(0, Math.min(m.sliceW, m.sliceX));
     }
   }
   if (m.type === 'TIMING') {
@@ -9323,6 +10505,42 @@ function miniTick(dt) {
       m.volleySpeed += m.volleySpeedGain;
     }
     miniVolleyBall.style.left = (m.volleyX - 14) + 'px';
+  } else if (m.type === 'SLICE') {
+    m.sliceTimeLeft -= ds;
+    m.sliceX += m.sliceDir * m.sliceSpeed * ds;
+    if (m.sliceX < 0) { m.sliceX = 0; m.sliceDir = 1; }
+    if (m.sliceX > m.sliceW) { m.sliceX = m.sliceW; m.sliceDir = -1; }
+    miniSliceBlade.style.left = m.sliceX + 'px';
+    miniSliceTimerFill.style.width = Math.max(0, (m.sliceTimeLeft / m.sliceTime) * 100) + '%';
+    if (m.sliceTimeLeft <= 0) miniResolve(m.sliceCut >= m.sliceTotal ? 'good' : 'bad');
+  } else if (m.type === 'MEMORY') {
+    if (m.memPhase === 'show') {
+      m.memTimer += ds;
+      const per = m.memFlashTime;
+      const i = Math.floor(m.memTimer / per);
+      const frac = (m.memTimer % per) / per;
+      const cells = miniMemoryRow.querySelectorAll('.memKey');
+      cells.forEach((c, ci) => {
+        if (ci === i && frac < 0.72 && i < m.memSeq.length) {
+          c.classList.add('flash'); c.textContent = ARROW_GLYPH[m.memSeq[ci]];
+        } else if (!c.classList.contains('hit')) {
+          c.classList.remove('flash'); c.textContent = '?';
+        }
+      });
+      if (i >= m.memSeq.length) {
+        m.memPhase = 'input'; m.memTimer = 0;
+        m.memInputTime = Math.max(2.5, (1.2 + m.memSeq.length * 0.6) * elemTimeMult());
+        cells.forEach(c => { c.classList.remove('flash'); c.textContent = '?'; });
+        miniMemoryStatus.textContent = 'REPEAT THE PATTERN!';
+        miniPrompt.textContent = '> REPEAT WITH ARROWS <';
+      }
+    } else if (m.memPhase === 'input') {
+      m.memTimer += ds;
+      if (m.memTimer >= m.memInputTime) miniResolve('bad');
+    }
+  } else if (m.type === 'SPIN') {
+    m.spinAngle = (m.spinAngle + m.spinSpeed * ds) % 360;
+    miniSpinPointer.style.transform = `translate(-50%,-100%) rotate(${m.spinAngle}deg)`;
   }
 }
 
@@ -9421,6 +10639,48 @@ function miniAction(key) {
       } else if (m.volleyX > m.volleyPlayerZone) {
         miniResolve('bad');
       }
+    }
+  } else if (m.type === 'SLICE') {
+    if (key === ' ' || key === 'enter') {
+      let hit = false;
+      for (const t of m.sliceTargets) {
+        if (t.cut) continue;
+        if (Math.abs(m.sliceX - t.x) <= m.sliceWin) {
+          t.cut = true; hit = true;
+          t.el.classList.add('cut');
+          m.sliceCut++;
+          miniSliceCount.textContent = `${m.sliceCut} / ${m.sliceTotal}`;
+          if (m.sliceCut >= m.sliceTotal) miniResolve('good');
+          break;
+        }
+      }
+      if (!hit) {
+        // whiff costs time — keeps spam in check without instant failure
+        m.sliceTimeLeft = Math.max(0, m.sliceTimeLeft - 0.5);
+        miniPanel.classList.remove('shake'); void miniPanel.offsetWidth; miniPanel.classList.add('shake');
+      }
+    }
+  } else if (m.type === 'MEMORY') {
+    if (m.memPhase !== 'input') return;
+    const map = { 'arrowup':'up','arrowdown':'down','arrowleft':'left','arrowright':'right',
+                  'w':'up','s':'down','a':'left','d':'right' };
+    const dir = map[key]; if (!dir) return;
+    const expect = m.memSeq[m.memIdx];
+    const el = miniMemoryRow.querySelector(`.memKey[data-idx="${m.memIdx}"]`);
+    if (dir === expect) {
+      if (el) { el.classList.add('hit'); el.textContent = ARROW_GLYPH[dir]; }
+      m.memIdx++;
+      if (m.memIdx >= m.memSeq.length) miniResolve('good');
+    } else {
+      if (el) { el.classList.add('miss'); el.textContent = ARROW_GLYPH[expect]; }
+      miniResolve('bad');
+    }
+  } else if (m.type === 'SPIN') {
+    if (key === ' ' || key === 'enter') {
+      const center = m.spinWedgeStart + m.spinWedge / 2;
+      const d = Math.abs(((m.spinAngle - center) % 360 + 540) % 360 - 180);
+      const buf = m.spinWedge * 0.25;
+      miniResolve(d <= m.spinWedge / 2 + buf ? 'good' : 'bad');
     }
   }
 }
@@ -9747,6 +11007,63 @@ function drawFloor(ch, sx, sy, tx, ty, h, p) {
       ctx.fillRect(sx + ((h >> 4) & 13) + 1, sy + ((h >> 8) & 13) + 1, 1, 1);
       // occasional shell
       if ((h & 0x1F) === 0) { ctx.fillStyle = '#f0e0c0'; ctx.fillRect(sx + 7, sy + 8, 2, 2); ctx.fillRect(sx + 8, sy + 7, 1, 1); }
+      break;
+    }
+    case 'v': { // volcanic ash — cracks + glowing embers
+      ctx.fillStyle = p.dk;
+      ctx.fillRect(sx + ((h >> 2) & 13) + 1, sy + ((h >> 6) & 13) + 1, 2, 1);
+      ctx.fillRect(sx + ((h >> 4) & 13) + 1, sy + ((h >> 8) & 13) + 1, 1, 2);
+      ctx.fillStyle = p.hl;
+      ctx.fillRect(sx + ((h >> 3) & 13) + 1, sy + ((h >> 7) & 13) + 1, 1, 1);
+      // pulsing ember speck
+      if ((h & 0x1F) === 0) {
+        const gl = (Math.floor(performance.now() / 300) + tx + ty) & 1;
+        ctx.fillStyle = gl ? '#ff6020' : '#c03010';
+        ctx.fillRect(sx + 8, sy + 6, 2, 2);
+        if (gl) { ctx.fillStyle = '#ffb060'; ctx.fillRect(sx + 8, sy + 6, 1, 1); }
+      }
+      break;
+    }
+    case 'g': { // bog mud — wet sheen + bubbles
+      ctx.fillStyle = p.dk;
+      for (let i = 0; i < 4; i++) {
+        const ix = (rnd(tx, ty, i + 70) % 14) + 1;
+        const iy = (rnd(tx, ty, i + 80) % 14) + 1;
+        ctx.fillRect(sx + ix, sy + iy, 2, 1);
+      }
+      ctx.fillStyle = p.hl;
+      ctx.fillRect(sx + ((h >> 2) & 13) + 1, sy + ((h >> 6) & 13) + 1, 1, 1);
+      if ((h & 0x1F) === 3) {
+        const bb = (Math.floor(performance.now() / 420) + tx * 2 + ty) & 3;
+        if (bb === 0) { ctx.fillStyle = '#7a9a60'; ctx.fillRect(sx + 5, sy + 9, 2, 2); ctx.fillStyle = '#a8c888'; ctx.fillRect(sx + 5, sy + 9, 1, 1); }
+      }
+      break;
+    }
+    case 'y': { // neon street — dark asphalt + glowing strips
+      ctx.fillStyle = p.dk;
+      ctx.fillRect(sx, sy + 15, TILE, 1);
+      ctx.fillStyle = p.hl;
+      if ((h & 0x7) === 0) ctx.fillRect(sx + 3, sy + 4, 1, 1);
+      if ((h & 0x7) === 4) ctx.fillRect(sx + 11, sy + 10, 1, 1);
+      // animated neon glow specks cycling pink/cyan/gold
+      const nt = Math.floor(performance.now() / 260) % 3;
+      if (((tx * 5 + ty * 7) & 0xF) === 0) {
+        ctx.fillStyle = nt === 0 ? '#ff50c8' : nt === 1 ? '#50dcff' : '#ffe44d';
+        ctx.fillRect(sx + ((h >> 2) & 12) + 2, sy + ((h >> 6) & 12) + 2, 2, 1);
+      }
+      break;
+    }
+    case 'z': { // cloud stone — soft drifts + gold sparkle
+      ctx.fillStyle = p.hl;
+      ctx.fillRect(sx + 3, sy + 5, 5, 2);
+      ctx.fillRect(sx + 9, sy + 10, 4, 2);
+      ctx.fillStyle = p.dk;
+      ctx.fillRect(sx + ((h >> 2) & 13) + 1, sy + ((h >> 6) & 13) + 1, 2, 1);
+      const st = Math.floor(performance.now() / 200) & 0x7;
+      if (((tx * 3 + ty * 5 + st) & 0xF) === 0) {
+        ctx.fillStyle = '#ffd870';
+        ctx.fillRect(sx + ((h >> 3) & 13) + 1, sy + ((h >> 7) & 13) + 1, 1, 1);
+      }
       break;
     }
   }
@@ -10298,7 +11615,8 @@ function render() {
 const ZONE_NAMES = { house: 'HOME', town: 'TOWN', market: 'GRANDE MART', wild: 'WILDERNESS',
                 cave: 'DEEP CAVE', base: 'UNDERGROUND BASE', dimension: 'CRYSTAL DIMENSION',
                 plains: 'GOLDEN PLAINS', mountain: 'FROSTPEAK MOUNTAIN', lake: 'STILLWATER LAKE', beach: 'SUNBURN BEACH',
-                fungal: 'FUNGAL HOLLOW', scrapyard: 'THE SCRAPYARD', gallery: '✨ SECRET GALLERY ✨' };
+                fungal: 'FUNGAL HOLLOW', scrapyard: 'THE SCRAPYARD', gallery: '✨ SECRET GALLERY ✨',
+                volcano: 'EMBER CALDERA', swamp: 'MURKMIRE SWAMP', neon: 'NEON DISTRICT', sky: 'CELESTIAL KITCHEN' };
 
 // Pokemon-style sliding area banner shown whenever you enter a new zone
 let _bannerTimer = null;
@@ -10345,6 +11663,10 @@ const _AMB_CFG = {
   dimension: { max:50, spawnRate:0.07, vx:[-0.5,0.5], vy:[-0.6,0.2],  r:[0.8,1.6], life:[140,260], col:(a)=>`rgba(${Math.random()<.5?'160,80,220':'60,200,220'},${a*.55})` },
   fungal:    { max:45, spawnRate:0.07, vx:[-0.3,0.3], vy:[-0.7,-0.2], r:[0.9,1.5], life:[160,300], col:(a)=>`rgba(70,215,100,${a*.5})` },
   beach:     { max:36, spawnRate:0.05, vx:[-0.2,0.2], vy:[-0.3,0.1],  r:[0.7,1.2], life:[120,220], col:(a)=>`rgba(220,235,255,${a*.42})` },
+  volcano:   { max:55, spawnRate:0.10, vx:[-0.3,0.3], vy:[-0.9,-0.3], r:[0.8,1.8], life:[120,240], col:(a)=>`rgba(255,${100+Math.floor(Math.random()*80)},40,${a*.6})` },
+  swamp:     { max:40, spawnRate:0.06, vx:[-0.3,0.3], vy:[-0.5,-0.1], r:[0.8,1.5], life:[180,320], col:(a)=>`rgba(110,200,90,${a*.45})` },
+  neon:      { max:48, spawnRate:0.08, vx:[-0.5,0.5], vy:[-0.6,0.2],  r:[0.8,1.6], life:[120,240], col:(a)=>`rgba(${Math.random()<.33?'255,80,200':Math.random()<.5?'80,220,255':'255,228,80'},${a*.55})` },
+  sky:       { max:44, spawnRate:0.07, vx:[-0.4,0.4], vy:[-0.4,0.3],  r:[0.7,1.4], life:[160,300], col:(a)=>`rgba(255,${230+Math.floor(Math.random()*25)},180,${a*.5})` },
 };
 function _rng(lo,hi){ return lo + Math.random()*(hi-lo); }
 function renderAmbient() {
@@ -10407,6 +11729,21 @@ function tick(now) {
             vx: (Math.random() - 0.5) * 0.9, vy: -0.6 - Math.random() * 0.9, t: performance.now()
           });
           audio.rustle();
+        }
+        // Pokemon-style random encounters in TALL grass ('w' tiles): every step
+        // rustles, and after a few steps a wild Appliance can jump you.
+        if (tileAt(state.map, state.px, state.py) === 'w') {
+          for (let i = 0; i < 6; i++) _rustles.push({
+            x: state.px + 0.1 + Math.random() * 0.8, y: state.py + 0.3 + Math.random() * 0.6,
+            vx: (Math.random() - 0.5) * 1.2, vy: -0.7 - Math.random() * 1.1, t: performance.now()
+          });
+          audio.rustle();
+          _grassSteps++;
+          if (_grassSteps >= 3 && Math.random() < 0.14) {
+            _grassSteps = 0;
+            const pool = entities.filter(en => en.id && en.m === state.map);
+            if (pool.length) encounter(pool[Math.floor(Math.random() * pool.length)]);
+          }
         }
         checkAdminTerminal(); checkLakeGateway(); checkHiddenItems();
       }
@@ -10516,7 +11853,21 @@ Object.assign(window, {
   renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher
 });
 // debug/testing handle (read-mostly; also powers automated playtests)
-window.__pando = { state, entities, maps, startBattle, audio };
+window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene };
+
+// Pre-rasterize the Impact font and filtered-emoji silhouettes the finishers
+// use, so the very first finisher doesn't pay a one-time ~hundreds-of-ms
+// raster/font-load hitch mid-cinematic.
+(function _ifWarmup() {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  const x = c.getContext('2d');
+  x.font = '40px Impact'; x.fillText('K.O!', 2, 40);
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;left:-9999px;top:0;font-size:160px;font-family:Impact,sans-serif;filter:brightness(0) invert(1) sepia(1) saturate(7) hue-rotate(120deg);';
+  d.textContent = '🍳⚔🔥!';
+  document.body.appendChild(d);
+  setTimeout(() => { try { d.remove(); } catch (e) {} }, 4000);
+})();
 
 setupTouchControls();
 requestAnimationFrame(tick);
