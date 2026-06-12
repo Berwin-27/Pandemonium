@@ -497,6 +497,39 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
   from { transform:translate(-50%,-50%) scale(.3); opacity:1; }
   to   { transform:translate(-50%,-50%) scale(6);  opacity:0; }
 }
+/* ult-ready golden aura on the player sprite */
+.bt-sprite-arena.ult-ready { animation: ultAura .8s ease-in-out infinite; }
+@keyframes ultAura {
+  0%,100% { filter:drop-shadow(0 0 6px rgba(255,210,74,.7)); }
+  50%     { filter:drop-shadow(0 0 18px rgba(255,210,74,1)) brightness(1.15); }
+}
+/* status-effect auras + orbiting icons */
+.bt-sprite-arena.st-burnt::after { content:'🔥'; position:absolute; bottom:-4px; left:-8px; font-size:13px; animation: stFlick .42s infinite alternate; }
+.bt-sprite-arena.st-frozen { filter:saturate(.55) brightness(1.18) drop-shadow(0 0 9px rgba(91,206,250,.9)); }
+.bt-sprite-arena.st-frozen::after { content:'❄️'; position:absolute; top:-6px; right:-8px; font-size:12px; animation: stSpin 3s linear infinite; }
+.bt-sprite-arena.st-shorted::after { content:'⚡'; position:absolute; top:-6px; left:-8px; font-size:12px; animation: stFlick .2s infinite alternate; }
+.bt-sprite-arena.st-overheated::after { content:'🌡️'; position:absolute; top:-6px; right:-8px; font-size:12px; animation: stFlick .3s infinite alternate; }
+@keyframes stFlick { from { opacity:.5; transform:scale(.9); } to { opacity:1; transform:scale(1.12); } }
+@keyframes stSpin { from { transform:rotate(0); } to { transform:rotate(360deg); } }
+/* zone-themed drifting particles behind the battle arena */
+.bt-zonefx { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+.bt-zonefx span { position:absolute; bottom:-10px; border-radius:50%; opacity:0; animation: zoneFloat linear infinite; }
+@keyframes zoneFloat {
+  from { transform:translateY(0); opacity:0; }
+  10%  { opacity:.75; }
+  85%  { opacity:.75; }
+  to   { transform:translateY(-380px); opacity:0; }
+}
+/* minigame result burst ring */
+.mini-burst {
+  position:absolute; left:50%; top:50%; width:30px; height:30px; border-radius:50%;
+  transform:translate(-50%,-50%) scale(.2); pointer-events:none;
+  animation: miniBurst .55s ease-out forwards; z-index:5;
+}
+@keyframes miniBurst {
+  from { transform:translate(-50%,-50%) scale(.2); opacity:1; }
+  to   { transform:translate(-50%,-50%) scale(10); opacity:0; }
+}
 
 /* Intro / Ending */
 #intro, #ending {
@@ -7725,6 +7758,12 @@ function renderBattle() {
   const evoTag = pEvo > 0 ? ` <span style="font-size:9px;color:${EVO_COLOR[pEvo]}">★${pEvo}</span>` : '';
   btPlayerName.innerHTML = `${pName} <span style="font-size:11px;color:${pElem.color}">${pElem.icon}</span>${evoTag}${shinyTag}`;
   btPlayerLvl.textContent = `Lv.${playerLevel()} ❤${bondLevel(state.activeAppliance)}`;
+  // live status auras + ult-ready glow on the sprites
+  for (const s of ['BURNT','FROZEN','SHORTED','OVERHEATED']) {
+    btEnemySprite.classList.toggle('st-' + s.toLowerCase(), !!(b.enemyStatus && b.enemyStatus[s] > 0));
+    btPlayerSprite.classList.toggle('st-' + s.toLowerCase(), !!(b.playerStatus && b.playerStatus[s] > 0));
+  }
+  btPlayerSprite.classList.toggle('ult-ready', state.ultGauge >= 100 && !b.ended);
   btPlayerSprite.textContent = p ? p.e : '?';
   btPlayerSprite.classList.toggle('shiny', !!isShiny);
   updateHpBar(btPlayerHp, btPlayerHpText, state.playerHp, state.playerMaxHp);
@@ -7933,6 +7972,27 @@ function injectBattleBackground(zone) {
   if (!bel) return;
   bel.style.background = BATTLE_BG[zone] || BATTLE_BG.home;
   bel.style.backgroundSize = '100% 100%';
+  // zone-themed drifting particles floating up behind the arena
+  const old = document.getElementById('btZoneFx');
+  if (old) old.remove();
+  const THEME = {
+    volcano:['#ff7030','#ffb060'], cave:['#8fb8ff','#c0d8ff'], mountain:['#eaf4ff','#ffffff'],
+    lake:['#9fd0ff','#d8ecff'], beach:['#ffe8b0','#fff6da'], swamp:['#9fe08a','#d0ffb0'],
+    neon:['#ff60c8','#60dcff','#ffe44d'], sky:['#fff0c0','#ffffff'], dimension:['#c080ff','#80ffe0'],
+    fungal:['#a0e890','#e0ffb0'], scrapyard:['#c0c0c8','#909098'], void:['#b060e8','#ff6080'],
+    wild:['#b0e890','#ffe8a0'], plains:['#ffe8a0','#f0d890'], town:['#ffd24a','#fff0c0']
+  };
+  const cols = THEME[zone] || ['#ffd24a','#fff0c0'];
+  const fx = document.createElement('div');
+  fx.id = 'btZoneFx'; fx.className = 'bt-zonefx';
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement('span');
+    const sz = 2 + Math.random() * 4;
+    const c = cols[i % cols.length];
+    s.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;width:${sz}px;height:${sz}px;background:${c};box-shadow:0 0 6px ${c};animation-duration:${(5 + Math.random() * 6).toFixed(1)}s;animation-delay:${(-Math.random() * 8).toFixed(1)}s;`;
+    fx.appendChild(s);
+  }
+  bel.insertBefore(fx, bel.firstChild);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -8810,6 +8870,13 @@ function _finBuildScene(pEmoji, eEmoji, C, bg) {
     ln.style.cssText = `position:absolute;left:50%;top:50%;width:${55+Math.random()*30}%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06));transform-origin:0 50%;transform:rotate(${ang}deg);pointer-events:none;`;
     fc.appendChild(ln);
   }
+  // cinematic letterbox bars slide in for the duration of the scene
+  ['top', 'bottom'].forEach(side => {
+    const bar = document.createElement('div');
+    bar.style.cssText = `position:absolute;left:0;right:0;${side}:0;height:0;background:#000;z-index:60;pointer-events:none;transition:height .4s ease-out;`;
+    fc.appendChild(bar);
+    setTimeout(() => { bar.style.height = '7%'; }, 30);
+  });
   const fcP = document.createElement('div');
   fcP.style.cssText = 'position:absolute;left:22%;top:57%;transform:translate(-50%,-50%);font-size:110px;line-height:1;z-index:10;pointer-events:none;transition:left 0.1s ease-in,font-size 0.3s,filter 0.3s;';
   fcP.textContent = pEmoji; fc.appendChild(fcP);
@@ -11560,6 +11627,13 @@ function miniResolve(result) {
   miniPrompt.style.display = 'none';
   miniResult.style.display = 'block';
   miniPanel.classList.add(result === 'good' ? 'pulseG' : 'shake');
+  // burst ring punctuating the verdict
+  const _mb = document.createElement('div');
+  _mb.className = 'mini-burst';
+  _mb.style.border = result === 'good' ? '3px solid #7edc8b' : '3px solid #f06a6a';
+  _mb.style.boxShadow = result === 'good' ? '0 0 24px rgba(126,220,139,.8)' : '0 0 24px rgba(240,106,106,.8)';
+  miniPanel.appendChild(_mb);
+  setTimeout(() => { try { _mb.remove(); } catch (e) {} }, 600);
 
   const ent = m.entity;
   if (result === 'good' && ent && ent.id) {
@@ -12421,6 +12495,7 @@ function render() {
       drawTile(ch, x * TILE - cam.x, y * TILE - cam.y, x, y);
     }
   }
+  renderFootprints();
   // entities on top (emoji items only; fixed-furniture entities piggy-back on tile)
   for (const e of entities) {
     if (e.m !== state.map) continue;
@@ -12452,7 +12527,10 @@ function render() {
   const pdy = state.moving ? (state.ty - state.py) * state.prog : 0;
   const psx = Math.round((state.px + pdx) * TILE - cam.x);
   const psy = Math.round((state.py + pdy) * TILE - cam.y);
-  drawPlayer(psx, psy);
+  // little hop while walking — sells the step rhythm
+  const hopY = state.moving ? -Math.round(Math.abs(Math.sin(state.prog * Math.PI)) * 1.5) : 0;
+  drawPlayer(psx, psy + hopY);
+  renderSwimRipples(psx, psy);
 
   // grass rustle particles (spawned on steps through ',' tiles)
   if (_rustles.length) {
@@ -12486,9 +12564,111 @@ function render() {
     }
   }
   renderAmbient();
+  renderCloudShadows();
   renderDayNight();
+  renderFireflies();
   renderRoamerSprite();
   renderWeather();
+  renderHeatShimmer();
+}
+
+// ── fading footprints pressed into sand and snow ──
+const _footprints = [];
+function renderFootprints() {
+  if (!_footprints.length) return;
+  const now = performance.now();
+  for (let i = _footprints.length - 1; i >= 0; i--) {
+    const f = _footprints[i];
+    const age = (now - f.t) / 4000;
+    if (age >= 1) { _footprints.splice(i, 1); continue; }
+    const sx = f.x * TILE - cam.x, sy = f.y * TILE - cam.y;
+    if (sx < -TILE || sy < -TILE || sx > VW || sy > VH) continue;
+    ctx.globalAlpha = 0.35 * (1 - age);
+    ctx.fillStyle = f.snow ? '#8aa4c0' : '#9a865e';
+    if (f.dir === 'left' || f.dir === 'right') {
+      ctx.fillRect(sx + 5, sy + 9, 2, 2); ctx.fillRect(sx + 9, sy + 12, 2, 2);
+    } else {
+      ctx.fillRect(sx + 5, sy + 10, 2, 2); ctx.fillRect(sx + 9, sy + 10, 2, 2);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── soft cloud shadows drifting across the world on clear days ──
+function renderCloudShadows() {
+  if (!state.started || state.battle || state.won) return;
+  if (!OUTDOOR_MAPS.has(state.map) || state.map === 'sky' || dayPhase() !== 'DAY') return;
+  const t = performance.now() / 1000;
+  ctx.fillStyle = 'rgba(8,12,30,0.07)';
+  for (let i = 0; i < 3; i++) {
+    const cx2 = ((t * (6 + i * 3) + i * 420) % (VW + 360)) - 180;
+    const cy2 = (i * 97 + Math.sin(t * 0.1 + i) * 30 + 40) % VH;
+    ctx.beginPath();
+    ctx.ellipse(cx2, cy2, 95 + i * 22, 40 + i * 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ── fireflies blink through warm nights in the green zones ──
+const FIREFLY_MAPS = new Set(['wild','plains','fungal','swamp','town','lake']);
+const _flies = [];
+function renderFireflies() {
+  if (!state.started || state.battle || state.won) return;
+  if (!isNight() || !FIREFLY_MAPS.has(state.map)) { _flies.length = 0; return; }
+  if (_flies.length < 14 && Math.random() < 0.07) {
+    _flies.push({ x: Math.random() * VW, y: Math.random() * VH, a: Math.random() * Math.PI * 2,
+                  ph: Math.random() * Math.PI * 2, life: 400 + Math.random() * 400 });
+  }
+  const t = performance.now() * 0.002;
+  for (let i = _flies.length - 1; i >= 0; i--) {
+    const f = _flies[i];
+    f.a += (Math.random() - 0.5) * 0.3;
+    f.x += Math.cos(f.a) * 0.45; f.y += Math.sin(f.a) * 0.3;
+    f.life--;
+    if (f.life <= 0 || f.x < -10 || f.y < -10 || f.x > VW + 10 || f.y > VH + 10) { _flies.splice(i, 1); continue; }
+    const glow = (Math.sin(t * 2.4 + f.ph) + 1) * 0.5;
+    if (glow < 0.18) continue;   // blink off
+    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 4 + glow * 3);
+    g.addColorStop(0, `rgba(220,255,120,${(0.5 * glow + 0.2).toFixed(2)})`);
+    g.addColorStop(1, 'rgba(220,255,120,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(f.x - 8, f.y - 8, 16, 16);
+    ctx.fillStyle = `rgba(240,255,170,${(0.5 + 0.5 * glow).toFixed(2)})`;
+    ctx.fillRect(f.x | 0, f.y | 0, 1, 1);
+  }
+}
+
+// ── expanding ripple rings around the player while swimming ──
+function renderSwimRipples(psx, psy) {
+  if (!isWaterTile(state.map, state.px, state.py)) return;
+  const t = (performance.now() % 1100) / 1100;
+  ctx.lineWidth = 1;
+  for (let k = 0; k < 2; k++) {
+    const kt = (t + k * 0.5) % 1;
+    ctx.strokeStyle = `rgba(190,225,255,${(0.5 * (1 - kt)).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.ellipse(psx + 8, psy + 12, 5 + kt * 9, 2 + kt * 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// ── rising heat-haze over the caldera: thin frame slices sway sideways.
+// Copies the frame to an offscreen buffer first — reading slices back from
+// the live canvas mid-draw stalls the GPU pipeline and tanks the framerate.
+let _shimCv = null, _shimCtx = null;
+function renderHeatShimmer() {
+  if (state.map !== 'volcano' || !state.started || state.battle || state.won) return;
+  if (!_shimCv) {
+    _shimCv = document.createElement('canvas');
+    _shimCv.width = VW; _shimCv.height = VH;
+    _shimCtx = _shimCv.getContext('2d');
+  }
+  _shimCtx.drawImage(canvas, 0, 0);
+  const t = performance.now() / 280;
+  for (let y = 0; y < VH; y += 8) {
+    const off = Math.sin(t + y * 0.12) * 1.4;
+    ctx.drawImage(_shimCv, 0, y, VW, 4, off, y, VW, 4);
+  }
 }
 
 // ── day/night canvas tint + lantern light pool around the player ──
@@ -12695,9 +12875,12 @@ function tick(now) {
           }
         }
         if (_roamer && _roamer.map === state.map && state.px === _roamer.x && state.py === _roamer.y) triggerRoamer();
-        // dust puffs on hard ground (grass tiles get rustle particles above)
+        // soft ground keeps footprints; hard ground kicks up dust
         const _stepTile = tileAt(state.map, state.px, state.py);
-        if (_stepTile !== ',' && _stepTile !== 'w' && !isWaterTile(state.map, state.px, state.py)) {
+        if (_stepTile === 's' || _stepTile === 'n' || _stepTile === 'o') {
+          _footprints.push({ x: state.px, y: state.py, dir: state.dir, snow: _stepTile === 'o', t: performance.now() });
+          if (_footprints.length > 40) _footprints.shift();
+        } else if (_stepTile !== ',' && _stepTile !== 'w' && !isWaterTile(state.map, state.px, state.py)) {
           for (let i = 0; i < 2; i++) _rustles.push({
             x: state.px + 0.3 + Math.random() * 0.4, y: state.py + 0.7 + Math.random() * 0.2,
             vx: (Math.random() - 0.5) * 0.5, vy: -0.25 - Math.random() * 0.35, t: performance.now(),
