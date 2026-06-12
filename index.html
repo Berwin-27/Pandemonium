@@ -484,6 +484,20 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
 #miniSpinHub { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:22px; }
 #miniSpinInfo { text-align:center; color:#bbb; font-size:11px; letter-spacing:2px; margin-top:8px; }
 
+/* Battle VFX extras */
+.bt-arena.crit-zoom { animation: critZoom .34s cubic-bezier(.2,1.4,.5,1); }
+@keyframes critZoom { 0%{transform:scale(1)} 30%{transform:scale(1.05)} 100%{transform:scale(1)} }
+.bt-entry-ring {
+  position:absolute; width:22px; height:22px; border:2px solid rgba(255,255,255,0.85);
+  border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; z-index:5;
+  box-shadow:0 0 12px rgba(255,255,255,0.5);
+  animation: entryRing .6s ease-out forwards;
+}
+@keyframes entryRing {
+  from { transform:translate(-50%,-50%) scale(.3); opacity:1; }
+  to   { transform:translate(-50%,-50%) scale(6);  opacity:0; }
+}
+
 /* Intro / Ending */
 #intro, #ending {
   position:absolute; inset:0; z-index: 40;
@@ -1958,7 +1972,7 @@ body { background: var(--bg-void) !important; }
         <div id="invtabs"></div>
         <div id="invgrid"></div>
         <div id="invdetail" class="empty">Select an entry to examine it.</div>
-        <div id="invfoot">ARROWS navigate &nbsp;&bull;&nbsp; TAB filter &nbsp;&bull;&nbsp; <span id="invClose" style="cursor:pointer;color:var(--accent);text-decoration:underline">CLOSE</span></div>
+        <div id="invfoot">ARROWS navigate &nbsp;&bull;&nbsp; ENTER add/remove party (max 6) &nbsp;&bull;&nbsp; TAB filter &nbsp;&bull;&nbsp; <span id="invClose" style="cursor:pointer;color:var(--accent);text-decoration:underline">CLOSE</span></div>
       </div>
     </div>
     <div id="mini">
@@ -2189,7 +2203,11 @@ body { background: var(--bg-void) !important; }
       <p>All eighty-one Appliances &mdash; from the humblest Spatulon to ASTROCHEF itself &mdash; now reside in your registry.</p>
       <p>Professor Bouillabaisse hands you a laminated certificate and a single perfectly-poached egg.</p>
       <p style="color:#b8f8b8;margin-top:14px;">YOU ARE THE MASTER CHEF.</p>
-      <div class="press">&gt; REFRESH TO PLAY AGAIN &lt;</div>
+      <p style="color:#9ab;font-size:12px;margin-top:8px;">...and yet, somewhere in the Crystal Dimension, a void cauldron has begun to boil.</p>
+      <div style="display:flex;gap:18px;margin-top:20px;justify-content:center;">
+        <div class="press" style="cursor:pointer;animation:none;border:1px solid #2a4a2a;border-radius:4px;padding:8px 18px;color:#7edc8b" onclick="continuePostgame()">&gt; KEEP EXPLORING &lt;</div>
+        <div class="press" style="cursor:pointer;animation:none;border:1px solid #5a2a3a;border-radius:4px;padding:8px 18px;color:#ff6080" onclick="startNewGamePlus()">&gt; NEW GAME+ &lt;</div>
+      </div>
     </div>
   </div>
   <div id="help">
@@ -3017,9 +3035,9 @@ function claimDailyReward(ch) {
     state.activeBuffs.critBoost = Date.now() + BUFF_DURATION;
     toast('Shock Charge surging! 30% crit chance for 20 minutes!');
   } else if (ch.reward === 'golden_fork') {
-    state.playerMaxHp += 25;
+    gainMaxHp(25);
     state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25);
-    toast('Golden Fork absorbed! +25 max HP permanently!');
+    toast('Golden Fork absorbed! +25 max HP for the whole party!');
   }
   checkAchievements();
   saveGame();
@@ -3300,6 +3318,8 @@ const entities = [
     desc:'A cracked monitor flickers with green text: "SYSTEM OVERRIDE AVAILABLE. AUTHORIZED PERSONNEL ONLY. Password hint: the name of the one who built this place."' },
 
   // =================== DIMENSION NPC ===================
+  { m:'dimension', x:6, y:5, n:'Void Cauldron', e:'🕳️', npc:true, potroast:true,
+    desc:'' },
   { m:'dimension', x:10, y:6, n:'Floating Orb', e:'🔮', npc:true,
     desc:'"You shouldn\'t be here. None of us should. The crystals hum at frequencies that make Appliances evolve. Or explode. Mostly explode. Good luck."' },
 
@@ -3406,7 +3426,7 @@ const CYCLE_NPCS = [
 const HIDDEN_ITEMS = [
   { map:'wild',       x:15, y:15, item:'Golden Fork',  oneTime:true,
     msg:'Found a hidden Golden Fork! +25 max HP permanently!',
-    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
+    effect(){ gainMaxHp(25); state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
   { map:'market',     x:24, y:15, item:'Gadget Chip',  oneTime:true,
     msg:'Found a Gadget Chip hidden in the aisle! Gadget Scanner activated!',
     effect(){ state.gadget = true; } },
@@ -3424,7 +3444,7 @@ const HIDDEN_ITEMS = [
     effect(){ state.playerHp = state.playerMaxHp; } },
   { map:'volcano',    x:25, y:14, item:'Golden Fork',  oneTime:true,
     msg:'A Golden Fork glints in the ash! +25 max HP permanently!',
-    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
+    effect(){ gainMaxHp(25); state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
   { map:'swamp',      x:14, y:12, item:'Max Ration',   oneTime:true,
     msg:'A Max Ration preserved in bog amber! Fully restored HP!',
     effect(){ state.playerHp = state.playerMaxHp; } },
@@ -3433,7 +3453,7 @@ const HIDDEN_ITEMS = [
     effect(){ state.shinyLureActive = true; } },
   { map:'sky',        x:20, y:10, item:'Golden Fork',  oneTime:true,
     msg:'A Golden Fork forged from starlight! +25 max HP permanently!',
-    effect(){ state.playerMaxHp += 25; state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
+    effect(){ gainMaxHp(25); state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25); } },
 ];
 
 function checkHiddenItems() {
@@ -3640,7 +3660,14 @@ const state = {
   achievements: [],        // unlocked achievement ids
   visited: [],             // map keys the player has entered
   mapOpen: false,          // world map overlay open
-  volume: 1                // master volume 0..1
+  volume: 1,               // master volume 0..1
+  party: [],               // up to 6 appliance ids fighting with you
+  applianceHp: {},         // id → current HP (undefined = full)
+  hpBonus: 0,              // shared max-HP growth applied to every appliance
+  ngPlus: 0,               // New Game+ cycle count
+  reducedFlash: false,     // accessibility: tame the impact-frame strobes
+  potRoastDefeated: false, // true postgame superboss beaten
+  endingSeen: false        // ending screen already shown once
 };
 
 // ── LAKE GATEWAY (3-password secret entrance) ─────────────
@@ -5172,7 +5199,7 @@ function starterBaseHp(id) {
 }
 function playerAtkBonus() { return Math.floor(state.caught.size * 0.7); }
 function playerLevel() { return 1 + state.caught.size; }
-function enemyMaxHp(ent) { return 50 + RARITY_TIER[ent.rarity] * 42 + Math.floor(Math.random()*8); }
+function enemyMaxHp(ent) { return Math.round((50 + RARITY_TIER[ent.rarity] * 42 + Math.floor(Math.random()*8)) * ngHpMult()); }
 function enemyAttack(ent) {
   const t = RARITY_TIER[ent.rarity];
   const hp = state.playerMaxHp || 60;
@@ -5368,6 +5395,11 @@ function onKeyDown(e) {
   // Pandex
   if (state.invOpen) {
     if (k === 'p' || k === 'i' || k === 'escape') { closeInventory(); e.preventDefault(); return; }
+    if (k === ' ' || k === 'enter') {
+      const sel = pandexList()[state.invSel];
+      if (sel && state.caught.has(sel.id)) togglePartyMember(sel.id);
+      e.preventDefault(); return;
+    }
     if (k === 'arrowleft' || k === 'a') { moveInvSel(-1); e.preventDefault(); return; }
     if (k === 'arrowright' || k === 'd') { moveInvSel(1); e.preventDefault(); return; }
     if (k === 'arrowup' || k === 'w') { moveInvSel(-6); e.preventDefault(); return; }
@@ -5496,7 +5528,8 @@ function questHint() {
   const elitesLeft = Object.values(ELITE_BOSSES).filter(e => !state.bossesDefeated[e.id]).length;
   if (elitesLeft) return `Defeat the ${elitesLeft} remaining ELITE boss${elitesLeft===1?'':'es'} in the frontier regions!`;
   if (c < TOTAL_DEX) return `Complete the Pandex — ${TOTAL_DEX - c} species remain!`;
-  return 'PANDEX COMPLETE! Push your Battle Tower record!';
+  if (!state.potRoastDefeated) return 'A Void Cauldron hums in the Crystal Dimension. Something LEGENDARY awaits...';
+  return 'You have cooked the uncookable. Push your Tower record — or begin NEW GAME+!';
 }
 
 function toggleWorldMap() {
@@ -5544,18 +5577,213 @@ function renderWorldMap() {
     cells += `<div style="position:absolute;left:${cx*cellW}px;top:${cy*cellH}px;width:${cellW-6}px;height:${cellH-6}px;border:${border};border-radius:4px;background:${bg};color:${color};font-size:13px;text-align:center;line-height:1.2;padding-top:3px;letter-spacing:1px;${here?'box-shadow:0 0 14px rgba(244,193,101,.5);animation:blink 1.4s infinite;':''}">${inner}</div>`;
   }
   const achTotal = ACHIEVEMENTS.length;
+  // party strip: each member with live HP
+  const partyStrip = partyMembers().map(id => {
+    const e = entities.find(x => x.id === id);
+    const hp = Math.ceil(hpOf(id)), mx = maxHpFor(id);
+    const pct = hp / mx;
+    const hpCol = pct > 0.5 ? '#7edc8b' : pct > 0.2 ? '#f4c165' : '#f06a6a';
+    const active = id === state.activeAppliance ? 'border-color:#f4c165;box-shadow:0 0 8px rgba(244,193,101,.4);' : '';
+    return `<span style="display:inline-block;border:1px solid #2a3a5a;${active}border-radius:4px;padding:2px 6px;margin:0 2px;font-size:11px">${e ? e.e : '?'}<span style="color:${hpCol};font-size:8px"> ${hp}/${mx}</span></span>`;
+  }).join('') || '<span style="color:#555;font-size:9px">no party</span>';
+  const roamHint = _roamer
+    ? `<div style="margin-top:6px;color:#ffd700;font-size:9px;letter-spacing:1px">✨ A golden glimmer roams ${ZONE_NAMES[_roamer.map] || _roamer.map.toUpperCase()}...</div>` : '';
   el.innerHTML =
-    `<div style="color:#f4c165;letter-spacing:6px;font-size:14px;margin-bottom:14px">— WORLD MAP —</div>` +
+    `<div style="color:#f4c165;letter-spacing:6px;font-size:14px;margin-bottom:6px">— WORLD MAP —</div>` +
+    `<div style="color:#9ab;font-size:9px;letter-spacing:2px;margin-bottom:10px">${PHASE_ICON[dayPhase()]} ${dayPhase()}${state.ngPlus ? ` &nbsp;&bull;&nbsp; <span style="color:#ff6080">NG+${state.ngPlus}</span>` : ''}</div>` +
     `<div style="position:relative;width:${7*cellW}px;height:${5*cellH}px">${cells}</div>` +
-    `<div style="margin-top:14px;color:#ffe08a;font-size:10px;letter-spacing:1px;max-width:440px;text-align:center">📜 ${questHint()}</div>` +
+    `<div style="margin-top:10px">⚔ ${partyStrip}</div>` +
+    `<div style="margin-top:10px;color:#ffe08a;font-size:10px;letter-spacing:1px;max-width:440px;text-align:center">📜 ${questHint()}</div>` +
+    roamHint +
     `<div style="margin-top:8px;color:#888;font-size:9px;letter-spacing:2px">🪙 ${state.coins} &nbsp;&bull;&nbsp; 🏆 ${state.achievements.length}/${achTotal} &nbsp;&bull;&nbsp; 🏯 BEST: ${state.towerBest||0}</div>` +
-    `<div style="margin-top:10px;color:#888;font-size:9px;letter-spacing:1px">🔊 VOLUME <input type="range" min="0" max="100" value="${Math.round((state.volume??1)*100)}" style="vertical-align:middle;width:120px;accent-color:#f4c165" oninput="setGameVolume(this.value/100)"></div>` +
+    `<div style="margin-top:10px;color:#888;font-size:9px;letter-spacing:1px">🔊 VOLUME <input type="range" min="0" max="100" value="${Math.round((state.volume??1)*100)}" style="vertical-align:middle;width:120px;accent-color:#f4c165" oninput="setGameVolume(this.value/100)"> &nbsp;&bull;&nbsp; <span style="cursor:pointer;color:${state.reducedFlash?'#7edc8b':'#aaa'};text-decoration:underline" onclick="toggleReducedFlash()">⚡ FLASH FX: ${state.reducedFlash?'REDUCED':'FULL'}</span></div>` +
     `<div style="margin-top:12px;color:#555;font-size:9px;letter-spacing:2px;cursor:pointer" onclick="closeWorldMap()">M / ESC — CLOSE</div>`;
 }
 
 function setGameVolume(v) {
   state.volume = Math.max(0, Math.min(1, v));
   audio.setVolume(state.volume);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DAY / NIGHT CYCLE — driven by playtime, full day every 10 min
+// ═══════════════════════════════════════════════════════════
+const DAY_CYCLE_MS = 10 * 60 * 1000;
+const OUTDOOR_MAPS = new Set(['town','wild','plains','mountain','lake','beach','fungal','scrapyard','volcano','swamp','neon','sky']);
+const NOCTURNAL = new Set([57, 72, 75, 80]);   // Moldsworth, Swampsieve, Synthsizzle, Halogenie
+const PHASE_ICON = { DAWN:'🌅', DAY:'☀️', DUSK:'🌇', NIGHT:'🌙' };
+
+function dayT() { return ((state.playtime || 0) % DAY_CYCLE_MS) / DAY_CYCLE_MS; }
+function dayPhase() {
+  const t = dayT();
+  if (t < 0.08) return 'DAWN';
+  if (t < 0.52) return 'DAY';
+  if (t < 0.64) return 'DUSK';
+  return 'NIGHT';
+}
+function isNight() { return dayPhase() === 'NIGHT'; }
+
+// tint keyframes: [t, r, g, b, alpha] — lerped for smooth transitions
+const DAY_KEYS = [
+  [0.00, 255, 150,  80, 0.10],
+  [0.08,   0,   0,   0, 0.00],
+  [0.48,   0,   0,   0, 0.00],
+  [0.56, 255,  90,  50, 0.14],
+  [0.68,  10,  18,  60, 0.34],
+  [0.92,  10,  18,  60, 0.34],
+  [1.00, 255, 150,  80, 0.10]
+];
+function dayTint() {
+  const t = dayT();
+  for (let i = 0; i < DAY_KEYS.length - 1; i++) {
+    const a = DAY_KEYS[i], b = DAY_KEYS[i + 1];
+    if (t >= a[0] && t <= b[0]) {
+      const k = (t - a[0]) / Math.max(0.0001, b[0] - a[0]);
+      return [a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k, a[3]+(b[3]-a[3])*k, a[4]+(b[4]-a[4])*k];
+    }
+  }
+  return [0, 0, 0, 0];
+}
+// nocturnal species hide during the day (outdoors only)
+function isHiddenNocturnal(e) {
+  return !!(e && e.id && NOCTURNAL.has(e.id) && !isNight() && OUTDOOR_MAPS.has(e.m));
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROAMING GOLDEN GLIMMER — a guaranteed-shiny legendary chase
+// ═══════════════════════════════════════════════════════════
+const ROAMER_MAPS = ['wild','plains','mountain','lake','beach','fungal','scrapyard','volcano','swamp','neon'];
+let _roamer = null;
+let _roamerCooldownUntil = 0;
+
+function _placeRoamer() {
+  const m = ROAMER_MAPS[Math.floor(Math.random() * ROAMER_MAPS.length)];
+  const map = maps[m];
+  for (let tries = 0; tries < 60; tries++) {
+    const x = 1 + Math.floor(Math.random() * (map.w - 2));
+    const y = 1 + Math.floor(Math.random() * (map.h - 2));
+    if (!BLOCK.has(tileAt(m, x, y)) && !entAt(m, x, y)) { _roamer = { map: m, x, y }; return; }
+  }
+}
+setInterval(() => {
+  if (Date.now() >= _roamerCooldownUntil && state.started && !state.won) _placeRoamer();
+}, 90000);
+setTimeout(_placeRoamer, 20000);   // first appearance shortly after boot
+
+function triggerRoamer() {
+  if (!_roamer) return;
+  _roamer = null;
+  _roamerCooldownUntil = Date.now() + 180000;
+  const pool = entities.filter(e => e.id && (e.rarity === 'legendary' || e.rarity === 'ultra'));
+  const sp = pool[Math.floor(Math.random() * pool.length)];
+  toast('✨ THE GOLDEN GLIMMER REVEALS ITSELF!');
+  audio.portal();
+  startBattle(sp);
+  const b = state.battle;
+  if (b) {
+    b.enemyShiny = true;
+    b.enemyMaxHp = Math.round(b.enemyMaxHp * 1.3);
+    b.enemyHp = b.enemyMaxHp;
+    btEnemySprite.classList.add('shiny');
+    setTimeout(playShinyFlash, 700);
+    battleLog('<span style="color:#ffd700">✦ The glimmer was a SHINY all along! ✦</span>');
+    renderBattle();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// THE LEGENDARY POT ROAST — true postgame superboss
+// ═══════════════════════════════════════════════════════════
+function potRoastInteract() {
+  if (state.caught.size < TOTAL_DEX) {
+    openDialog('Void Cauldron', [
+      `A cauldron of pure darkness simmers silently. Something vast circles within.`,
+      `It does not acknowledge you. The Pandex feels... incomplete. (${state.caught.size}/${TOTAL_DEX})`
+    ]);
+    return;
+  }
+  if (state.potRoastDefeated) {
+    openDialog('Void Cauldron', [
+      'The cauldron bubbles with respect. You have cooked the uncookable.',
+      'The Pot Roast stirs, willing to test you again... (interact once more to rematch)'
+    ]);
+    state._potRoastRematch = true;
+    return;
+  }
+  openDialog('Void Cauldron', []);
+  _typewriterFinish();
+  const dlg = document.getElementById('dialogue');
+  if (!dlg) return;
+  dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px;text-align:center">` +
+    `<b style="color:#ff6080;letter-spacing:3px">🍖 THE VOID STIRS 🍖</b><br>` +
+    `<span style="font-size:10px;color:#ccc">Your Pandex is complete. The Legendary Pot Roast — the dish no Appliance has ever cooked twice — rises from the cauldron.</span><br>` +
+    `<span style="font-size:10px;color:#e55">This is the strongest battle in the game.</span><br><br>` +
+    `<span style="display:inline-block;padding:5px 16px;cursor:pointer;color:#ff6080;border:1px solid #5a2a3a;border-radius:3px" onclick="closeDialog();window.__potRoast()">⚔ FACE THE POT ROAST</span> ` +
+    `<span style="display:inline-block;padding:5px 16px;cursor:pointer;color:#888" onclick="closeDialog()">NOT YET</span></div>`;
+}
+
+function startPotRoast() {
+  const ng = 1 + (state.ngPlus || 0) * 0.5;
+  const phases = [
+    { n:'THE POT ROAST (RAW)',      e:'🍖', hp:Math.round(480*ng), element:'neutral' },
+    { n:'THE POT ROAST (SIZZLING)', e:'🔥', hp:Math.round(580*ng), element:'fire' },
+    { n:'THE LEGENDARY POT ROAST',  e:'✨', hp:Math.round(700*ng), element:'electric' }
+  ];
+  _startBossFight({
+    id:'potroast', name:'THE LEGENDARY POT ROAST', emoji:'🍖',
+    element:'neutral', hp:phases[0].hp, atk:Math.round(38*ng),
+    quote:'NO APPLIANCE HAS EVER COOKED ME TWICE.',
+    intro:'The Void Cauldron erupts! THE LEGENDARY POT ROAST rises, dripping with primordial gravy!',
+    defeat:'The Pot Roast falls still... then bows, perfectly cooked at last. "...twice. you cooked me twice." (+100 MAX HP!)',
+    rewardHp:100, phases, phaseIdx:0, potRoast:true
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// POSTGAME + NEW GAME+
+// ═══════════════════════════════════════════════════════════
+function continuePostgame() {
+  state.won = false;
+  state.screen = 'world';
+  document.getElementById('ending').style.display = 'none';
+  toast('🕳️ A void portal hums in the Crystal Dimension...');
+  autoSave();
+}
+
+function startNewGamePlus() {
+  state.ngPlus = (state.ngPlus || 0) + 1;
+  // kept: achievements, towerBest, applianceWins (bond), shinies, coinsEarned,
+  //        volume, reducedFlash, totalWins, ngPlus
+  state.caught = new Set();
+  state.party = []; state.applianceHp = {}; state.hpBonus = 0;
+  state.coins = 0; state.items = { potion: 0, maxPotion: 0, bait: 0 };
+  state.premiumBox = false; state.rareLureActive = false; state.shinyLureActive = false;
+  state.michelinStars = 0; state.bossesDefeated = {}; state.rivalBeaten = {};
+  state.encounters = 0;
+  state.won = false; state.endingSeen = false; state.potRoastDefeated = false;
+  state.starter = null; state.activeAppliance = null;
+  state.hiddenItemsFound = new Set();
+  state.visited = []; state.gadget = false; state.adminMode = false;
+  state.frostCore = false; state.luckyCharmBonus = 0;
+  state.map = 'house'; state.px = state.tx = 10; state.py = state.ty = 12;
+  state.moving = false; state.prog = 0;
+  document.getElementById('ending').style.display = 'none';
+  state.screen = 'starter';
+  document.getElementById('starter').classList.add('show');
+  toast(`★ NEW GAME+${state.ngPlus} — enemies hit harder, shinies shine brighter! ★`);
+  autoSave();
+}
+
+// NG+ difficulty scalars
+function ngHpMult()  { return 1 + (state.ngPlus || 0) * 0.5; }
+function ngDmgMult() { return 1 + (state.ngPlus || 0) * 0.4; }
+
+// FX accessibility toggle
+function toggleReducedFlash() {
+  state.reducedFlash = !state.reducedFlash;
+  toast(state.reducedFlash ? 'FLASH FX: REDUCED — gentler finisher strobes.' : 'FLASH FX: FULL');
+  if (state.mapOpen) renderWorldMap();
+  autoSave();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5628,7 +5856,7 @@ function openTowerDialog() {
 function startTower() {
   if (state.battle || state.tower) return;
   state.tower = { round: 1 };
-  state.playerHp = state.playerMaxHp;   // fresh start, then you're on your own
+  healParty();                          // fresh start, then you're on your own
   toast('🏯 BATTLE TOWER — ROUND 1!');
   setTimeout(() => startTowerBattle(), 600);
 }
@@ -5669,6 +5897,66 @@ function bondLevel(id) {
   return Math.min(10, Math.floor(Math.sqrt((state.applianceWins && state.applianceWins[id]) || 0)));
 }
 
+// ═══════════════════════════════════════════════════════════
+// PARTY SYSTEM — up to 6 appliances, each with its own HP.
+// state.playerHp/playerMaxHp remain the ACTIVE appliance's live view;
+// commitActiveHp/syncActiveHp move HP between the view and the store.
+// ═══════════════════════════════════════════════════════════
+function maxHpFor(id) { return starterBaseHp(id) + (state.hpBonus || 0); }
+function hpOf(id) {
+  const v = state.applianceHp[id];
+  return v === undefined ? maxHpFor(id) : Math.min(v, maxHpFor(id));
+}
+function commitActiveHp() {
+  if (state.activeAppliance) {
+    state.applianceHp[state.activeAppliance] =
+      Math.max(0, Math.min(state.playerHp, maxHpFor(state.activeAppliance)));
+  }
+}
+function syncActiveHp() {
+  state.playerMaxHp = maxHpFor(state.activeAppliance);
+  state.playerHp = hpOf(state.activeAppliance);
+}
+// permanent max-HP growth: goes into the shared pool so the whole party grows
+function gainMaxHp(n) {
+  state.hpBonus = (state.hpBonus || 0) + n;
+  state.playerMaxHp = maxHpFor(state.activeAppliance);
+}
+function partyMembers() { return (state.party || []).filter(id => state.caught.has(id)); }
+function aliveParty() { return partyMembers().filter(id => hpOf(id) > 0); }
+function healParty() {
+  for (const id of partyMembers()) state.applianceHp[id] = maxHpFor(id);
+  syncActiveHp();
+}
+function autoJoinParty(id) {
+  if (state.party.length < 6 && !state.party.includes(id)) {
+    state.party.push(id);
+    const e = entities.find(x => x.id === id);
+    toast(`⚔ ${e ? e.n.toUpperCase() : 'IT'} joined your party!`);
+  }
+}
+function togglePartyMember(id) {
+  if (!state.caught.has(id)) { toast('Catch it first!'); return; }
+  const i = state.party.indexOf(id);
+  const e = entities.find(x => x.id === id);
+  if (i >= 0) {
+    if (partyMembers().length <= 1) { toast('Your party needs at least one Appliance!'); return; }
+    state.party.splice(i, 1);
+    if (id === state.activeAppliance) {
+      commitActiveHp();
+      state.activeAppliance = partyMembers()[0];
+      syncActiveHp();
+    }
+    toast(`${e ? e.n.toUpperCase() : 'IT'} left the party.`);
+  } else {
+    if (state.party.length >= 6) { toast('Party is full (6 max)! Remove someone first.'); return; }
+    state.party.push(id);
+    toast(`⚔ ${e ? e.n.toUpperCase() : 'IT'} joined the party!`);
+  }
+  audio.blip();
+  renderInventoryModal();
+}
+
 const ACHIEVEMENTS = [
   { id:'first_catch', icon:'🍴', name:'FIRST CATCH',     check:() => state.caught.size >= 1 },
   { id:'dex10',       icon:'📗', name:'COLLECTOR',       check:() => state.caught.size >= 10 },
@@ -5685,7 +5973,9 @@ const ACHIEVEMENTS = [
   { id:'wins100',     icon:'🗡️', name:'WARCHEF',         check:() => (state.totalWins||0) >= 100 },
   { id:'tower5',      icon:'🏯', name:'TOWER CLIMBER',   check:() => (state.towerBest||0) >= 5 },
   { id:'tower10',     icon:'🌟', name:'TOWER LEGEND',    check:() => (state.towerBest||0) >= 10 },
-  { id:'rich',        icon:'🪙', name:'LOADED',          check:() => (state.coinsEarned||0) >= 1000 }
+  { id:'rich',        icon:'🪙', name:'LOADED',          check:() => (state.coinsEarned||0) >= 1000 },
+  { id:'potroast',    icon:'🍖', name:'COOKED IT TWICE', check:() => !!state.potRoastDefeated },
+  { id:'ngplus',      icon:'🔁', name:'SECOND HELPING',  check:() => (state.ngPlus||0) >= 1 }
 ];
 
 function checkAchievements() {
@@ -5735,7 +6025,14 @@ function _buildSaveData() {
     totalWins: state.totalWins || 0,
     achievements: state.achievements || [],
     visited: state.visited || [],
-    volume: (state.volume === undefined ? 1 : state.volume)
+    volume: (state.volume === undefined ? 1 : state.volume),
+    party: state.party || [],
+    applianceHp: (commitActiveHp(), state.applianceHp || {}),
+    hpBonus: state.hpBonus || 0,
+    ngPlus: state.ngPlus || 0,
+    reducedFlash: state.reducedFlash || false,
+    potRoastDefeated: state.potRoastDefeated || false,
+    endingSeen: state.endingSeen || false
   };
 }
 
@@ -5779,6 +6076,28 @@ function _applySaveData(d) {
   state.visited = d.visited || [];
   state.volume = (d.volume === undefined ? 1 : d.volume);
   audio.setVolume(state.volume);
+  state.ngPlus = d.ngPlus || 0;
+  state.reducedFlash = d.reducedFlash || false;
+  state.potRoastDefeated = d.potRoastDefeated || false;
+  state.endingSeen = d.endingSeen || (d.won || false);
+  if (d.party && d.party.length) {
+    // modern save: per-appliance HP store
+    state.party = d.party;
+    state.applianceHp = d.applianceHp || {};
+    state.hpBonus = d.hpBonus || 0;
+    syncActiveHp();
+  } else {
+    // migrate pre-party saves: global HP pool → shared bonus + auto-party
+    state.hpBonus = Math.max(0, (d.playerMaxHp || 60) - starterBaseHp(state.activeAppliance));
+    state.party = [state.activeAppliance];
+    for (const e of entities) {
+      if (state.party.length >= 6) break;
+      if (e.id && state.caught.has(e.id) && !state.party.includes(e.id)) state.party.push(e.id);
+    }
+    state.applianceHp = {};
+    state.applianceHp[state.activeAppliance] = Math.min(d.playerHp || 60, maxHpFor(state.activeAppliance));
+    syncActiveHp();
+  }
   state.started = true; state.screen = 'world';
   state.moving = false; state.prog = 0;
 }
@@ -5900,7 +6219,9 @@ function pickStarter(id) {
   state.starter = id;
   state.activeAppliance = id;
   state.caught.add(id);
-  state.playerMaxHp = starterBaseHp(id);
+  state.party = [id];
+  state.applianceHp = {};
+  state.playerMaxHp = maxHpFor(id);
   state.playerHp = state.playerMaxHp;
   computeMichelin();
   state.screen = 'world';
@@ -5941,7 +6262,8 @@ function tileAt(m, x, y) {
 }
 function entAt(m, x, y) {
   return entities.find(e => e.m === m && e.x === x && e.y === y
-    && !(e.id && state.caught.has(e.id)))
+    && !(e.id && state.caught.has(e.id))
+    && !isHiddenNocturnal(e))
     || CYCLE_NPCS.find(e => e.m === m && e.x === x && e.y === y);
 }
 function isWaterTile(m, x, y) { return tileAt(m, x, y) === '~' && (m === 'lake' || m === 'beach'); }
@@ -6114,6 +6436,10 @@ function interact() {
   if (e.elite)  return startEliteBattle(e.elite);
   if (e.shopkeep) return openShop();
   if (e.tower)  return openTowerDialog();
+  if (e.potroast) {
+    if (state._potRoastRematch) { state._potRoastRematch = false; return startPotRoast(); }
+    return potRoastInteract();
+  }
   if (e.bulletin) return bulletinBoardInteract();
   if (e.lines)  return npcCycleTalk(e);   // cycling-dialogue NPC
   if (e.npc)    return openDialog(e.n, [e.desc]);
@@ -6122,7 +6448,8 @@ function interact() {
 
 function healStation(e) {
   audio.heal();
-  const wasInjured = state.playerHp < state.playerMaxHp;
+  const wasInjured = state.playerHp < state.playerMaxHp || partyMembers().some(id => hpOf(id) < maxHpFor(id));
+  healParty();
   state.playerHp = state.playerMaxHp;
   if (wasInjured) {
     const _hs = document.getElementById('stage');
@@ -6243,8 +6570,15 @@ function startBattle(enemyEnt) {
     }, 440);
   }
   if (!state.activeAppliance) state.activeAppliance = state.starter;
+  if (!state.party || !state.party.length) state.party = [state.activeAppliance];
+  // lead with a healthy party member if the active appliance is down
+  if (hpOf(state.activeAppliance) <= 0) {
+    const alive = aliveParty();
+    if (alive.length) state.activeAppliance = alive[0];
+    else healParty();   // full wipe outside a heal — mercy revive
+  }
+  syncActiveHp();
   const active = entities.find(e => e.id === state.activeAppliance);
-  if (state.playerHp <= 0) state.playerHp = state.playerMaxHp;
   state.battle = {
     enemy: enemyEnt,
     enemyMaxHp: enemyMaxHp(enemyEnt),
@@ -6259,7 +6593,7 @@ function startBattle(enemyEnt) {
     turnCount: 0,
     lastMinigame: null,
     switchList: null,
-    enemyShiny: Math.random() < (state.shinyLureActive ? 0.50 : 0.01)
+    enemyShiny: Math.random() < (state.shinyLureActive ? 0.50 : (isNight() ? 0.03 : 0.01) * (state.ngPlus ? 2 : 1))
   };
   if (state.shinyLureActive) { state.shinyLureActive = false; }
   if (state.battle.enemyShiny) {
@@ -6278,6 +6612,18 @@ function startBattle(enemyEnt) {
   btEnemySprite.classList.add('entering');
   btPlayerSprite.classList.add('entering');
   setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
+  // shockwave ring as the wild appliance lands in the arena
+  setTimeout(() => {
+    try {
+      const r = btEnemySprite.getBoundingClientRect(), a = btArena.getBoundingClientRect();
+      const ring = document.createElement('div');
+      ring.className = 'bt-entry-ring';
+      ring.style.left = (r.left - a.left + r.width / 2) + 'px';
+      ring.style.top = (r.top - a.top + r.height / 2) + 'px';
+      btArena.appendChild(ring);
+      setTimeout(() => ring.remove(), 700);
+    } catch (e) {}
+  }, 380);
   const eEl = ELEMENTS[getElement(enemyEnt.id)];
   const shinyTag = state.battle.enemyShiny ? ' <span style="color:#ffd700;font-weight:bold">✦ SHINY ✦</span>' : '';
   battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> <span style="color:${eEl.color}">${eEl.icon} ${eEl.label}</span>${shinyTag} appears!`);
@@ -6331,22 +6677,22 @@ function startBossBattle(starNum) {
 function _startBossFight(boss) {
   audio.encounter();
   if (!state.activeAppliance) state.activeAppliance = state.starter;
-  const active = entities.find(e => e.id === state.activeAppliance);
-  if (state.playerHp <= 0) state.playerHp = state.playerMaxHp;
-
-  // Build roster of up to 3 appliances with individual HP
-  const roster = [];
-  roster.push({ id: state.activeAppliance, hp: state.playerHp, maxHp: state.playerMaxHp });
-  const others = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
-  for (let i = 0; i < Math.min(2, others.length); i++) {
-    const hp = starterBaseHp(others[i].id);
-    roster.push({ id: others[i].id, hp, maxHp: hp });
+  if (!state.party || !state.party.length) state.party = [state.activeAppliance];
+  // if the active appliance is down, lead with the first healthy party member
+  if (hpOf(state.activeAppliance) <= 0) {
+    const alive = aliveParty();
+    if (alive.length) state.activeAppliance = alive[0];
+    else healParty();   // total wipe before a boss — mercy heal
   }
+  const active = entities.find(e => e.id === state.activeAppliance);
+  syncActiveHp();
+  const roster = partyMembers().map(id => ({ id }));
 
+  const _bossHp = boss.potRoast ? boss.hp : Math.round(boss.hp * ngHpMult());
   state.battle = {
     enemy: { id: boss.id, n: boss.name, e: boss.emoji, rarity: 'ultra', dex: boss.intro, habitat: 'BOSS ARENA' },
-    enemyMaxHp: boss.hp,
-    enemyHp: boss.hp,
+    enemyMaxHp: _bossHp,
+    enemyHp: _bossHp,
     starter: active,
     phase: 'intro',
     log: [],
@@ -6362,7 +6708,7 @@ function _startBossFight(boss) {
     bossData: boss,
     bossRoster: roster,
     bossRosterIdx: 0,
-    bossAtkPower: boss.atk
+    bossAtkPower: boss.potRoast ? boss.atk : Math.round(boss.atk * ngDmgMult())
   };
   audio.stopArea();
   audio.startBattle();
@@ -6381,7 +6727,7 @@ function _startBossFight(boss) {
     setTimeout(() => { btEnemySprite.classList.remove('entering'); btPlayerSprite.classList.remove('entering'); }, 650);
     battleLog(`<b style="color:#ff6080;font-size:14px">★ BOSS BATTLE ★</b>`);
     battleLog(boss.intro);
-    battleLog(`<span style="color:#888">You have ${roster.length} appliance${roster.length>1?'s':''} in your roster.</span>`);
+    battleLog(`<span style="color:#888">Your party: ${roster.length} appliance${roster.length>1?'s':''}.</span>`);
     renderBattle();
     setBattleMenu('continue');
   });
@@ -7651,8 +7997,10 @@ const _fin = {
   },
   // True impact frame: full-opacity hold then hard fade. times>1 = rapid strobe.
   impactFrame(parent, times=1, color='#fff', holdMs=55) {
+    if (state.reducedFlash) times = 1;
+    const _op = state.reducedFlash ? 0.45 : 1;
     for (let i=0; i<times; i++) setTimeout(()=>{
-      const el=this.mk(`position:absolute;inset:0;z-index:94;pointer-events:none;background:${color};opacity:1;`,parent);
+      const el=this.mk(`position:absolute;inset:0;z-index:94;pointer-events:none;background:${color};opacity:${_op};`,parent);
       setTimeout(()=>{ el.style.transition=`opacity ${Math.round(holdMs*1.6)}ms ease-out`; el.style.opacity='0'; },holdMs);
       setTimeout(()=>el.remove(), holdMs*2.6+35);
     }, i*(holdMs+26));
@@ -7781,7 +8129,8 @@ function _ifController(onDone) {
     // Each frame replaces the previous one — this is what creates the 25fps
     // impact-frame barrage. builder returns the new panel element (or null).
     burst(start, dur, builder, frameMs) {
-      const FR = frameMs || 40;          // ≈25 frames per second
+      // reduced-flash mode slows the strobe well below photosensitive ranges
+      const FR = state.reducedFlash ? Math.max(frameMs || 40, 120) : (frameMs || 40);   // ≈25fps full / ≈8fps reduced
       const n = Math.max(1, Math.round(dur / FR));
       for (let i = 0; i < n; i++) this.sched(start + i * FR, () => {
         const old = this.rootEl.querySelector('[data-if-flip]');
@@ -8478,7 +8827,8 @@ function _finBuildScene(pEmoji, eEmoji, C, bg) {
   fc.appendChild(fcCnt);
 
   function imp(col, ms) {
-    fcFl.style.cssText = `position:absolute;inset:0;z-index:20;pointer-events:none;background:${col};opacity:1;`;
+    const op = state.reducedFlash ? '0.4' : '1';
+    fcFl.style.cssText = `position:absolute;inset:0;z-index:20;pointer-events:none;background:${col};opacity:${op};`;
     setTimeout(() => { fcFl.style.transition = `opacity ${ms}ms ease-out`; fcFl.style.opacity = '0'; }, 60);
   }
   function sl(lPct, tPct, ang, col) {
@@ -8509,6 +8859,20 @@ function _finBuildScene(pEmoji, eEmoji, C, bg) {
       setTimeout(()=>r.remove(),750);
     },(d0||0)+i*70);
   }
+  // drifting theme-colored embers float up through the whole cinematic
+  const embTimer = setInterval(() => {
+    if (!document.body.contains(fc)) { clearInterval(embTimer); return; }
+    const em = document.createElement('div');
+    const sz = 2 + Math.random() * 4;
+    em.style.cssText = `position:absolute;left:${Math.random()*100}%;top:${55+Math.random()*45}%;width:${sz}px;height:${sz}px;border-radius:50%;background:${C};box-shadow:0 0 8px ${C};opacity:${(0.25+Math.random()*0.5).toFixed(2)};z-index:8;pointer-events:none;transition:transform ${2200+Math.random()*1200|0}ms linear,opacity 2.4s linear;`;
+    fc.appendChild(em);
+    void em.offsetWidth;
+    em.style.transform = `translate(${((Math.random()-0.5)*80)|0}px,-${140+Math.random()*160|0}px)`;
+    em.style.opacity = '0';
+    setTimeout(() => { try { em.remove(); } catch(e) {} }, 3600);
+  }, state.reducedFlash ? 260 : 130);
+  setTimeout(() => clearInterval(embTimer), 6500);
+
   return { ov, fc, fcP, fcE, fcFl, fcCnt, fcT, imp, sl, shk, trail, ring };
 }
 
@@ -8966,7 +9330,7 @@ function setBattleMenu(kind) {
   } else if (kind === 'main') {
     b.phase = 'menu'; b.menuFocus = 0;
     if (b.isBoss) {
-      const hasSwitch = b.bossRoster && b.bossRoster.filter((r,i) => i !== b.bossRosterIdx && r.hp > 0).length > 0;
+      const hasSwitch = partyMembers().some(id => id !== state.activeAppliance && hpOf(id) > 0);
       const bossItemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0);
       const opts = [
         { a:'fight',  label:'FIGHT',  disabled:false },
@@ -9071,21 +9435,18 @@ function setBattleMenu(kind) {
     });
   } else if (kind === 'switch') {
     b.phase = 'switch'; b.moveFocus = 0;
-    let switchEntities;
-    if (b.isBoss && b.bossRoster) {
-      switchEntities = b.bossRoster
-        .map((r, i) => ({ ...entities.find(e => e.id === r.id), _rosterIdx: i, _rosterHp: r.hp, _rosterMaxHp: r.maxHp }))
-        .filter(r => r._rosterIdx !== b.bossRosterIdx && r._rosterHp > 0);
-    } else {
-      switchEntities = entities.filter(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
-    }
+    commitActiveHp();
+    const switchEntities = partyMembers()
+      .filter(id => id !== state.activeAppliance && hpOf(id) > 0)
+      .map(id => entities.find(e => e.id === id))
+      .filter(Boolean);
     b.switchList = switchEntities;
     btMenu.innerHTML = switchEntities.map((e, i) => {
       const el = ELEMENTS[getElement(e.id)];
       const evo = getEvoStage(e.id);
       const evoMark = evo > 0 ? ` <span style="color:${EVO_COLOR[evo]};font-size:9px">★${evo}</span>` : '';
       const shMark = state.shinies[e.id] ? ' <span style="color:#ffd700;font-size:9px">✦SHINY</span>' : '';
-      const hpInfo = b.isBoss ? ` <span style="color:#aaa;font-size:9px">${Math.ceil(e._rosterHp)}/${e._rosterMaxHp} HP</span>` : '';
+      const hpInfo = ` <span style="color:#aaa;font-size:9px">${Math.ceil(hpOf(e.id))}/${maxHpFor(e.id)} HP ❤${bondLevel(e.id)}</span>`;
       return `<div class="bt-btn ${i===0?'focus':''}" data-sw="${i}">${e.e} ${getEvoName(e.id).toUpperCase()}<span class="bt-mg" style="color:${RARITY_COLOR[e.rarity]}">${RARITY_LABEL[e.rarity]}</span> <span style="color:${el.color};font-size:10px">${el.icon}</span>${evoMark}${shMark}${hpInfo}</div>`;
     }).join('');
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
@@ -9172,7 +9533,7 @@ function useBattleItem(k) {
     audio.blip();
     battleLog(`🍖 Tasty Bait scattered! Catch chance <b style="color:#f4c165">+20%</b> this battle.`);
   }
-  if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
+  commitActiveHp();
   renderBattle();
   setBattleMenu('none');
   setTimeout(() => enemyTurn(), 900);
@@ -9536,20 +9897,10 @@ function doSwitch(idx) {
   const b = state.battle; if (!b) return;
   const target = b.switchList[idx]; if (!target) return;
 
-  if (b.isBoss && b.bossRoster) {
-    // Save current appliance's HP to roster
-    b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
-    // Switch to new roster entry
-    const newIdx = target._rosterIdx;
-    b.bossRosterIdx = newIdx;
-    state.activeAppliance = target.id;
-    b.starter = entities.find(e => e.id === target.id);
-    state.playerHp = b.bossRoster[newIdx].hp;
-    state.playerMaxHp = b.bossRoster[newIdx].maxHp;
-  } else {
-    state.activeAppliance = target.id;
-    b.starter = target;
-  }
+  commitActiveHp();
+  state.activeAppliance = target.id;
+  b.starter = entities.find(e => e.id === target.id) || target;
+  syncActiveHp();
   b.lastMinigame = null;
   dailyTrack('switch', {});
   setSpriteBattleClasses(btPlayerSprite, target.id || target);
@@ -9651,7 +10002,11 @@ function resolveBattleMove(score, gotGood) {
     if (matchup > 1) setTimeout(() => playMatchupFlash(true), 100);
     else if (matchup < 1) setTimeout(() => playMatchupFlash(false), 100);
   }, 200);
-  if (state.adminMode || crit) { audio.crit(); triggerScreenShake(8, 380); }
+  if (state.adminMode || crit) {
+    audio.crit(); triggerScreenShake(8, 380);
+    btArena.classList.remove('crit-zoom'); void btArena.offsetWidth; btArena.classList.add('crit-zoom');
+    setTimeout(() => btArena.classList.remove('crit-zoom'), 380);
+  }
   else if (score > 0.7) { audio.cleanHit(); audio.battleHit(); triggerScreenShake(4, 240); }
   else if (score > 0.4) { audio.hit(); audio.battleHit(); triggerScreenShake(2, 160); }
   else audio.glance();
@@ -9707,7 +10062,7 @@ function enemyTurn() {
     const moves = getEnemyMoves(b.enemy);
     const mv = moves[Math.floor(Math.random() * moves.length)];
     const tier = RARITY_TIER[b.enemy.rarity] || 0;
-    const baseDmg = mv.power + tier * 2 + Math.floor(Math.random() * 4);
+    const baseDmg = Math.round((mv.power + tier * 2 + Math.floor(Math.random() * 4)) * ngDmgMult());
     atk = { dmg: baseDmg, flavor: `${b.enemy.n} uses <b>${mv.name}</b>!` };
     if (mv.status && Math.random() < (mv.statusChance || 0.25)) {
       applyPlayerStatus(mv.status);
@@ -9718,7 +10073,7 @@ function enemyTurn() {
   const towerMult = b.isTower ? (1 + (b.towerRound || 1) * 0.05) : 1;
   const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
-  if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
+  commitActiveHp();
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
   const eMg = atkTypes[Math.floor(Math.random()*atkTypes.length)];
   btAttackAnim(btEnemySprite);
@@ -9749,27 +10104,24 @@ function enemyTurn() {
   else battleLog(`${atk.flavor} You lose <b>${realDmg}</b> HP.`);
   renderBattle();
   if (state.playerHp <= 0) {
-    if (b.isBoss && b.bossRoster) {
-      const nextAlive = b.bossRoster.findIndex((r, i) => i !== b.bossRosterIdx && r.hp > 0);
-      if (nextAlive >= 0) {
-        const nxt = b.bossRoster[nextAlive];
-        const nxtEnt = entities.find(e => e.id === nxt.id);
-        battleLog(`<b>${getEvoName(state.activeAppliance).toUpperCase()}</b> is overcooked!`);
-        b.bossRosterIdx = nextAlive;
-        state.activeAppliance = nxt.id;
-        b.starter = nxtEnt;
-        state.playerHp = nxt.hp;
-        state.playerMaxHp = nxt.maxHp;
-        b.lastMinigame = null;
-        setSpriteBattleClasses(btPlayerSprite, nxtEnt.id || nxtEnt);
-        btPlayerSprite.classList.add('entering');
-        setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
-        setTimeout(() => playEnterFlash(), 100);
-        battleLog(`Go, <b style="color:${RARITY_COLOR[nxtEnt.rarity]}">${getEvoName(nxt.id).toUpperCase()}</b>!`);
-        renderBattle();
-        setTimeout(() => setBattleMenu('main'), 1100);
-        return;
-      }
+    // Party safety net: any battle, the next healthy party member steps in
+    commitActiveHp();
+    const next = aliveParty().find(id => id !== state.activeAppliance);
+    if (next !== undefined) {
+      const nxtEnt = entities.find(e => e.id === next);
+      battleLog(`<b>${getEvoName(state.activeAppliance).toUpperCase()}</b> is overcooked!`);
+      state.activeAppliance = next;
+      b.starter = nxtEnt;
+      syncActiveHp();
+      b.lastMinigame = null;
+      setSpriteBattleClasses(btPlayerSprite, nxtEnt.id || nxtEnt);
+      btPlayerSprite.classList.add('entering');
+      setTimeout(() => btPlayerSprite.classList.remove('entering'), 650);
+      setTimeout(() => playEnterFlash(), 100);
+      battleLog(`Go, <b style="color:${RARITY_COLOR[nxtEnt.rarity]}">${getEvoName(next).toUpperCase()}</b>!`);
+      renderBattle();
+      setTimeout(() => setBattleMenu('main'), 1100);
+      return;
     }
     return onPlayerFaint();
   }
@@ -9836,9 +10188,11 @@ function onEnemyFaint() {
     audio.stinger();
     battleLog(`<b>${b.enemy.n}</b> is knocked out!`);
     b.enemy = Object.assign({}, b.enemy, { n: ph.n, e: ph.e });
-    b.bossData.element = ph.element;           // matchups follow the new appliance
+    b.bossData.element = ph.element;           // matchups follow the new phase
     b.enemyMaxHp = ph.hp; b.enemyHp = ph.hp;
-    battleLog(`${RIVAL.name} sends out <b style="color:#ff6080">${ph.n}</b>!`);
+    battleLog(b.bossData.potRoast
+      ? `<b style="color:#ff6080">THE POT ROAST TRANSFORMS — ${ph.n}!</b>`
+      : `${RIVAL.name} sends out <b style="color:#ff6080">${ph.n}</b>!`);
     btEnemySprite.classList.remove('hurt', 'faint');
     btEnemySprite.classList.add('entering');
     setTimeout(() => btEnemySprite.classList.remove('entering'), 650);
@@ -9856,12 +10210,17 @@ function onEnemyFaint() {
     battleLog(`<b style="color:#ff6080;font-size:14px">★ BOSS DEFEATED ★</b>`);
     battleLog(b.bossData.defeat);
     if (firstKill && b.bossData.rewardHp) {
-      state.playerMaxHp += b.bossData.rewardHp;
+      gainMaxHp(b.bossData.rewardHp);
       state.playerHp = Math.min(state.playerMaxHp, state.playerHp + b.bossData.rewardHp);
       setTimeout(() => playHpGainFloat(b.bossData.rewardHp), 800);
       toast(`★ ELITE DEFEATED! +${b.bossData.rewardHp} MAX HP! ★`);
     }
     state.totalWins = (state.totalWins || 0) + 1;
+    if (b.bossData.potRoast) {
+      state.potRoastDefeated = true;
+      addCoins(1000, true);
+      battleLog(`🪙 The void yields <b style="color:#ffd700">1000 coins</b> of crystallized gravy!`);
+    }
     if (b.bossData.rivalEvent) {
       state.rivalBeaten[b.bossData.rivalEvent.n] = true;
       addCoins(b.bossData.rivalEvent.coins, true);
@@ -9880,6 +10239,7 @@ function onEnemyFaint() {
       if (state.michelinStars === 1) battleLog('The forest cave is now open.');
     }
     state.playerHp = state.playerMaxHp;
+    commitActiveHp();
     setTimeout(() => { renderBattle(); setBattleMenu('end'); }, 650);
     setTimeout(checkEnding, 900);
     return;
@@ -9889,6 +10249,7 @@ function onEnemyFaint() {
     const shinyMsg = b.enemyShiny ? ' <span style="color:#ffd700">✦ SHINY ✦</span>' : '';
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b>${shinyMsg} faints! You add it to your Pandex.`);
     state.caught.add(b.enemy.id);
+    autoJoinParty(b.enemy.id);
     autoSave();
     setTimeout(() => playLevelUpFloat(), 300);
     if (b.enemyShiny) state.shinies[b.enemy.id] = true;
@@ -9934,7 +10295,7 @@ function onEnemyFaint() {
         const col = EVO_COLOR[1] || '#f4c165';
         setTimeout(() => showEvoCutscene && showEvoCutscene(activeId, entities.find(e=>e.id===activeId)?.n || '?', evoName, entities.find(e=>e.id===activeId)?.e || '?', itemEvo.toEmoji, col, 15), 500);
         battleLog(`<b style="color:${col};font-size:14px">★ ITEM EVOLUTION! ★</b> ${itemEvo.itemName} triggered evolution into <b style="color:${col}">${evoName.toUpperCase()}</b>!`);
-        state.playerMaxHp += 15;
+        gainMaxHp(15);
         state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 15);
         dailyTrack && dailyTrack('evolve', {});
         // Mark item consumed
@@ -9951,7 +10312,7 @@ function onEnemyFaint() {
       battleLog(`<b style="color:${col};font-size:14px">★ EVOLUTION! ★</b> Your appliance evolved into <b style="color:${col}">${evoName.toUpperCase()}</b>!`);
       dailyTrack('evolve', {});
       const hpGain = newStage === 2 ? 18 : 12;
-      state.playerMaxHp += hpGain;
+      gainMaxHp(hpGain);
       state.playerHp = Math.min(state.playerMaxHp, state.playerHp + hpGain);
     } else {
       const next = getWinsToNextEvo(activeId);
@@ -9961,7 +10322,7 @@ function onEnemyFaint() {
   const prev = state.michelinStars;
   computeMichelin();
   const growth = Math.max(1, RARITY_TIER[b.enemy.rarity] + 1);
-  state.playerMaxHp += growth * 2;
+  gainMaxHp(growth);   // shared across the whole party, so half the old solo rate
   state.playerHp = Math.min(state.playerMaxHp, state.playerHp + growth * 2);
   setTimeout(() => playHpGainFloat(growth * 2), 700);
   if (state.michelinStars > prev) {
@@ -9998,6 +10359,7 @@ function onPlayerFaint() {
     setTimeout(()=>bo.remove(),450);
   },1900);
   setTimeout(() => {
+    healParty();   // the Professor patches up the whole party after a blackout
     state.playerHp = state.playerMaxHp;
     // Blackout teleport: inside prof's kitchen building
     state.map = 'town';
@@ -10021,6 +10383,7 @@ function _startLowHpAlarm() {
 
 function closeBattle() {
   clearInterval(_lowHpIv); _lowHpIv = null;
+  commitActiveHp();
   const wasBoss = state.battle && state.battle.isBoss;
   state.battle = null;
   battleEl.classList.remove('show');
@@ -10121,8 +10484,9 @@ function shrineInteract() {
 }
 
 function checkEnding() {
-  if (state.caught.size >= TOTAL_DEX && !state.won) {
+  if (state.caught.size >= TOTAL_DEX && !state.won && !state.endingSeen) {
     state.won = true;
+    state.endingSeen = true;
     state.screen = 'ended';
     setTimeout(() => { document.getElementById('ending').style.display = 'flex'; }, 900);
   }
@@ -10418,11 +10782,13 @@ function renderInventoryModal() {
       const badgeCh = admin ? 'A' : RARITY_LABEL[it.rarity][0];
       const badge = `<div class="rbadge" style="color:${col}">${badgeCh}</div>`;
       const num = `<div class="plotmark" style="color:${col};font-size:9px;letter-spacing:1px">#${String(it.id).padStart(2,'0')}</div>`;
+      const partyBadge = state.party.includes(it.id)
+        ? `<div style="position:absolute;top:1px;left:2px;font-size:9px;color:#7edc8b;text-shadow:0 0 4px #7edc8b">⚔</div>` : '';
       const face = reveal ? it.e : '?';
       const isShinySlot = state.shinies[it.id];
       const border = admin ? '#f067ff' : (isShinySlot ? '#ffd700' : (isCaught ? '#7edc8b' : '#2a2e5a'));
       const shinyGlow = isShinySlot ? ';box-shadow:0 0 8px #ffd700' : '';
-      html += `<div class="${cls}" data-idx="${i}" data-rarity="${it.rarity}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}</div>`;
+      html += `<div class="${cls}" data-idx="${i}" data-rarity="${it.rarity}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}${partyBadge}</div>`;
     } else {
       html += `<div class="invslot empty"></div>`;
     }
@@ -10458,9 +10824,16 @@ function renderInventoryModal() {
       `<div class="name"><span style="font-size:22px;vertical-align:-2px">${reveal ? sel.e : '\u2753'}</span> ` +
       `#${String(sel.id).padStart(2,'0')} ${reveal ? getEvoName(sel.id) : '???'}${evoLabel}${shinyLabel} ` +
       `<span style="color:${col};letter-spacing:3px;font-size:11px">&bull; ${rarLabel}</span></div>`;
+    const inParty = state.party.includes(sel.id);
+    const partyLine = isCaught
+      ? `<div class="act" style="margin-top:4px;color:${inParty ? '#7edc8b' : '#888'}">` +
+        `${inParty ? '⚔ IN PARTY' : 'NOT IN PARTY'} &nbsp;&bull;&nbsp; HP ${Math.ceil(hpOf(sel.id))}/${maxHpFor(sel.id)} &nbsp;&bull;&nbsp; BOND ❤${bondLevel(sel.id)}` +
+        ` &nbsp;&bull;&nbsp; <span style="color:#f4c165;cursor:pointer;text-decoration:underline" onclick="window.__toggleParty(${sel.id})">ENTER — ${inParty ? 'REMOVE' : 'ADD TO PARTY'}</span></div>`
+      : '';
     const body = reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
-        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}${itemEvoHint}</div>` +
+        `<div class="act">HABITAT: ${sel.habitat}${NOCTURNAL.has(sel.id) ? ' <span style="color:#8fa8ff">🌙 NOCTURNAL</span>' : ''} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}${itemEvoHint}</div>` +
+        partyLine +
         (isCaught ? `<div style="margin-top:6px">${renderStatBars(sel)}</div>${renderEvoChain(sel)}` : '')
       : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
         `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`;
@@ -11191,6 +11564,7 @@ function miniResolve(result) {
   const ent = m.entity;
   if (result === 'good' && ent && ent.id) {
     state.caught.add(ent.id);
+    autoJoinParty(ent.id);
     dailyTrack('catch', { elem: getElement(ent.id), rarity: ent.rarity });
     const prev = state.michelinStars;
     computeMichelin();
@@ -11791,19 +12165,41 @@ function drawFeature(ch, sx, sy, tx, ty, h) {
       ctx.fillStyle = '#a0a0ac'; ctx.fillRect(sx + 5, sy + 5, 1, 1);
       break;
     }
-    case 'L': { // lava
+    case 'L': { // lava — molten churn with pulsing hotspots
       ctx.fillStyle = '#301010'; ctx.fillRect(sx, sy, TILE, TILE);
-      ctx.fillStyle = '#f04028'; ctx.fillRect(sx + 1, sy + 1, 14, 14);
-      ctx.fillStyle = '#ffa040'; ctx.fillRect(sx + 2, sy + 4, 2, 2); ctx.fillRect(sx + 10, sy + 9, 2, 2);
-      ctx.fillStyle = '#fff070'; ctx.fillRect(sx + 3, sy + 4, 1, 1); ctx.fillRect(sx + 11, sy + 9, 1, 1);
+      const lt = performance.now() / 480;
+      const lp = (Math.sin(lt + tx * 1.7 + ty * 2.3) + 1) * 0.5;
+      ctx.fillStyle = lp > 0.5 ? '#ff5030' : '#f04028';
+      ctx.fillRect(sx + 1, sy + 1, 14, 14);
+      // drifting hot blobs
+      const bx = 2 + ((lt * 3 + tx * 5) % 10 | 0);
+      const by = 3 + ((lt * 2 + ty * 7) % 9 | 0);
+      ctx.fillStyle = '#ffa040';
+      ctx.fillRect(sx + bx, sy + by, 3, 2);
+      ctx.fillRect(sx + ((bx + 7) % 12) + 1, sy + ((by + 5) % 11) + 2, 2, 2);
+      ctx.fillStyle = `rgba(255,240,112,${0.5 + lp * 0.5})`;
+      ctx.fillRect(sx + bx + 1, sy + by, 1, 1);
+      // bursting ember spark
+      if (((lt * 2 | 0) + tx + ty) % 9 === 0) {
+        ctx.fillStyle = '#fff0a0';
+        ctx.fillRect(sx + ((bx + 4) % 13) + 1, sy + 2, 1, 1);
+      }
       break;
     }
-    case '~': { // water
+    case '~': { // water — rolling animated waves
       ctx.fillStyle = '#1e4aa0'; ctx.fillRect(sx, sy, TILE, TILE);
+      const wt = performance.now() / 600;
+      const ph = (tx * 3 + ty * 5);
+      const w1 = ((wt + ph) % 4) * 4;          // drifting ripple rows
+      const w2 = ((wt * 0.7 + ph + 2) % 4) * 4;
       ctx.fillStyle = '#3060c8';
-      ctx.fillRect(sx + 1, sy + 3, 4, 1); ctx.fillRect(sx + 8, sy + 8, 4, 1); ctx.fillRect(sx + 2, sy + 13, 4, 1);
+      ctx.fillRect(sx + ((ph * 3 + (wt * 8 | 0)) % 12) + 1, sy + (w1 | 0) + 1, 4, 1);
+      ctx.fillRect(sx + ((ph * 5 + (wt * 6 | 0)) % 11) + 1, sy + (w2 | 0) + 2, 4, 1);
       ctx.fillStyle = '#70b0f4';
-      ctx.fillRect(sx + 10, sy + 5, 1, 1); ctx.fillRect(sx + 3, sy + 10, 1, 1); ctx.fillRect(sx + 13, sy + 12, 1, 1);
+      ctx.fillRect(sx + ((ph * 7 + (wt * 10 | 0)) % 14) + 1, sy + ((w1 + 6) % 14 | 0) + 1, 2, 1);
+      // glints
+      const gph = (Math.floor(wt * 2) + ph) & 0x7;
+      if (gph === 0) { ctx.fillStyle = '#b8dcff'; ctx.fillRect(sx + 6, sy + 7, 1, 1); }
       break;
     }
     case 'W': { // window (in wall)
@@ -11924,10 +12320,20 @@ function drawEntitySprite(e, sx, sy) {
     }
   }
   if (!e.e) return;
+  // nocturnal species glow with cool light when they're out at night
+  if (e.id && NOCTURNAL.has(e.id) && isNight()) {
+    const _np = (Math.sin(performance.now() * 0.004) + 1) * 0.5;
+    const _ng = ctx.createRadialGradient(sx+TILE/2, sy+TILE/2, 1, sx+TILE/2, sy+TILE/2, 12);
+    _ng.addColorStop(0, `rgba(140,180,255,${0.18 + _np * 0.22})`);
+    _ng.addColorStop(1, 'rgba(140,180,255,0)');
+    ctx.fillStyle = _ng; ctx.fillRect(sx - 2, sy - 2, TILE + 4, TILE + 4);
+  }
+  // gentle idle bob so the world feels alive (phase varies per tile)
+  const _bob = e.id ? Math.sin(performance.now() * 0.003 + (e.x * 7 + e.y * 13)) * 1.2 : 0;
   ctx.font = '13px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(e.e, sx + TILE / 2, sy + TILE / 2);
+  ctx.fillText(e.e, sx + TILE / 2, sy + TILE / 2 + _bob);
 }
 
 function drawPlayer(sx, sy) {
@@ -12019,6 +12425,7 @@ function render() {
   for (const e of entities) {
     if (e.m !== state.map) continue;
     if (e.id && state.caught.has(e.id)) continue;
+    if (isHiddenNocturnal(e)) continue;
     // FOG OF WAR: catchable Appliances only reveal themselves within 2 tiles.
     // NPCs, shrine, signs, heal counter stay visible at all times.
     if (e.id && !state.adminMode) {
@@ -12057,7 +12464,7 @@ function render() {
       const rx = (r.x + r.vx * age) * TILE - cam.x;
       const ry = (r.y + r.vy * age) * TILE - cam.y;
       ctx.globalAlpha = 1 - age;
-      ctx.fillStyle = age < 0.5 ? '#7ec850' : '#5a9a3c';
+      ctx.fillStyle = age < 0.5 ? (r.col || '#7ec850') : (r.col2 || '#5a9a3c');
       ctx.fillRect(Math.round(rx), Math.round(ry), 2, 2);
     }
     ctx.globalAlpha = 1;
@@ -12079,6 +12486,69 @@ function render() {
     }
   }
   renderAmbient();
+  renderDayNight();
+  renderRoamerSprite();
+  renderWeather();
+}
+
+// ── day/night canvas tint + lantern light pool around the player ──
+function renderDayNight() {
+  if (!state.started || state.battle || state.won) return;
+  if (!OUTDOOR_MAPS.has(state.map)) return;
+  const [r, g, b, a0] = dayTint();
+  const a = state.map === 'neon' ? a0 * 0.55 : a0;   // city lights soften the night
+  if (a <= 0.005) return;
+  ctx.fillStyle = `rgba(${r|0},${g|0},${b|0},${a.toFixed(3)})`;
+  ctx.fillRect(0, 0, VW, VH);
+  if (a > 0.2) {
+    const px = (state.px + (state.moving ? (state.tx - state.px) * state.prog : 0)) * TILE - cam.x + TILE / 2;
+    const py = (state.py + (state.moving ? (state.ty - state.py) * state.prog : 0)) * TILE - cam.y + TILE / 2;
+    const lg = ctx.createRadialGradient(px, py, 4, px, py, 64);
+    lg.addColorStop(0, 'rgba(255,214,140,0.16)');
+    lg.addColorStop(1, 'rgba(255,214,140,0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(px - 64, py - 64, 128, 128);
+  }
+}
+
+// ── golden glimmer roamer: pulsing star drawn above the world ──
+function renderRoamerSprite() {
+  if (!_roamer || _roamer.map !== state.map || state.battle) return;
+  const sx = _roamer.x * TILE - cam.x + TILE / 2;
+  const sy = _roamer.y * TILE - cam.y + TILE / 2;
+  if (sx < -TILE || sy < -TILE || sx > VW + TILE || sy > VH + TILE) return;
+  const t = performance.now() * 0.004;
+  const pulse = (Math.sin(t) + 1) * 0.5;
+  const gl = ctx.createRadialGradient(sx, sy, 1, sx, sy, 12 + pulse * 5);
+  gl.addColorStop(0, `rgba(255,220,90,${(0.45 + pulse * 0.3).toFixed(2)})`);
+  gl.addColorStop(1, 'rgba(255,220,90,0)');
+  ctx.fillStyle = gl;
+  ctx.fillRect(sx - 18, sy - 18, 36, 36);
+  ctx.font = '12px "Segoe UI Emoji", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('✨', sx, sy + Math.sin(t * 1.4) * 2);
+}
+
+// ── weather: drizzle over the swamp, dusk rain on the lake ──
+const _rain = [];
+function renderWeather() {
+  if (!state.started || state.battle || state.won) return;
+  const rainy = state.map === 'swamp' || (state.map === 'lake' && (dayPhase() === 'DUSK' || dayPhase() === 'NIGHT'));
+  if (!rainy) { _rain.length = 0; return; }
+  if (_rain.length < 70 && Math.random() < 0.55) {
+    _rain.push({ x: Math.random() * (VW + 20), y: -6, v: 3.0 + Math.random() * 2.4 });
+  }
+  ctx.strokeStyle = 'rgba(160,200,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = _rain.length - 1; i >= 0; i--) {
+    const d = _rain[i];
+    d.y += d.v; d.x -= d.v * 0.18;
+    if (d.y > VH + 6) { _rain.splice(i, 1); continue; }
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x + 1.1, d.y + 5);
+  }
+  ctx.stroke();
 }
 
 const ZONE_NAMES = { house: 'HOME', town: 'TOWN', market: 'GRANDE MART', wild: 'WILDERNESS',
@@ -12111,7 +12581,8 @@ function renderHud() {
   const _cc = document.getElementById('coinCount');
   if (_cc && _cc.textContent !== String(state.coins)) _cc.textContent = state.coins;
   document.getElementById('attemptCount').textContent = state.encounters;
-  document.getElementById('zone').textContent = ZONE_NAMES[state.map] || state.map.toUpperCase();
+  document.getElementById('zone').textContent =
+    `${ZONE_NAMES[state.map] || state.map.toUpperCase()} ${OUTDOOR_MAPS.has(state.map) ? PHASE_ICON[dayPhase()] : ''}`;
   // Michelin stars
   const starsEl = document.getElementById('stars');
   if (starsEl) {
@@ -12119,6 +12590,8 @@ function renderHud() {
     for (let i = 0; i < 5; i++) {
       html += i < state.michelinStars ? '<span>&#9733;</span>' : '<span class="off">&#9733;</span>';
     }
+    if (state.potRoastDefeated) html += ' <span title="Cooked It Twice">🍖</span>';
+    if (state.ngPlus > 0) html += ` <span style="color:#ff6080;letter-spacing:1px;font-size:9px">NG+${state.ngPlus}</span>`;
     if (state.adminMode) html += ' <span style="color:#f067ff;letter-spacing:2px;font-size:10px">&#9889;ADMIN&#9889;</span>';
     if (starsEl.innerHTML !== html) starsEl.innerHTML = html;
   }
@@ -12213,13 +12686,23 @@ function tick(now) {
           _grassSteps++;
           if (_grassSteps >= 3 && (state.rareLureActive || Math.random() < 0.14)) {
             _grassSteps = 0;
-            let pool = entities.filter(en => en.id && en.m === state.map);
+            let pool = entities.filter(en => en.id && en.m === state.map && !isHiddenNocturnal(en));
             if (state.rareLureActive) {
               const rare = pool.filter(en => RARITY_TIER[en.rarity] >= 1);
               if (rare.length) { pool = rare; state.rareLureActive = false; toast('🎏 The Rare Lure worked!'); }
             }
             if (pool.length) encounter(pool[Math.floor(Math.random() * pool.length)]);
           }
+        }
+        if (_roamer && _roamer.map === state.map && state.px === _roamer.x && state.py === _roamer.y) triggerRoamer();
+        // dust puffs on hard ground (grass tiles get rustle particles above)
+        const _stepTile = tileAt(state.map, state.px, state.py);
+        if (_stepTile !== ',' && _stepTile !== 'w' && !isWaterTile(state.map, state.px, state.py)) {
+          for (let i = 0; i < 2; i++) _rustles.push({
+            x: state.px + 0.3 + Math.random() * 0.4, y: state.py + 0.7 + Math.random() * 0.2,
+            vx: (Math.random() - 0.5) * 0.5, vy: -0.25 - Math.random() * 0.35, t: performance.now(),
+            col: '#b8a888', col2: '#8a8070'
+          });
         }
         checkAdminTerminal(); checkLakeGateway(); checkHiddenItems();
       }
@@ -12299,6 +12782,9 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
     'Your rival MARCO is out there. He picked the element that beats yours.',
     'The 🏯 BATTLE TOWER in town is an endless gauntlet — how far can you climb?',
     'Elite bosses guard the volcano, swamp, neon city, and sky. Beat them for MAX HP!',
+    'Build a PARTY of 6 in the Pandex (ENTER) — each appliance has its own HP!',
+    'Some species are NOCTURNAL — they only appear at night. Shinies love the dark too.',
+    '✨ A golden glimmer roams the world. Find it for a guaranteed SHINY legendary!',
     'F5 saves anytime • F opens fast travel • P opens your PANDEX'
   ];
   let tipIdx = 0;
@@ -12350,8 +12836,11 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
 Object.assign(window, {
   saveGame, loadGame, openSaveSlots, closeSaveModal, deleteSaveSlot,
   renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
-  buyItem, startTower, setGameVolume, closeWorldMap
+  buyItem, startTower, setGameVolume, closeWorldMap,
+  continuePostgame, startNewGamePlus, toggleReducedFlash
 });
+window.__toggleParty = togglePartyMember;
+window.__potRoast = startPotRoast;
 // debug/testing handle (read-mostly; also powers automated playtests)
 window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene };
 
