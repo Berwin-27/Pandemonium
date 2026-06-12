@@ -1943,10 +1943,12 @@ body { background: var(--bg-void) !important; }
       <div class="row"><span id="attemptLabel">TOTAL</span><span class="cnt" id="attemptCount">0</span></div>
       <div class="h" style="margin-top:6px">MICHELIN</div>
       <div id="stars"><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span><span class="off">&#9733;</span></div>
+      <div class="h" style="margin-top:6px">COINS</div>
+      <div class="row"><span>&#129689;</span><span class="cnt" id="coinCount" style="color:#ffd700">0</span></div>
     </div>
     <div id="zone">HOME</div>
     <div id="dexHud" style="position:absolute;bottom:4px;left:8px;font-family:'Courier New',monospace;font-size:9px;color:#888;letter-spacing:2px;z-index:50"></div>
-    <div id="hint">P = PANDEX &bull; M = WARP HOME &bull; F5 = SAVE SLOTS &bull; F9 = LOAD SLOTS</div>
+    <div id="hint">P = PANDEX &bull; M = MAP &bull; H = WARP HOME &bull; F = FAST TRAVEL &bull; F5 = SAVE &bull; F9 = LOAD</div>
     <div id="streakHud" style="display:none;position:absolute;top:4px;right:8px;font-family:'Courier New',monospace;font-size:9px;color:#f4c165;letter-spacing:2px;z-index:50"></div>
     <div id="dialogue"></div>
     <div id="invmodal">
@@ -2109,16 +2111,21 @@ body { background: var(--bg-void) !important; }
       </div>
       <div id="loadText" style="font-size:10px;letter-spacing:3px;color:#666;margin-top:4px;">INITIALIZING...</div>
       <div id="loadEmoji" style="font-size:36px;margin-top:12px;animation:loadSpin 2s linear infinite;">🍳</div>
+      <div style="margin-top:18px;width:min(520px,90vw);border:1px solid #2a3a5a;border-radius:4px;background:rgba(10,16,36,0.6);padding:10px 16px;text-align:center;">
+        <div style="font-size:9px;letter-spacing:4px;color:#f4c165;margin-bottom:6px;">— HOW TO PLAY —</div>
+        <div id="loadTip" style="font-size:10px;letter-spacing:1px;color:#aac;line-height:1.6;min-height:30px;">Move with ARROWS or WASD &bull; SPACE to interact with anything</div>
+      </div>
     </div>
     <div id="intro" style="display:none;">
       <h1>PANDEMONIUM</h1>
       <p style="color:#f4c165;letter-spacing:3px;font-size:13px;">&mdash; GOTTA COOK 'EM ALL &mdash;</p>
       <p>For as long as anyone remembers, the world has been home to wild, living kitchenware &mdash; mischievous <b>Appliances</b> that roam the homes, markets, caves, and crystal dimensions of the realm.</p>
       <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>81 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And three ULTRA entities whispered about only in chef's lore.</p>
-      <p>Catching an Appliance requires skill. Time your strikes, hammer buttons, hold your nerve, follow precise sequences, and take careful aim. Rarer Appliances demand sharper technique.</p>
+      <p>Catching an Appliance requires skill. Battle it, weaken it below 30% HP, then throw a Takeout Box. Rarer Appliances demand sharper technique &mdash; and the tall golden grass hides surprise encounters.</p>
+      <p style="font-size:12px;color:#aac;">Earn <b style="color:#ffd700">🪙 coins</b> from every win and spend them at the <b>Grande Mart</b>. Evolve your team, bond with your favorites, face your <b>rival Marco</b>, conquer the <b>🏯 Battle Tower</b>, and press <b style="color:#f4c165">M</b> any time you're lost &mdash; the world map always shows your next objective.</p>
       <div class="keys">
-        ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact<br>
-        P &mdash; PANDEX &nbsp; M &mdash; WARP HOME &nbsp; F5 &mdash; SAVE SLOTS &nbsp; F9 &mdash; LOAD SLOTS
+        ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact &nbsp; P &mdash; PANDEX<br>
+        M &mdash; WORLD MAP &nbsp; H &mdash; WARP HOME &nbsp; F &mdash; FAST TRAVEL &nbsp; F5 / F9 &mdash; SAVE / LOAD
       </div>
       <div class="press" style="cursor:pointer" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}))">&gt; TAP or PRESS SPACE TO BEGIN &lt;</div>
       <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="openSaveSlots('load')">&gt; TAP or F9 TO CONTINUE &lt;</div>
@@ -2179,14 +2186,14 @@ body { background: var(--bg-void) !important; }
     <div id="ending">
       <h1>MASTER CHEF</h1>
       <p>You have completed the PANDEX.</p>
-      <p>All sixty-three Appliances &mdash; from the humblest Spatulon to OMNICHEF PRIME itself &mdash; now reside in your registry.</p>
+      <p>All eighty-one Appliances &mdash; from the humblest Spatulon to ASTROCHEF itself &mdash; now reside in your registry.</p>
       <p>Professor Bouillabaisse hands you a laminated certificate and a single perfectly-poached egg.</p>
       <p style="color:#b8f8b8;margin-top:14px;">YOU ARE THE MASTER CHEF.</p>
       <div class="press">&gt; REFRESH TO PLAY AGAIN &lt;</div>
     </div>
   </div>
   <div id="help">
-    <b>ARROWS</b> MOVE &nbsp;&bull;&nbsp; <b>SPACE</b> INTERACT &nbsp;&bull;&nbsp; <b>P</b> PANDEX &nbsp;&bull;&nbsp; <b>ESC</b> CLOSE
+    <b>ARROWS</b> MOVE &nbsp;&bull;&nbsp; <b>SPACE</b> INTERACT &nbsp;&bull;&nbsp; <b>P</b> PANDEX &nbsp;&bull;&nbsp; <b>M</b> MAP &nbsp;&bull;&nbsp; <b>H</b> HOME &nbsp;&bull;&nbsp; <b>ESC</b> CLOSE
   </div>
 </div>
 
@@ -2205,12 +2212,13 @@ body { background: var(--bg-void) !important; }
     </div>
     <div class="row">
       <div class="touch-btn" data-key="p" id="touchPandex"><span class="icon">&#128214;</span><span class="label">DEX</span></div>
-      <div class="touch-btn" data-key="m" id="touchWarp"><span class="icon">&#127968;</span><span class="label">WARP</span></div>
+      <div class="touch-btn" data-key="h" id="touchWarp"><span class="icon">&#127968;</span><span class="label">WARP</span></div>
     </div>
   </div>
 </div>
 <div class="touch-util">
   <div class="touch-btn" id="touchSave" data-key="f5"><span class="icon">&#128190;</span><span class="label">SAVE</span></div>
+  <div class="touch-btn" id="touchMap" data-key="m"><span class="icon">&#128506;</span><span class="label">MAP</span></div>
 </div>
 <script>
 (() => {
@@ -3013,6 +3021,7 @@ function claimDailyReward(ch) {
     state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 25);
     toast('Golden Fork absorbed! +25 max HP permanently!');
   }
+  checkAchievements();
   saveGame();
 }
 
@@ -3350,6 +3359,12 @@ const entities = [
   { m:'mountain', x:7, y:2, n:'Summit Monk', e:'🧘', npc:true, gate:'sky',
     desc:'A monk meditates beside the glowing portal. "The Celestial Kitchen accepts only the attuned. Catch a Frostifry and the gate shall know you."' },
 
+  // =================== SHOP & TOWER ===================
+  { m:'market', x:24, y:13, n:'Shopkeeper', e:'🧑‍💼', npc:true, shopkeep:true,
+    desc:'' },
+  { m:'town', x:10, y:12, n:'Battle Tower', e:'🏯', npc:true, tower:true,
+    desc:'' },
+
   // =================== SHRINE ===================
   { m:'wild', x:13, y:20, n:'The Shrine', e:'', shrine:true,
     desc:'Old stones, older than language. Weighing what you carry.' }
@@ -3612,7 +3627,20 @@ const state = {
   luckyCharmBonus: 0,      // Lucky Charm: +10% catch rate
   dailyStreak: 0,          // consecutive days with a daily claim
   streakLastDate: null,    // date string of last claim day
-  streakBonusExpiry: null  // timestamp when 7-day streak bonus expires
+  streakBonusExpiry: null, // timestamp when 7-day streak bonus expires
+  coins: 0,                // spendable currency from battle wins
+  coinsEarned: 0,          // lifetime coins (achievements)
+  items: { potion: 0, maxPotion: 0, bait: 0 },  // shop consumables
+  premiumBox: false,       // permanent +10% catch upgrade
+  rareLureActive: false,   // next grass encounter is rare-or-better
+  rivalBeaten: {},         // rival event number → true
+  towerBest: 0,            // best Battle Tower streak
+  tower: null,             // active tower run { round } or null
+  totalWins: 0,            // lifetime battle wins (achievements)
+  achievements: [],        // unlocked achievement ids
+  visited: [],             // map keys the player has entered
+  mapOpen: false,          // world map overlay open
+  volume: 1                // master volume 0..1
 };
 
 // ── LAKE GATEWAY (3-password secret entrance) ─────────────
@@ -3892,6 +3920,8 @@ const audio = (() => {
   // Everything (music + SFX) routes through this so layered sounds never clip
   // and the whole game shares one cohesive master tone.
   let _bus = null;
+  let _volNode = null;
+  let _userVol = 1;
   function bus() {
     const a = ensure(); if (!a) return null;
     if (_bus) return _bus;
@@ -3900,9 +3930,14 @@ const audio = (() => {
     comp.attack.value = 0.004; comp.release.value = 0.24;
     const shelf = a.createBiquadFilter();
     shelf.type = 'highshelf'; shelf.frequency.value = 7800; shelf.gain.value = 2.5;
-    shelf.connect(comp); comp.connect(a.destination);
+    _volNode = a.createGain(); _volNode.gain.value = _userVol;
+    shelf.connect(comp); comp.connect(_volNode); _volNode.connect(a.destination);
     _bus = shelf;
     return _bus;
+  }
+  function setVolume(v) {
+    _userVol = Math.max(0, Math.min(1, v));
+    if (_volNode) _volNode.gain.value = _userVol;
   }
   function play(notes, type, vol) {
     const a = ensure(); if (!a) return;
@@ -5052,6 +5087,7 @@ const audio = (() => {
       noiseHit({ dur:0.25, vol:0.02, kind:'hp', f:6000 });
     },
 
+    setVolume,
     startBattle, stopBattle,
     startArea, stopArea,
     startLoading, stopLoading
@@ -5198,6 +5234,7 @@ function fastTravelTo(idx) {
   state.moving = false; state.prog = 0;
   audio.startArea(w.map); audio.zoneTransition(); showAreaBanner(w.map);
   toast(`Warped to ${w.label}!`);
+  checkRivalAmbush();
 }
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
@@ -5264,6 +5301,12 @@ function onKeyDown(e) {
   // impact-frame finisher: SPACE/ENTER/ESC skips straight to the result
   if (_ifActive) {
     if (k === ' ' || k === 'enter' || k === 'escape') { _ifActive.finish(); e.preventDefault(); }
+    return;
+  }
+
+  // world map overlay eats input until closed
+  if (state.mapOpen) {
+    if (k === 'm' || k === 'escape') { closeWorldMap(); e.preventDefault(); }
     return;
   }
 
@@ -5348,7 +5391,8 @@ function onKeyDown(e) {
 
   // world
   if (k === 'p' || k === 'i') { openInventory(); e.preventDefault(); return; }
-  if (k === 'm') { teleportHome(); e.preventDefault(); return; }
+  if (k === 'm') { toggleWorldMap(); e.preventDefault(); return; }
+  if (k === 'h') { teleportHome(); e.preventDefault(); return; }
   if (k === 'f' && state.screen === 'world' && !state.battle && !state.invOpen && !state.mini && !state.dialog) {
     openFastTravel(); e.preventDefault(); return;
   }
@@ -5365,6 +5409,295 @@ function teleportHome() {
   } else {
     state.map = 'town'; state.px = state.tx = 23; state.py = state.ty = 7;
     state.moving = false; state.prog = 0; audio.startArea('town'); toast('Warped to Professor\'s Kitchen!');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// COIN ECONOMY & GRANDE MART SHOP
+// ═══════════════════════════════════════════════════════════
+function addCoins(n, silent) {
+  state.coins = (state.coins || 0) + n;
+  state.coinsEarned = (state.coinsEarned || 0) + n;
+  if (!silent) toast(`🪙 +${n} coins!`);
+}
+
+const SHOP_STOCK = [
+  { key:'potion',     name:'POTION',       icon:'🧪', price:60,  desc:'Restores 50 HP mid-battle' },
+  { key:'maxPotion',  name:'MAX POTION',   icon:'💖', price:150, desc:'Fully restores HP mid-battle' },
+  { key:'bait',       name:'TASTY BAIT',   icon:'🍖', price:50,  desc:'+20% catch chance for one battle' },
+  { key:'rareLure',   name:'RARE LURE',    icon:'🎏', price:120, desc:'Next grass encounter: RARE or better', flag:'rareLureActive' },
+  { key:'shinyLure',  name:'SHINY LURE',   icon:'✨', price:500, desc:'Next encounter: 50% shiny chance', flag:'shinyLureActive' },
+  { key:'premiumBox', name:'PREMIUM BOX',  icon:'📦', price:400, desc:'PERMANENT +10% catch chance', oneTime:true }
+];
+
+function openShop() {
+  openDialog('GRANDE MART', []);
+  _typewriterFinish();
+  const dlg = document.getElementById('dialogue');
+  if (!dlg) return;
+  const rows = SHOP_STOCK.map((it, i) => {
+    const soldOut = it.oneTime && state.premiumBox;
+    const active = it.flag && state[it.flag];
+    const owned = state.items && state.items[it.key] !== undefined ? ` <span style="color:#888">(×${state.items[it.key]})</span>` : '';
+    const right = soldOut ? '<span style="color:#666">SOLD OUT</span>'
+                : active  ? '<span style="color:#7edc8b">ACTIVE</span>'
+                : `<span style="color:#ffd700">🪙 ${it.price}</span>`;
+    const click = (soldOut || active) ? '' : `onclick="buyItem(${i})"`;
+    const col = (soldOut || active) ? '#555' : (state.coins >= it.price ? '#e0e0e0' : '#775');
+    return `<span style="display:flex;justify-content:space-between;padding:3px 8px;cursor:${click?'pointer':'default'};color:${col};border-radius:3px" ${click} onmouseover="this.style.background='rgba(244,193,101,.08)'" onmouseout="this.style.background='transparent'">` +
+      `<span>${it.icon} ${it.name}${owned} <span style="font-size:9px;color:#888">— ${it.desc}</span></span>${right}</span>`;
+  }).join('');
+  dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px">` +
+    `<b style="color:#f4c165;letter-spacing:3px">🛒 GRANDE MART</b> <span style="float:right;color:#ffd700">🪙 ${state.coins}</span><br>` +
+    `<span style="font-size:9px;color:#666">Win battles to earn coins &bull; click to buy &bull; ESC to leave</span><br><br>${rows}</div>`;
+}
+
+function buyItem(i) {
+  const it = SHOP_STOCK[i]; if (!it) return;
+  if (it.oneTime && state.premiumBox) return;
+  if (it.flag && state[it.flag]) return;
+  if (state.coins < it.price) { toast('Not enough coins!'); audio.bump(); return; }
+  state.coins -= it.price;
+  if (it.key === 'premiumBox') { state.premiumBox = true; toast('📦 Premium Box! Catch chance +10% forever!'); }
+  else if (it.flag) { state[it.flag] = true; toast(`${it.icon} ${it.name} activated!`); }
+  else { state.items[it.key] = (state.items[it.key] || 0) + 1; toast(`Bought ${it.icon} ${it.name}!`); }
+  audio.catchSuccess();
+  checkAchievements();
+  autoSave();
+  openShop();   // refresh the shop view
+}
+
+// ═══════════════════════════════════════════════════════════
+// WORLD MAP (M) + QUEST HINTS
+// ═══════════════════════════════════════════════════════════
+const MAP_GRID = {   // zone → [col,row] in rough world geography
+  volcano:[0,2], sky:[1,1], mountain:[1,2], plains:[2,2], fungal:[2,3], swamp:[2,4],
+  house:[3,0], town:[3,1], wild:[3,2], cave:[3,3], dimension:[3,4],
+  base:[4,0], market:[4,1], lake:[4,2], scrapyard:[4,3], beach:[5,2], neon:[6,2]
+};
+const MAP_ICONS = {
+  house:'🏠', town:'🏘️', market:'🛒', wild:'🌲', cave:'🕳️', base:'🔩', dimension:'🔮',
+  plains:'🌾', mountain:'🏔️', lake:'🌊', beach:'🏖️', fungal:'🍄', scrapyard:'⚙️',
+  volcano:'🌋', swamp:'🐸', neon:'🌆', sky:'☁️'
+};
+
+function markVisited(m) {
+  if (m && MAP_GRID[m] && !state.visited.includes(m)) state.visited.push(m);
+}
+
+function questHint() {
+  const c = state.caught.size;
+  if (!state.starter) return 'Choose your starter Appliance!';
+  if (c === 0) return 'Head south of Town into the Wilderness and catch your first Appliance!';
+  if (c < 10) return `Catch 10 Appliances to earn Michelin Star 2 (${c}/10).`;
+  if (!state.bossesDefeated.boss1) return 'Keep battling — a boss challenger approaches for Star 3!';
+  if (![37,38,39].every(id => state.caught.has(id))) return 'Catch the 3 LEGENDARY Appliances in the Deep Cave for Star 4.';
+  if (!sacredFiveComplete()) return 'Gather the Sacred Five and visit the Shrine in the Wilderness.';
+  const elitesLeft = Object.values(ELITE_BOSSES).filter(e => !state.bossesDefeated[e.id]).length;
+  if (elitesLeft) return `Defeat the ${elitesLeft} remaining ELITE boss${elitesLeft===1?'':'es'} in the frontier regions!`;
+  if (c < TOTAL_DEX) return `Complete the Pandex — ${TOTAL_DEX - c} species remain!`;
+  return 'PANDEX COMPLETE! Push your Battle Tower record!';
+}
+
+function toggleWorldMap() {
+  if (state.mapOpen) { closeWorldMap(); return; }
+  if (!state.started || state.battle || state.mini || state.dialog || state.invOpen || state.won) return;
+  state.mapOpen = true;
+  markVisited(state.map);
+  renderWorldMap();
+}
+
+function closeWorldMap() {
+  state.mapOpen = false;
+  const el = document.getElementById('worldMap');
+  if (el) el.remove();
+}
+
+function renderWorldMap() {
+  let el = document.getElementById('worldMap');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'worldMap';
+    document.getElementById('stage').appendChild(el);
+  }
+  el.style.cssText = 'position:absolute;inset:0;z-index:60;background:rgba(4,6,16,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:\'Courier New\',monospace;';
+  const cellW = 62, cellH = 46;
+  let cells = '';
+  for (const [m, [cx, cy]] of Object.entries(MAP_GRID)) {
+    const here = m === state.map;
+    const seen = state.visited.includes(m);
+    const locked = AREA_GATES[m] && !checkGate(m, false);
+    let inner, border, color, bg;
+    if (here) {
+      inner = `${MAP_ICONS[m]}<br><span style="font-size:7px">${(ZONE_NAMES[m]||m).split(' ')[0]}</span>`;
+      border = '2px solid #f4c165'; color = '#ffe08a'; bg = 'rgba(244,193,101,0.16)';
+    } else if (seen) {
+      inner = `${MAP_ICONS[m]}<br><span style="font-size:7px">${(ZONE_NAMES[m]||m).split(' ')[0]}</span>`;
+      border = '1px solid #3a4a6a'; color = '#aac'; bg = 'rgba(30,40,70,0.5)';
+    } else if (locked) {
+      inner = `🔒<br><span style="font-size:7px">LOCKED</span>`;
+      border = '1px solid #553'; color = '#875'; bg = 'rgba(40,30,10,0.4)';
+    } else {
+      inner = `?<br><span style="font-size:7px">???</span>`;
+      border = '1px dashed #333'; color = '#555'; bg = 'rgba(20,20,30,0.4)';
+    }
+    cells += `<div style="position:absolute;left:${cx*cellW}px;top:${cy*cellH}px;width:${cellW-6}px;height:${cellH-6}px;border:${border};border-radius:4px;background:${bg};color:${color};font-size:13px;text-align:center;line-height:1.2;padding-top:3px;letter-spacing:1px;${here?'box-shadow:0 0 14px rgba(244,193,101,.5);animation:blink 1.4s infinite;':''}">${inner}</div>`;
+  }
+  const achTotal = ACHIEVEMENTS.length;
+  el.innerHTML =
+    `<div style="color:#f4c165;letter-spacing:6px;font-size:14px;margin-bottom:14px">— WORLD MAP —</div>` +
+    `<div style="position:relative;width:${7*cellW}px;height:${5*cellH}px">${cells}</div>` +
+    `<div style="margin-top:14px;color:#ffe08a;font-size:10px;letter-spacing:1px;max-width:440px;text-align:center">📜 ${questHint()}</div>` +
+    `<div style="margin-top:8px;color:#888;font-size:9px;letter-spacing:2px">🪙 ${state.coins} &nbsp;&bull;&nbsp; 🏆 ${state.achievements.length}/${achTotal} &nbsp;&bull;&nbsp; 🏯 BEST: ${state.towerBest||0}</div>` +
+    `<div style="margin-top:10px;color:#888;font-size:9px;letter-spacing:1px">🔊 VOLUME <input type="range" min="0" max="100" value="${Math.round((state.volume??1)*100)}" style="vertical-align:middle;width:120px;accent-color:#f4c165" oninput="setGameVolume(this.value/100)"></div>` +
+    `<div style="margin-top:12px;color:#555;font-size:9px;letter-spacing:2px;cursor:pointer" onclick="closeWorldMap()">M / ESC — CLOSE</div>`;
+}
+
+function setGameVolume(v) {
+  state.volume = Math.max(0, Math.min(1, v));
+  audio.setVolume(state.volume);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RIVAL — Chef Marco, ambushes at story beats with a counter team
+// ═══════════════════════════════════════════════════════════
+const RIVAL = { name:'RIVAL MARCO', emoji:'🧑‍🍳' };
+const RIVAL_COUNTER = { fire:'electric', ice:'fire', electric:'ice', neutral:'fire' };
+const RIVAL_EVENTS = [
+  { n:1, map:'wild',     hp:130, atk:11, team:1, coins:100,
+    quote:"Heh. The Professor gave YOU a Pandex too? Let's see whose starter is fresher!" },
+  { n:2, map:'cave',     hp:200, atk:17, team:2, coins:180,
+    quote:"You again?! I've been training in the dark. Literally. My team can't even see." },
+  { n:3, map:'mountain', hp:280, atk:24, team:3, coins:280,
+    quote:"Top of the mountain, top of the food chain. That's me. Prepare to be plated." },
+  { n:4, map:'sky',      hp:380, atk:32, team:4, coins:500,
+    quote:"This is it, rival. Winner takes the title of TRUE chef. No more appetizers!" }
+];
+
+function rivalTeamFor(ev) {
+  const elem = RIVAL_COUNTER[getElement(state.starter)] || 'fire';
+  const pool = entities.filter(e => e.id && getElement(e.id) === elem)
+    .sort((x, y) => RARITY_TIER[x.rarity] - RARITY_TIER[y.rarity]);
+  const picks = [];
+  for (let i = 0; i < ev.team; i++) picks.push(pool[Math.min(pool.length - 1, i * 2 + ev.n)]);
+  return picks;
+}
+
+function checkRivalAmbush() {
+  if (!state.started || state.battle || state.dialog || state.mini || state.won || state.tower) return;
+  const ev = RIVAL_EVENTS.find(v => v.map === state.map && !state.rivalBeaten[v.n]);
+  if (!ev) return;
+  if (ev.n > 1 && !state.rivalBeaten[ev.n - 1]) return;   // beats happen in order
+  setTimeout(() => {
+    if (state.battle || state.dialog || state.mini || state.map !== ev.map) return;
+    const team = rivalTeamFor(ev);
+    const phases = team.map((sp, i) => ({
+      n: `MARCO'S ${sp.n.toUpperCase()}`, e: sp.e,
+      hp: Math.round(ev.hp * (0.8 + i * 0.25)),
+      element: getElement(sp.id)
+    }));
+    _startBossFight({
+      id: 'rival' + ev.n, name: RIVAL.name, emoji: RIVAL.emoji,
+      element: phases[0].element, hp: phases[0].hp, atk: ev.atk,
+      quote: ev.quote,
+      intro: `${RIVAL.name} blocks your path! "${ev.quote}"`,
+      defeat: ev.n === 4
+        ? 'Marco drops to his knees. "...You really are the better chef. For now." He hands over his prize money.'
+        : 'Marco scowls and storms off. "Next time you won\'t be so lucky!"',
+      rivalEvent: ev, phases, phaseIdx: 0
+    });
+  }, 800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BATTLE TOWER — endless gauntlet, best streak saved
+// ═══════════════════════════════════════════════════════════
+function openTowerDialog() {
+  openDialog('BATTLE TOWER', []);
+  _typewriterFinish();
+  const dlg = document.getElementById('dialogue');
+  if (!dlg) return;
+  dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px;text-align:center">` +
+    `<b style="color:#f4c165;letter-spacing:3px">🏯 BATTLE TOWER</b><br>` +
+    `<span style="font-size:10px;color:#ccc">Endless gauntlet. Enemies grow stronger every round.<br>NO healing between rounds &bull; NO catching &bull; RUN to retire with your coins.</span><br>` +
+    `<span style="font-size:10px;color:#7edc8b">Best streak: <b>${state.towerBest||0}</b></span><br><br>` +
+    `<span style="display:inline-block;padding:5px 16px;cursor:pointer;color:#7edc8b;border:1px solid #2a4a2a;border-radius:3px" onclick="closeDialog();startTower()">▶ ENTER</span> ` +
+    `<span style="display:inline-block;padding:5px 16px;cursor:pointer;color:#888" onclick="closeDialog()">LEAVE</span></div>`;
+}
+
+function startTower() {
+  if (state.battle || state.tower) return;
+  state.tower = { round: 1 };
+  state.playerHp = state.playerMaxHp;   // fresh start, then you're on your own
+  toast('🏯 BATTLE TOWER — ROUND 1!');
+  setTimeout(() => startTowerBattle(), 600);
+}
+
+function startTowerBattle() {
+  if (!state.tower) return;
+  const r = state.tower.round;
+  const pool = entities.filter(e => e.id);
+  const sp = pool[Math.floor(Math.random() * pool.length)];
+  startBattle(Object.assign({}, sp, { _tower: true }));
+  const b = state.battle;
+  if (!b) { state.tower = null; return; }
+  b.isTower = true;
+  b.towerRound = r;
+  b.enemyMaxHp = b.enemyHp = 60 + r * 26 + Math.floor(Math.random() * 10);
+  battleLog(`<b style="color:#f4c165">🏯 TOWER ROUND ${r}</b> — survive!`);
+  renderBattle();
+}
+
+function endTower() {
+  const t = state.tower; if (!t) return;
+  const cleared = t.round - 1;
+  state.tower = null;
+  if (cleared > (state.towerBest || 0)) {
+    state.towerBest = cleared;
+    toast(`🏯 NEW TOWER RECORD — ${cleared} round${cleared===1?'':'s'}!`);
+  } else {
+    toast(`🏯 Tower run over — ${cleared} round${cleared===1?'':'s'} cleared.`);
+  }
+  checkAchievements();
+  autoSave();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOND LEVELS + ACHIEVEMENTS
+// ═══════════════════════════════════════════════════════════
+function bondLevel(id) {
+  return Math.min(10, Math.floor(Math.sqrt((state.applianceWins && state.applianceWins[id]) || 0)));
+}
+
+const ACHIEVEMENTS = [
+  { id:'first_catch', icon:'🍴', name:'FIRST CATCH',     check:() => state.caught.size >= 1 },
+  { id:'dex10',       icon:'📗', name:'COLLECTOR',       check:() => state.caught.size >= 10 },
+  { id:'dex25',       icon:'📘', name:'CURATOR',         check:() => state.caught.size >= 25 },
+  { id:'dex50',       icon:'📙', name:'ARCHIVIST',       check:() => state.caught.size >= 50 },
+  { id:'dex81',       icon:'👑', name:'PANDEX MASTER',   check:() => state.caught.size >= TOTAL_DEX },
+  { id:'shiny',       icon:'✦',  name:'SHINY HUNTER',    check:() => Object.keys(state.shinies).length >= 1 },
+  { id:'evo',         icon:'⭐', name:'EVOLVED',         check:() => Object.keys(state.applianceWins || {}).some(id => getEvoStage(+id) > 0) },
+  { id:'boss1',       icon:'👨‍🍳', name:'KITCHEN PROVEN', check:() => !!state.bossesDefeated.boss1 },
+  { id:'boss5',       icon:'🏅', name:'SUPREME CHEF',    check:() => !!state.bossesDefeated.boss5 },
+  { id:'elites',      icon:'💀', name:'FRONTIER KING',   check:() => ['elite_volcano','elite_swamp','elite_neon','elite_sky'].every(k => state.bossesDefeated[k]) },
+  { id:'rival',       icon:'🧑‍🍳', name:'RIVAL NO MORE',  check:() => !!state.rivalBeaten[4] },
+  { id:'wins25',      icon:'⚔️', name:'BATTLE-HARDENED', check:() => (state.totalWins||0) >= 25 },
+  { id:'wins100',     icon:'🗡️', name:'WARCHEF',         check:() => (state.totalWins||0) >= 100 },
+  { id:'tower5',      icon:'🏯', name:'TOWER CLIMBER',   check:() => (state.towerBest||0) >= 5 },
+  { id:'tower10',     icon:'🌟', name:'TOWER LEGEND',    check:() => (state.towerBest||0) >= 10 },
+  { id:'rich',        icon:'🪙', name:'LOADED',          check:() => (state.coinsEarned||0) >= 1000 }
+];
+
+function checkAchievements() {
+  for (const a of ACHIEVEMENTS) {
+    if (state.achievements.includes(a.id)) continue;
+    let ok = false;
+    try { ok = a.check(); } catch (e) {}
+    if (ok) {
+      state.achievements.push(a.id);
+      toast(`🏆 ACHIEVEMENT — ${a.icon} ${a.name}!`);
+      audio.stinger();
+    }
   }
 }
 
@@ -5391,7 +5724,18 @@ function _buildSaveData() {
     luckyCharmBonus: state.luckyCharmBonus || 0,
     dailyStreak: state.dailyStreak || 0,
     streakLastDate: state.streakLastDate || null,
-    streakBonusExpiry: state.streakBonusExpiry || null
+    streakBonusExpiry: state.streakBonusExpiry || null,
+    coins: state.coins || 0,
+    coinsEarned: state.coinsEarned || 0,
+    items: state.items || { potion: 0, maxPotion: 0, bait: 0 },
+    premiumBox: state.premiumBox || false,
+    rareLureActive: state.rareLureActive || false,
+    rivalBeaten: state.rivalBeaten || {},
+    towerBest: state.towerBest || 0,
+    totalWins: state.totalWins || 0,
+    achievements: state.achievements || [],
+    visited: state.visited || [],
+    volume: (state.volume === undefined ? 1 : state.volume)
   };
 }
 
@@ -5422,6 +5766,19 @@ function _applySaveData(d) {
   state.dailyStreak = d.dailyStreak || 0;
   state.streakLastDate = d.streakLastDate || null;
   state.streakBonusExpiry = d.streakBonusExpiry || null;
+  state.coins = d.coins || 0;
+  state.coinsEarned = d.coinsEarned || 0;
+  state.items = Object.assign({ potion: 0, maxPotion: 0, bait: 0 }, d.items || {});
+  state.premiumBox = d.premiumBox || false;
+  state.rareLureActive = d.rareLureActive || false;
+  state.rivalBeaten = d.rivalBeaten || {};
+  state.towerBest = d.towerBest || 0;
+  state.tower = null;
+  state.totalWins = d.totalWins || 0;
+  state.achievements = d.achievements || [];
+  state.visited = d.visited || [];
+  state.volume = (d.volume === undefined ? 1 : d.volume);
+  audio.setVolume(state.volume);
   state.started = true; state.screen = 'world';
   state.moving = false; state.prog = 0;
 }
@@ -5713,6 +6070,7 @@ function tryMove(dx, dy, dirName) {
   const tr = transitions(state.map, nx, ny);
   if (tr) {
     state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition(); showAreaBanner(state.map);
+    checkRivalAmbush();
     const tf=document.createElement('div');
     Object.assign(tf.style,{position:'fixed',inset:'0',zIndex:'4000',background:'rgba(0,0,0,0)',pointerEvents:'none',transition:'background .14s ease-in'});
     document.body.appendChild(tf); void tf.offsetWidth; tf.style.background='rgba(0,0,0,.82)';
@@ -5754,6 +6112,8 @@ function interact() {
   if (e.heal)   return healStation(e);
   if (e.gate)   return gateNpcTalk(e);
   if (e.elite)  return startEliteBattle(e.elite);
+  if (e.shopkeep) return openShop();
+  if (e.tower)  return openTowerDialog();
   if (e.bulletin) return bulletinBoardInteract();
   if (e.lines)  return npcCycleTalk(e);   // cycling-dialogue NPC
   if (e.npc)    return openDialog(e.n, [e.desc]);
@@ -7018,7 +7378,7 @@ function renderBattle() {
   const shinyTag = isShiny ? ' <span style="color:#ffd700;font-size:9px">✦</span>' : '';
   const evoTag = pEvo > 0 ? ` <span style="font-size:9px;color:${EVO_COLOR[pEvo]}">★${pEvo}</span>` : '';
   btPlayerName.innerHTML = `${pName} <span style="font-size:11px;color:${pElem.color}">${pElem.icon}</span>${evoTag}${shinyTag}`;
-  btPlayerLvl.textContent = `Lv.${playerLevel()}`;
+  btPlayerLvl.textContent = `Lv.${playerLevel()} ❤${bondLevel(state.activeAppliance)}`;
   btPlayerSprite.textContent = p ? p.e : '?';
   btPlayerSprite.classList.toggle('shiny', !!isShiny);
   updateHpBar(btPlayerHp, btPlayerHpText, state.playerHp, state.playerMaxHp);
@@ -8607,9 +8967,11 @@ function setBattleMenu(kind) {
     b.phase = 'menu'; b.menuFocus = 0;
     if (b.isBoss) {
       const hasSwitch = b.bossRoster && b.bossRoster.filter((r,i) => i !== b.bossRosterIdx && r.hp > 0).length > 0;
+      const bossItemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0);
       const opts = [
         { a:'fight',  label:'FIGHT',  disabled:false },
         { a:'switch', label:'SWITCH', disabled:!hasSwitch },
+        { a:'item',   label: bossItemCount > 0 ? `ITEM<span class="bt-mg" style="color:#7edc8b">×${bossItemCount} IN BAG</span>` : `<span style="opacity:0.55">ITEM</span><span class="bt-mg" style="color:#777">BAG EMPTY</span>`, disabled:bossItemCount === 0 },
         { a:'run',    label:'<span style="opacity:0.35">RUN</span><span class="bt-mg" style="color:#e55">BOSS — NO ESCAPE</span>', disabled:true }
       ];
       btMenu.innerHTML = opts.map((o, i) => {
@@ -8623,16 +8985,23 @@ function setBattleMenu(kind) {
         });
       });
     } else {
-    const canCatch = b.enemyHp > 0 && (b.enemyHp / b.enemyMaxHp) < 0.30;
+    const canCatch = !b.isTower && b.enemyHp > 0 && (b.enemyHp / b.enemyMaxHp) < 0.30;
     const hasSwitchTargets = entities.some(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
-    const catchLabel = canCatch
+    const itemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0);
+    const catchLabel = b.isTower
+      ? `<span style="opacity:0.35">CATCH</span><span class="bt-mg" style="color:#e55">TOWER — NO CATCHING</span>`
+      : canCatch
       ? `CATCH<span class="bt-mg" style="color:#f4c165">★ READY ★</span>`
       : `<span style="opacity:0.55">CATCH</span><span class="bt-mg" style="color:#777">HP &lt; 30%</span>`;
+    const itemLabel = itemCount > 0
+      ? `ITEM<span class="bt-mg" style="color:#7edc8b">×${itemCount} IN BAG</span>`
+      : `<span style="opacity:0.55">ITEM</span><span class="bt-mg" style="color:#777">BAG EMPTY — VISIT THE MART</span>`;
     const opts = [
       { a:'fight',  label:'FIGHT',  disabled:false },
       { a:'switch', label:'SWITCH', disabled:!hasSwitchTargets },
       { a:'catch',  label:catchLabel, disabled:!canCatch },
-      { a:'run',    label:'RUN',    disabled:false }
+      { a:'item',   label:itemLabel, disabled:itemCount === 0 },
+      { a:'run',    label: b.isTower ? 'RETIRE<span class="bt-mg" style="color:#f4c165">KEEP YOUR STREAK</span>' : 'RUN', disabled:false }
     ];
     let mainHtml = opts.map((o, i) => {
       const cls = `bt-btn ${i===0?'focus':''} ${o.disabled?'dim':''}`;
@@ -8722,6 +9091,19 @@ function setBattleMenu(kind) {
     btMenu.querySelectorAll('.bt-btn').forEach(el => {
       el.addEventListener('click', () => doSwitch(+el.dataset.sw));
     });
+  } else if (kind === 'item') {
+    b.phase = 'item'; b.moveFocus = 0;
+    const defs = [
+      { k:'potion',    label:'🧪 POTION',     sub:'RESTORE 50 HP',               n: state.items.potion || 0 },
+      { k:'maxPotion', label:'💖 MAX POTION', sub:'FULL RESTORE',                n: state.items.maxPotion || 0 },
+      { k:'bait',      label:'🍖 TASTY BAIT', sub:'+20% CATCH (THIS BATTLE)',    n: state.items.bait || 0 }
+    ].filter(d => d.n > 0);
+    btMenu.innerHTML = defs.map((d, i) =>
+      `<div class="bt-btn ${i===0?'focus':''}" data-it="${d.k}">${d.label} ×${d.n}<span class="bt-mg">${d.sub}</span></div>`
+    ).join('') + `<div class="bt-btn" data-it="back">◂ BACK</div>`;
+    btMenu.querySelectorAll('.bt-btn').forEach(el => {
+      el.addEventListener('click', () => useBattleItem(el.dataset.it));
+    });
   } else if (kind === 'none') {
     btMenu.innerHTML = '';
   } else if (kind === 'end') {
@@ -8739,7 +9121,7 @@ function moveBattleFocus(delta) {
     const btns = btMenu.querySelectorAll('.bt-btn');
     b.menuFocus = (b.menuFocus + delta + btns.length) % btns.length;
     btns.forEach((el, i) => el.classList.toggle('focus', i === b.menuFocus));
-  } else if (b.phase === 'moves' || b.phase === 'switch') {
+  } else if (b.phase === 'moves' || b.phase === 'switch' || b.phase === 'item') {
     const btns = btMenu.querySelectorAll('.bt-btn');
     b.moveFocus = (b.moveFocus + delta + btns.length) % btns.length;
     btns.forEach((el, i) => el.classList.toggle('focus', i === b.moveFocus));
@@ -8762,15 +9144,45 @@ function confirmBattleFocus() {
     else useMove(b.moveFocus);
   } else if (b.phase === 'switch') {
     doSwitch(b.moveFocus);
+  } else if (b.phase === 'item') {
+    const btn = btMenu.querySelectorAll('.bt-btn')[b.moveFocus];
+    if (btn) useBattleItem(btn.dataset.it);
   } else if (b.phase === 'end') {
     closeBattle();
   }
+}
+
+function useBattleItem(k) {
+  const b = state.battle; if (!b) return;
+  if (k === 'back') { setBattleMenu('main'); return; }
+  if (!state.items[k] || state.items[k] <= 0) { setBattleMenu('main'); return; }
+  state.items[k]--;
+  if (k === 'potion') {
+    const heal = Math.min(50, state.playerMaxHp - state.playerHp);
+    state.playerHp += heal;
+    audio.heal(); playHpGainFloat(heal);
+    battleLog(`🧪 Potion! Restored <b style="color:#7edc8b">${heal}</b> HP.`);
+  } else if (k === 'maxPotion') {
+    const heal = state.playerMaxHp - state.playerHp;
+    state.playerHp = state.playerMaxHp;
+    audio.heal(); playHpGainFloat(heal);
+    battleLog(`💖 Max Potion! <b style="color:#7edc8b">Fully restored!</b>`);
+  } else if (k === 'bait') {
+    b.baitActive = true;
+    audio.blip();
+    battleLog(`🍖 Tasty Bait scattered! Catch chance <b style="color:#f4c165">+20%</b> this battle.`);
+  }
+  if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
+  renderBattle();
+  setBattleMenu('none');
+  setTimeout(() => enemyTurn(), 900);
 }
 
 function pickBattleAction(act) {
   const b = state.battle; if (!b) return;
   if (act === 'fight') setBattleMenu('moves');
   else if (act === 'switch') setBattleMenu('switch');
+  else if (act === 'item') setBattleMenu('item');
   else if (act === 'catch') startCatchSequence();
   else if (act === 'run') attemptRun();
   else if (act === 'ult') triggerFinisher();
@@ -8778,6 +9190,13 @@ function pickBattleAction(act) {
 
 function attemptRun() {
   const b = state.battle; if (!b) return;
+  if (b.isTower) {
+    battleLog('You retire from the tower with your winnings.');
+    b.ended = true;
+    setBattleMenu('end');
+    endTower();
+    return;
+  }
   const chance = enemyRunChance(b.enemy);
   if (Math.random() < chance) {
     battleLog('You slip away before it notices.');
@@ -8798,7 +9217,9 @@ function catchChance(rarity, hpPct) {
   const hpBoost = (1 - hpPct) * 0.35;
   const luckBonus = (state.luckyCharmBonus || 0) * 0.10;
   const streakBonus = (state.streakBonusExpiry && Date.now() < state.streakBonusExpiry) ? 0.10 : 0;
-  return Math.min(0.98, base + hpBoost + luckBonus + streakBonus);
+  const premium = state.premiumBox ? 0.10 : 0;
+  const bait = (state.battle && state.battle.baitActive) ? 0.20 : 0;
+  return Math.min(0.98, base + hpBoost + luckBonus + streakBonus + premium + bait);
 }
 
 function startCatchSequence() {
@@ -9214,7 +9635,8 @@ function resolveBattleMove(score, gotGood) {
   const matchup = elemMatchup(activeElement(), enemyElem);
   const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
   const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
-  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg);
+  const bondBonus = 1 + bondLevel(state.activeAppliance) * 0.02;   // up to +20% from battling together
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
   else { b.enemyHp = Math.max(0, b.enemyHp - dmg); chargeUlt(dmg); }
@@ -9293,7 +9715,8 @@ function enemyTurn() {
   }
   const eMatchup = b.isBoss ? elemMatchup(b.bossData.element, activeElement()) : elemMatchup(getElement(b.enemy.id), activeElement());
   const buffReduce = isBuffActive('halfEnemyDmg') ? 0.5 : 1;
-  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce);
+  const towerMult = b.isTower ? (1 + (b.towerRound || 1) * 0.05) : 1;
+  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
   if (b.isBoss && b.bossRoster) b.bossRoster[b.bossRosterIdx].hp = state.playerHp;
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
@@ -9405,6 +9828,25 @@ function teleportEntityToRandomPosition(ent) {
 
 function onEnemyFaint() {
   const b = state.battle; if (!b) return;
+
+  // Rival multi-phase: the next appliance steps in and the battle continues
+  if (b.isBoss && b.bossData && b.bossData.phases && b.bossData.phaseIdx < b.bossData.phases.length - 1) {
+    b.bossData.phaseIdx++;
+    const ph = b.bossData.phases[b.bossData.phaseIdx];
+    audio.stinger();
+    battleLog(`<b>${b.enemy.n}</b> is knocked out!`);
+    b.enemy = Object.assign({}, b.enemy, { n: ph.n, e: ph.e });
+    b.bossData.element = ph.element;           // matchups follow the new appliance
+    b.enemyMaxHp = ph.hp; b.enemyHp = ph.hp;
+    battleLog(`${RIVAL.name} sends out <b style="color:#ff6080">${ph.n}</b>!`);
+    btEnemySprite.classList.remove('hurt', 'faint');
+    btEnemySprite.classList.add('entering');
+    setTimeout(() => btEnemySprite.classList.remove('entering'), 650);
+    renderBattle();
+    setTimeout(() => setBattleMenu('main'), 900);
+    return;
+  }
+
   b.ended = true;
   audio.victory();
 
@@ -9419,6 +9861,17 @@ function onEnemyFaint() {
       setTimeout(() => playHpGainFloat(b.bossData.rewardHp), 800);
       toast(`★ ELITE DEFEATED! +${b.bossData.rewardHp} MAX HP! ★`);
     }
+    state.totalWins = (state.totalWins || 0) + 1;
+    if (b.bossData.rivalEvent) {
+      state.rivalBeaten[b.bossData.rivalEvent.n] = true;
+      addCoins(b.bossData.rivalEvent.coins, true);
+      battleLog(`🪙 Won <b style="color:#ffd700">${b.bossData.rivalEvent.coins} coins</b> from your rival!`);
+    } else {
+      const bossCoins = 120 + (b.bossData.star ? b.bossData.star * 60 : 200);
+      addCoins(bossCoins, true);
+      battleLog(`🪙 Earned <b style="color:#ffd700">${bossCoins} coins</b>!`);
+    }
+    checkAchievements();
     const prev = state.michelinStars;
     computeMichelin();
     if (state.michelinStars > prev) {
@@ -9446,6 +9899,15 @@ function onEnemyFaint() {
     teleportEntityToRandomPosition(b.enemy);
   }
   dailyTrack('win', {});
+  state.totalWins = (state.totalWins || 0) + 1;
+  const _coinGain = (b.isTower ? 14 + b.towerRound * 6 : 12 + RARITY_TIER[b.enemy.rarity] * 10) + (b.enemyShiny ? 25 : 0);
+  addCoins(_coinGain, true);
+  battleLog(`🪙 Earned <b style="color:#ffd700">${_coinGain} coins</b>!`);
+  if (b.isTower && state.tower) {
+    state.tower.round++;
+    battleLog(`<b style="color:#f4c165">🏯 ROUND ${b.towerRound} CLEARED!</b> Next round incoming...`);
+  }
+  checkAchievements();
   if (b.turnCount > 0 && state.playerHp >= state.playerMaxHp) {
     dailyTrack('perfectWin', {});
     setTimeout(() => {
@@ -9518,6 +9980,7 @@ function onEnemyFaint() {
 function onPlayerFaint() {
   const b = state.battle; if (!b) return;
   b.ended = true;
+  if (b.isTower) endTower();
   audio.defeat();
   const p = b.starter;
   battleLog(`Your <b>${p ? getEvoName(p.id).toUpperCase() : 'APPLIANCE'}</b> is overcooked! You black out...`);
@@ -9569,6 +10032,11 @@ function closeBattle() {
   audio.stopBattle();
   audio.startArea(state.map);
   autoSave();
+  // Battle Tower: chain straight into the next round
+  if (state.tower) {
+    setTimeout(() => startTowerBattle(), 700);
+    return;
+  }
   if (!wasBoss) {
     const pending = pendingBossStar();
     if (pending > 0) {
@@ -10744,6 +11212,7 @@ function miniResolve(result) {
     miniResult.className = 'good';
     miniResult.innerHTML = `<div class="rt">${rtitle}</div><div class="rb">${body}</div>
       <div style="color:#777;font-size:11px;letter-spacing:2px;margin-top:14px">SPACE / ESC TO CLOSE</div>`;
+    checkAchievements();
     setTimeout(checkEnding, 20);
   } else {
     audio.catchFail();
@@ -11621,6 +12090,7 @@ const ZONE_NAMES = { house: 'HOME', town: 'TOWN', market: 'GRANDE MART', wild: '
 // Pokemon-style sliding area banner shown whenever you enter a new zone
 let _bannerTimer = null;
 function showAreaBanner(mapName) {
+  markVisited(mapName);
   const stage = document.getElementById('stage'); if (!stage) return;
   let b = document.getElementById('areaBanner');
   if (!b) { b = document.createElement('div'); b.id = 'areaBanner'; stage.appendChild(b); }
@@ -11638,6 +12108,8 @@ function showAreaBanner(mapName) {
 function renderHud() {
   document.getElementById('invCount').textContent = 'CAUGHT';
   document.getElementById('plotCount').textContent = `${state.caught.size} / ${TOTAL_DEX}`;
+  const _cc = document.getElementById('coinCount');
+  if (_cc && _cc.textContent !== String(state.coins)) _cc.textContent = state.coins;
   document.getElementById('attemptCount').textContent = state.encounters;
   document.getElementById('zone').textContent = ZONE_NAMES[state.map] || state.map.toUpperCase();
   // Michelin stars
@@ -11716,7 +12188,7 @@ function tick(now) {
     _dhud.style.color = pct >= 100 ? '#f4c165' : pct >= 50 ? '#7edc8b' : '#888';
   }
   if (state.mini) miniTick(dt);
-  if (state.started && !state.won && !state.dialog && !state.invOpen && !state.mini && !state.battle) {
+  if (state.started && !state.won && !state.dialog && !state.invOpen && !state.mini && !state.battle && !state.mapOpen) {
     if (state.moving) {
       const swimming = isWaterTile(state.map, state.tx, state.ty);
       state.prog += dt / (swimming ? STEP_MS * 2.2 : STEP_MS);
@@ -11739,9 +12211,13 @@ function tick(now) {
           });
           audio.rustle();
           _grassSteps++;
-          if (_grassSteps >= 3 && Math.random() < 0.14) {
+          if (_grassSteps >= 3 && (state.rareLureActive || Math.random() < 0.14)) {
             _grassSteps = 0;
-            const pool = entities.filter(en => en.id && en.m === state.map);
+            let pool = entities.filter(en => en.id && en.m === state.map);
+            if (state.rareLureActive) {
+              const rare = pool.filter(en => RARITY_TIER[en.rarity] >= 1);
+              if (rare.length) { pool = rare; state.rareLureActive = false; toast('🎏 The Rare Lure worked!'); }
+            }
             if (pool.length) encounter(pool[Math.floor(Math.random() * pool.length)]);
           }
         }
@@ -11810,6 +12286,28 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
   let msgIdx = 0;
   let musicStarted = false;
 
+  // rotating how-to-play tips while the bar fills
+  const LOAD_TIPS = [
+    'Move with ARROWS / WASD • SPACE interacts with anything that looks alive',
+    'Walk into a wild Appliance to battle it — weaken it below 30% HP, then CATCH!',
+    'Tall golden grass hides random encounters. Rustle through it to hunt!',
+    '🪙 Every battle won earns COINS — spend them at the Grande Mart shop',
+    'M opens the WORLD MAP with your next objective • H warps you home',
+    'FIRE beats ICE, ICE beats ELECTRIC, ELECTRIC beats FIRE',
+    'Win battles with an Appliance to EVOLVE it and grow your BOND (+damage!)',
+    'Fill the ULT gauge in battle to unleash a cinematic FINISHER',
+    'Your rival MARCO is out there. He picked the element that beats yours.',
+    'The 🏯 BATTLE TOWER in town is an endless gauntlet — how far can you climb?',
+    'Elite bosses guard the volcano, swamp, neon city, and sky. Beat them for MAX HP!',
+    'F5 saves anytime • F opens fast travel • P opens your PANDEX'
+  ];
+  let tipIdx = 0;
+  const tipEl = document.getElementById('loadTip');
+  const tipInterval = setInterval(() => {
+    tipIdx = (tipIdx + 1) % LOAD_TIPS.length;
+    if (tipEl) { tipEl.style.opacity = '0'; setTimeout(() => { tipEl.textContent = LOAD_TIPS[tipIdx]; tipEl.style.transition = 'opacity .3s'; tipEl.style.opacity = '1'; }, 250); }
+  }, 3200);
+
   function startLoadMusic() {
     if (musicStarted) return;
     musicStarted = true;
@@ -11832,6 +12330,7 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
 
     if (progress >= 100) {
       clearInterval(loadInterval);
+      clearInterval(tipInterval);
       loadText.textContent = 'READY TO SERVE...';
       loadBar.style.width = '100%';
       setTimeout(() => {
@@ -11850,7 +12349,8 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
 // fast-travel and gallery button throws ReferenceError).
 Object.assign(window, {
   saveGame, loadGame, openSaveSlots, closeSaveModal, deleteSaveSlot,
-  renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher
+  renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
+  buyItem, startTower, setGameVolume, closeWorldMap
 });
 // debug/testing handle (read-mostly; also powers automated playtests)
 window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene };
