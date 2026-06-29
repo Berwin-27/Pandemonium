@@ -4082,6 +4082,7 @@ const audio = (() => {
   function setVolume(v) {
     _userVol = Math.max(0, Math.min(1, v));
     if (_volNode) _volNode.gain.value = _userVol;
+    if (_battleMp3) _battleMp3.volume = _userVol * BATTLE_MP3_GAIN;
   }
   function play(notes, type, vol) {
     const a = ensure(); if (!a) return;
@@ -4596,12 +4597,40 @@ const audio = (() => {
   };
 
   let battleLoop = null;
+  // ── MP3 battle theme (music/Demon Slayer.mp3) — replaces the synth loop in
+  //    every Appliance battle; falls back to the synth if the file can't load. ──
+  const BATTLE_MP3_URL = 'music/Demon%20Slayer.mp3';
+  const BATTLE_MP3_GAIN = 0.85;
+  let _battleMp3 = null, _battleMp3Failed = false;
+  function _ensureBattleMp3() {
+    if (_battleMp3 || _battleMp3Failed) return _battleMp3;
+    try {
+      _battleMp3 = new Audio(BATTLE_MP3_URL);
+      _battleMp3.loop = true;
+      _battleMp3.preload = 'auto';
+      _battleMp3.volume = _userVol * BATTLE_MP3_GAIN;
+      _battleMp3.addEventListener('error', () => { _battleMp3Failed = true; });
+    } catch (e) { _battleMp3Failed = true; _battleMp3 = null; }
+    return _battleMp3;
+  }
+  function _stopBattleMp3() {
+    if (_battleMp3) { try { _battleMp3.pause(); _battleMp3.currentTime = 0; } catch (e) {} }
+  }
   function startBattle() {
     if (areaLoop) { stopLoop(areaLoop); areaLoop = null; currentArea = null; }
+    const mp3 = _ensureBattleMp3();
+    if (mp3 && !_battleMp3Failed) {
+      if (battleLoop) { stopLoop(battleLoop); battleLoop = null; }   // MP3 supersedes synth
+      mp3.volume = _userVol * BATTLE_MP3_GAIN;
+      try { mp3.currentTime = 0; } catch (e) {}
+      const p = mp3.play();
+      if (p && p.catch) p.catch(() => { if (!battleLoop) battleLoop = genericLoop(BATTLE_SONG); });
+      return;
+    }
     if (battleLoop) return;
     battleLoop = genericLoop(BATTLE_SONG);
   }
-  function stopBattle() { stopLoop(battleLoop); battleLoop = null; }
+  function stopBattle() { stopLoop(battleLoop); battleLoop = null; _stopBattleMp3(); }
 
   let areaLoop = null;
   let currentArea = null;
@@ -5018,6 +5047,7 @@ const audio = (() => {
   function startArea(mapName) {
     if (loadingLoop) { stopLoop(loadingLoop); loadingLoop = null; }
     if (battleLoop) { stopLoop(battleLoop); battleLoop = null; }
+    _stopBattleMp3();
     if (mapName === currentArea && areaLoop) return;
     stopArea();
     const song = AREA_SONGS[mapName === 'vault' ? 'dimension' : mapName];
