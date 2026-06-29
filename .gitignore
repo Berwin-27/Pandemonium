@@ -1,0 +1,11 @@
+# Local tooling / agent scaffolding — never part of the deployed game
+.claude/
+.claude-flow/
+.swarm/
+.mcp.json
+CLAUDE.md
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.bak
