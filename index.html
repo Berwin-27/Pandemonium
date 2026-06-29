@@ -2890,32 +2890,34 @@ const RARITY_COLOR = { common:'#9aa0b8', rare:'#4aa0f4', epic:'#b060e8', mythic:
 const RARITY_TIER  = { common:0, rare:1, epic:2, mythic:3, legendary:4, ultra:5 };
 // Elements
 const ELEMENTS = {
-  fire:     { icon:'🔥', color:'#ff6b35', label:'FIRE' },
-  ice:      { icon:'❄️', color:'#5bcefa', label:'ICE' },
-  electric: { icon:'⚡', color:'#ffe44d', label:'ELECTRIC' },
-  neutral:  { icon:'⚪', color:'#9aa0b8', label:'NEUTRAL' }
+  fire:     { icon:'🔥', color:'#ff6b35', label:'FIRE',     blurb:'Aggressive heat. Hits harder but the catch window runs hot and fast.' },
+  ice:      { icon:'❄️', color:'#5bcefa', label:'ICE',      blurb:'Control. Slows the catch and grants extra time to line up the shot.' },
+  electric: { icon:'⚡', color:'#ffe44d', label:'ELECTRIC', blurb:'Raw voltage. Highest damage, and can SHORT-circuit foes — but vulnerable when SHORTED itself.' },
+  water:    { icon:'💧', color:'#4aa3ff', label:'WATER',    blurb:'Flow and sustain. A forgiving, patient catch window; douses Fire utterly.' },
+  wind:     { icon:'🌪️', color:'#8fe3b0', label:'WIND',     blurb:'Tempo. A fast, breezy catch with a wide margin; scatters Water.' },
+  neutral:  { icon:'⚪', color:'#9aa0b8', label:'NEUTRAL',   blurb:'No elemental edge — and no weakness. Reliable in any matchup.' }
 };
 const ELEM_MAP = {
-  1:'fire', 2:'neutral', 3:'electric', 4:'fire', 5:'neutral', 6:'ice',
-  7:'neutral', 8:'fire', 9:'neutral', 10:'neutral', 11:'ice', 12:'ice',
-  13:'neutral', 14:'neutral', 15:'fire', 16:'fire',
-  17:'fire', 18:'electric', 19:'ice', 20:'neutral', 21:'fire',
-  22:'neutral', 23:'electric', 24:'ice', 25:'neutral', 26:'neutral',
-  27:'fire', 28:'electric', 29:'ice', 30:'fire', 31:'fire', 32:'fire',
-  33:'ice', 34:'ice', 35:'fire', 36:'electric',
-  37:'fire', 38:'electric', 39:'fire',
+  1:'fire', 2:'wind', 3:'electric', 4:'water', 5:'neutral', 6:'ice',
+  7:'neutral', 8:'water', 9:'neutral', 10:'wind', 11:'water', 12:'water',
+  13:'neutral', 14:'neutral', 15:'water', 16:'wind',
+  17:'fire', 18:'wind', 19:'water', 20:'neutral', 21:'fire',
+  22:'neutral', 23:'electric', 24:'water', 25:'neutral', 26:'neutral',
+  27:'fire', 28:'wind', 29:'water', 30:'wind', 31:'fire', 32:'fire',
+  33:'water', 34:'ice', 35:'fire', 36:'electric',
+  37:'fire', 38:'wind', 39:'wind',
   40:'electric', 41:'electric',
-  42:'fire', 43:'neutral', 44:'neutral', 45:'fire',
+  42:'fire', 43:'water', 44:'neutral', 45:'fire',
   46:'ice', 47:'ice', 48:'ice', 49:'ice',
-  50:'ice', 51:'neutral', 52:'neutral', 53:'neutral',
+  50:'water', 51:'water', 52:'water', 53:'water',
   54:'fire', 55:'fire',
-  56:'neutral', 57:'neutral', 58:'electric', 59:'ice',
+  56:'neutral', 57:'neutral', 58:'wind', 59:'ice',
   60:'electric', 61:'neutral', 62:'neutral', 63:'electric',
   64:'fire', 65:'fire', 66:'fire', 67:'fire', 68:'fire',
-  69:'neutral', 70:'ice', 71:'neutral', 72:'ice',
+  69:'water', 70:'water', 71:'water', 72:'water',
   73:'electric', 74:'electric', 75:'electric', 76:'electric', 77:'electric',
-  78:'ice', 79:'ice', 80:'electric', 81:'neutral',
-  82:'fire', 83:'electric', 84:'ice', 85:'electric', 86:'neutral'
+  78:'wind', 79:'wind', 80:'electric', 81:'neutral',
+  82:'fire', 83:'electric', 84:'ice', 85:'electric', 86:'wind'
 };
 function getElement(id) { return ELEM_MAP[id] || 'neutral'; }
 
@@ -5615,13 +5617,15 @@ function buyItem(i) {
 // THE KITCHEN — ingredients, dishes (buffs), garnishes (held items)
 // ═══════════════════════════════════════════════════════════
 const INGREDIENTS = {
-  flour:     { icon:'🌾', name:'Flour' },
-  chili:     { icon:'🌶️', name:'Chili' },
-  iceShard:  { icon:'🧊', name:'Ice Shard' },
-  spark:     { icon:'⚡', name:'Spark' },
-  salt:      { icon:'🧂', name:'Salt' },
-  truffle:   { icon:'🍄', name:'Truffle' },
-  goldenEgg: { icon:'🥚', name:'Golden Egg' }
+  flour:       { icon:'🌾', name:'Flour' },
+  chili:       { icon:'🌶️', name:'Chili' },
+  iceShard:    { icon:'🧊', name:'Ice Shard' },
+  spark:       { icon:'⚡', name:'Spark' },
+  springwater: { icon:'💧', name:'Spring Water' },
+  gust:        { icon:'🌬️', name:'Bottled Gust' },
+  salt:        { icon:'🧂', name:'Salt' },
+  truffle:     { icon:'🍄', name:'Truffle' },
+  goldenEgg:   { icon:'🥚', name:'Golden Egg' }
 };
 const COOK_MIN = 15 * 60 * 1000;
 
@@ -5636,6 +5640,10 @@ const DISH_RECIPES = [
     desc:'30% crit chance for 15 min', apply(){ state.activeBuffs.critBoost = Date.now() + COOK_MIN; } },
   { key:'stew', name:'Hearty Stew', icon:'🍲', cost:{ flour:3, salt:2 },
     desc:'Heal party fully + PERMANENT +6 max HP', apply(){ gainMaxHp(6); healParty(); } },
+  { key:'broth', name:'Tidal Broth', icon:'🍜', cost:{ springwater:2, salt:1 },
+    desc:'Heal party fully + enemies deal ½ damage for 15 min', apply(){ healParty(); state.activeBuffs.halfEnemyDmg = Date.now() + COOK_MIN; } },
+  { key:'pesto', name:'Gale Pesto', icon:'🥬', cost:{ gust:2, flour:1 },
+    desc:'30% chance to dodge enemy attacks for 15 min', apply(){ state.activeBuffs.evasion = Date.now() + COOK_MIN; } },
   { key:'banquet', name:"Chef's Grand Banquet", icon:'🍱', cost:{ truffle:1, goldenEgg:1, chili:1, iceShard:1, spark:1 },
     desc:'PERMANENT +3 ATK (whole party)', apply(){ state.cookAtkBonus = (state.cookAtkBonus||0) + 3; } }
 ];
@@ -5658,6 +5666,29 @@ function garnishAtkMult(id) { const g = garnishMods(id); return 1 + (g && g.atk 
 function garnishDefMult(id) { const g = garnishMods(id); return 1 - (g && g.def ? g.def : 0); }
 function garnishCritBonus(id) { const g = garnishMods(id); return (g && g.crit) ? g.crit : 0; }
 
+// SET BONUSES — equip a themed PAIR of garnishes anywhere across your active
+// party and the whole team gains an aura. The combat code reads these globally.
+const GARNISH_SETS = [
+  { keys:['knife','brand'],  name:"Chef's Fury",      icon:'🔪🔥', desc:'+12% attack & +8% crit chance', atk:0.12, crit:0.08 },
+  { keys:['mitt','thermos'], name:'Field Medic',      icon:'🧤🌡️', desc:'-10% damage taken & +4 regen/turn', def:0.10, regen:4 },
+  { keys:['whisk','knife'],  name:'Master Technique', icon:'🥄🔪', desc:'+10% attack & +6% crit chance', atk:0.10, crit:0.06 },
+  { keys:['brand','thermos'],name:'Slow Burn',        icon:'🔥🌡️', desc:'+8% attack & +3 regen/turn', atk:0.08, regen:3 }
+];
+function equippedGarnishKeys() {
+  const out = new Set();
+  const members = (typeof partyMembers === 'function') ? partyMembers() : [];
+  for (const id of members) { const k = state.equippedGarnish && state.equippedGarnish[id]; if (k) out.add(k); }
+  return out;
+}
+function activeSets() {
+  const owned = equippedGarnishKeys();
+  return GARNISH_SETS.filter(s => s.keys.every(k => owned.has(k)));
+}
+function setBonusAtkMult()  { let m = 1; for (const s of activeSets()) if (s.atk)  m *= (1 + s.atk);  return m; }
+function setBonusDefMult()  { let m = 1; for (const s of activeSets()) if (s.def)  m *= (1 - s.def);  return m; }
+function setBonusCrit()     { let c = 0; for (const s of activeSets()) if (s.crit) c += s.crit;        return c; }
+function setBonusRegen()    { let r = 0; for (const s of activeSets()) if (s.regen) r += s.regen;       return r; }
+
 function canAfford(cost) {
   for (const k in cost) if ((state.ingredients[k] || 0) < cost[k]) return false;
   return true;
@@ -5675,7 +5706,7 @@ function costLabel(cost) {
 function dropIngredients(ent) {
   const elem = getElement(ent.id);
   const tier = RARITY_TIER[ent.rarity] || 0;
-  const elemIng = ({ fire:'chili', ice:'iceShard', electric:'spark', neutral:'flour' })[elem] || 'flour';
+  const elemIng = ({ fire:'chili', ice:'iceShard', electric:'spark', water:'springwater', wind:'gust', neutral:'flour' })[elem] || 'flour';
   const drops = {};
   const add = (k, n) => { drops[k] = (drops[k] || 0) + n; };
   add(elemIng, 1 + (Math.random() < 0.4 ? 1 : 0));
@@ -5739,11 +5770,22 @@ function openKitchen() {
       const uneq = cur ? `<span onclick="equipGarnish(${id},'')" style="cursor:pointer;padding:2px 6px;margin:2px;border-radius:4px;font-size:9px;background:#3a2020;color:#e08">✕</span>` : '';
       return `<div style="padding:5px 8px;border-bottom:1px solid #2a2418"><b style="color:#e6dcc0">${e?e.e:'?'} ${e?getEvoName(id).toUpperCase():'?'}</b> <span style="font-size:9px;color:#8a8470">holds ${fmtG(cur)}</span><div style="margin-top:3px">${chips||'<span style="color:#666;font-size:9px">forge a garnish to equip</span>'}${uneq}</div></div>`;
     }).join('');
+    // SET BONUSES catalog — show which themed pairs are active across the party
+    const active = new Set(activeSets().map(s => s.name));
+    const setRows = GARNISH_SETS.map(s => {
+      const on = active.has(s.name);
+      const names = s.keys.map(k => GARNISH_DEFS[k] ? GARNISH_DEFS[k].name : k).join(' + ');
+      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 8px;font-size:10px;color:${on?'#f4c165':'#6a6452'}">`+
+        `<span>${on?'✓ ':''}<b>${s.icon} ${s.name}</b> <span style="color:#8a8470;font-size:9px">(${names})</span></span>`+
+        `<span style="font-size:9px;color:${on?'#7edc8b':'#6a6452'}">${s.desc}</span></div>`;
+    }).join('');
+    body += `<div style="margin-top:8px;border-top:1px solid #3a3020;padding-top:5px"><b style="color:#caa86a;font-size:10px;letter-spacing:2px;padding:0 8px">★ SET BONUSES</b>`+
+      `<div style="font-size:9px;color:#8a8470;padding:1px 8px 3px">Equip both garnishes of a pair anywhere in your party.</div>${setRows}</div>`;
   }
 
   dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px;max-height:300px;overflow:auto">`+
     `<b style="color:#f4c165;letter-spacing:3px">🍳 THE KITCHEN</b>`+
-    `<span style="float:right;font-size:9px;color:#8a8470">Chef Gourmand &bull; ESC to leave</span><br>`+
+    `<span style="float:right;font-size:9px;color:#8a8470"><span onclick="showTypeChart()" style="cursor:pointer;color:#9ab4ff">⚔ TYPE CHART</span> &bull; Chef Gourmand &bull; ESC to leave</span><br>`+
     `<div style="margin:6px 0;padding:4px 6px;background:rgba(0,0,0,.25);border-radius:4px;font-size:11px">${pantry}</div>`+
     `<div style="display:flex;gap:6px;margin:6px 0">${tabBtn('cook','COOK DISHES')}${tabBtn('forge','FORGE GARNISH')}${tabBtn('equip','EQUIP')}</div>`+
     `<div>${body}</div></div>`;
@@ -10342,14 +10384,14 @@ function resolveBattleMove(score, gotGood) {
   }
   b.lastMinigame = mv.mg;
   const base = mv.power + playerAtkBonus() + (state.cookAtkBonus || 0);   // KITCHEN: banquet ATK
-  const critThreshold = Math.max(0.55, (isBuffActive('critBoost') ? 0.7 : 0.92) - garnishCritBonus(state.activeAppliance));
+  const critThreshold = Math.max(0.5, (isBuffActive('critBoost') ? 0.7 : 0.92) - garnishCritBonus(state.activeAppliance) - setBonusCrit());
   const crit = score > critThreshold;
   const enemyElem = b.isBoss && b.bossData ? b.bossData.element : getElement(b.enemy.id);
   const matchup = elemMatchup(activeElement(), enemyElem);
   const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
   const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
   const bondBonus = 1 + bondLevel(state.activeAppliance) * 0.02;   // up to +20% from battling together
-  const garnishAtk = garnishAtkMult(state.activeAppliance);        // KITCHEN: held-item ATK
+  const garnishAtk = garnishAtkMult(state.activeAppliance) * setBonusAtkMult();   // KITCHEN: held-item + set ATK
   let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus * garnishAtk);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
@@ -10381,12 +10423,13 @@ function resolveBattleMove(score, gotGood) {
     const sd = STATUS_DEFS[mv.status];
     if (sd) setTimeout(() => battleLog(`<span style="color:${sd.color}">${b.enemy.n} is now ${sd.label}! ${sd.desc}</span>`), 200);
   }
-  // KITCHEN: Lucky Thermos regen — heal a little each turn the holder acts
+  // KITCHEN: Lucky Thermos + set-bonus regen — heal a little each turn the holder acts
   const _gReg = garnishMods(state.activeAppliance);
-  if (_gReg && _gReg.regen && state.playerHp > 0 && state.playerHp < state.playerMaxHp) {
-    const heal = Math.min(_gReg.regen, state.playerMaxHp - state.playerHp);
+  const _regenAmt = (_gReg && _gReg.regen ? _gReg.regen : 0) + setBonusRegen();
+  if (_regenAmt > 0 && state.playerHp > 0 && state.playerHp < state.playerMaxHp) {
+    const heal = Math.min(_regenAmt, state.playerMaxHp - state.playerHp);
     state.playerHp += heal; commitActiveHp();
-    setTimeout(() => { battleLog(`<span style="color:#7edc8b">🌡️ Lucky Thermos restores ${heal} HP.</span>`); playHpGainFloat && playHpGainFloat(heal); }, 320);
+    setTimeout(() => { battleLog(`<span style="color:#7edc8b">🌡️ Restores ${heal} HP.</span>`); playHpGainFloat && playHpGainFloat(heal); }, 320);
   }
   renderBattle();
   if (b.enemyHp <= 0) { setTimeout(() => triggerDefeatFinisher(), 250); return; }
@@ -10441,8 +10484,10 @@ function enemyTurn() {
   const eMatchup = b.isBoss ? elemMatchup(b.bossData.element, activeElement()) : elemMatchup(getElement(b.enemy.id), activeElement());
   const buffReduce = isBuffActive('halfEnemyDmg') ? 0.5 : 1;
   const towerMult = b.isTower ? (1 + (b.towerRound || 1) * 0.05) : 1;
-  const garnishDef = garnishDefMult(state.activeAppliance);   // KITCHEN: held-item defense
-  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult * garnishDef);
+  const garnishDef = garnishDefMult(state.activeAppliance) * setBonusDefMult();   // KITCHEN: held-item + set defense
+  const dodged = !state.adminMode && isBuffActive('evasion') && Math.random() < 0.3;   // KITCHEN: Gale Pesto
+  const realDmg = (state.adminMode || dodged) ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult * garnishDef);
+  if (dodged) setTimeout(() => battleLog(`<span style="color:#8fe3b0">🌪️ Dodged! A gust whisks the attack aside.</span>`), 260);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
   commitActiveHp();
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
@@ -11364,31 +11409,75 @@ function activeElement() {
 
 function elemZoneMult() {
   const el = activeElement();
-  if (el === 'fire') return 0.75;
+  if (el === 'fire') return 0.75;   // tight, risky window
+  if (el === 'water') return 1.18;  // forgiving, calm window
+  if (el === 'wind') return 1.1;    // breezy, wide margin
   return 1;
 }
 function elemSpeedMult() {
   const el = activeElement();
-  if (el === 'fire') return 1.3;
-  if (el === 'ice') return 0.8;
+  if (el === 'fire') return 1.3;    // hot and fast
+  if (el === 'wind') return 1.2;    // quick tempo
+  if (el === 'ice') return 0.8;     // slow and steady
+  if (el === 'water') return 0.9;   // gentle flow
   return 1;
 }
 function elemTimeMult() {
   const el = activeElement();
-  if (el === 'ice') return 1.25;
+  if (el === 'ice') return 1.25;    // extra time to aim
+  if (el === 'water') return 1.15;  // patient
   return 1;
 }
 function elemDmgMult() {
   const el = activeElement();
-  if (el === 'electric') return 1.2;
+  if (el === 'electric') return 1.2; // raw voltage
+  if (el === 'fire') return 1.1;     // aggressive
+  if (el === 'wind') return 1.05;    // light but quick
   return 1;
 }
 
-const ELEM_ADVANTAGE = { fire:'ice', ice:'electric', electric:'fire' };
+// 5-element wheel (+ neutral, which has no edge either way):
+//   Fire → Ice → Electric → Wind → Water → Fire
+//   (Fire melts Ice · Ice freezes circuits · Electric shorts the fan ·
+//    Wind scatters Water · Water douses Fire)
+const ELEM_ADVANTAGE = { fire:'ice', ice:'electric', electric:'wind', wind:'water', water:'fire' };
 function elemMatchup(atkElem, defElem) {
   if (ELEM_ADVANTAGE[atkElem] === defElem) return 1.35;
   if (ELEM_ADVANTAGE[defElem] === atkElem) return 0.7;
   return 1;
+}
+// What this element beats / is beaten by — for the type chart UI.
+function elemBeats(el) { return ELEM_ADVANTAGE[el] || null; }
+function elemBeatenBy(el) { for (const k in ELEM_ADVANTAGE) if (ELEM_ADVANTAGE[k] === el) return k; return null; }
+
+// Discoverable type chart — teaches the 5-element wheel + set bonuses.
+function showTypeChart() {
+  openDialog('TYPE CHART', []);
+  _typewriterFinish();
+  const dlg = document.getElementById('dialogue');
+  if (!dlg) return;
+  const chip = el => { const E = ELEMENTS[el]; return `<span style="color:${E.color};white-space:nowrap">${E.icon} ${E.label}</span>`; };
+  const order = ['fire','ice','electric','wind','water','neutral'];
+  const rows = order.map(el => {
+    const E = ELEMENTS[el];
+    const beats = elemBeats(el), weak = elemBeatenBy(el);
+    const strong = beats ? `<span style="color:#7edc8b">↗ beats ${chip(beats)}</span>` : '<span style="color:#9aa0b8">↗ no advantage</span>';
+    const vuln = weak ? `<span style="color:#e06868">↘ weak to ${chip(weak)}</span>` : '<span style="color:#9aa0b8">↘ no weakness</span>';
+    return `<div style="padding:6px 8px;border-bottom:1px solid #2a2418">`+
+      `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">`+
+      `<b style="color:${E.color};font-size:13px">${E.icon} ${E.label}</b>`+
+      `<span style="font-size:10px">${strong} &nbsp; ${vuln}</span></div>`+
+      `<div style="font-size:9px;color:#8a8470;margin-top:2px">${E.blurb}</div></div>`;
+  }).join('');
+  const wheel = `<div style="text-align:center;font-size:11px;color:#cbb;letter-spacing:1px;margin:4px 0 8px">`+
+    `${chip('fire')} → ${chip('ice')} → ${chip('electric')} → ${chip('wind')} → ${chip('water')} → ${chip('fire')}</div>`;
+  dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px;max-height:320px;overflow:auto">`+
+    `<b style="color:#f4c165;letter-spacing:3px">⚔ TYPE CHART</b>`+
+    `<span style="float:right;font-size:9px;color:#8a8470">ESC to close</span>`+
+    `<div style="font-size:10px;color:#9a8;margin:4px 0">Super effective hits deal <b style="color:#7edc8b">×1.35</b>; resisted hits deal <b style="color:#e06868">×0.7</b>. The wheel loops:</div>`+
+    wheel + `<div>${rows}</div>`+
+    `<div style="font-size:9px;color:#8a8470;margin-top:6px;padding:0 8px">An Appliance's element flavors its catch minigame too — Fire is fast and tight, Water and Wind are forgiving, Ice buys you time.</div>`+
+    `</div>`;
 }
 
 function setupTiming() {
@@ -13403,7 +13492,7 @@ Object.assign(window, {
   renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
   buyItem, startTower, setGameVolume, closeWorldMap,
   continuePostgame, startNewGamePlus, toggleReducedFlash,
-  openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish
+  openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish, showTypeChart
 });
 window.__toggleParty = togglePartyMember;
 window.__potRoast = startPotRoast;
@@ -13412,7 +13501,8 @@ window.toggleIntroSettings = function () {
   if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
 };
 // debug/testing handle (read-mostly; also powers automated playtests)
-window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene };
+window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene,
+  ELEMENTS, elemMatchup, getElement, partyMembers, activeSets, elemBeats, elemBeatenBy };
 
 // Pre-rasterize the Impact font and filtered-emoji silhouettes the finishers
 // use, so the very first finisher doesn't pay a one-time ~hundreds-of-ms
