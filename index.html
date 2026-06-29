@@ -2919,7 +2919,8 @@ const ELEM_MAP = {
   78:'wind', 79:'wind', 80:'electric', 81:'neutral',
   82:'fire', 83:'electric', 84:'ice', 85:'electric', 86:'wind'
 };
-function getElement(id) { return ELEM_MAP[id] || 'neutral'; }
+function getElement(id) { return (state.elemOverride && state.elemOverride[id]) || ELEM_MAP[id] || 'neutral'; }
+function baseElement(id) { return ELEM_MAP[id] || 'neutral'; }
 
 // Evolution system
 const EVO_THRESHOLDS = {
@@ -3756,7 +3757,9 @@ const state = {
   dishesCooked: 0,         // KITCHEN: lifetime dishes cooked (achievements)
   cookAtkBonus: 0,         // KITCHEN: permanent flat ATK from cooked dishes
   garnishes: {},           // KITCHEN: garnish key → count owned
-  equippedGarnish: {}      // KITCHEN: appliance id → equipped garnish key
+  equippedGarnish: {},     // KITCHEN: appliance id → equipped garnish key
+  elemOverride: {},        // FUSION: appliance id → infused element (overrides ELEM_MAP)
+  seen: []                 // PANDEX: ids encountered in battle (seen but maybe not caught)
 };
 
 // ── LAKE GATEWAY (3-password secret entrance) ─────────────
@@ -5755,6 +5758,31 @@ function openKitchen() {
         `<span><b>${g.icon} ${g.name}</b>${owned?` <span style="color:#7edc8b;font-size:9px">×${owned}</span>`:''} <span style="font-size:9px;color:#8a8470">— ${g.desc}</span></span>`+
         `<span style="white-space:nowrap">${costLabel(g.cost)} ${ok?'<span style="color:#f4c165">▶ FORGE</span>':''}</span></div>`;
     }).join('');
+  } else if (_kitchenTab === 'fuse') {
+    const members = partyMembers();
+    if (!members.length) { body = '<div style="color:#8a8470;padding:8px">Catch an Appliance and add it to your party first!</div>'; }
+    else body = members.map(id => {
+      const e = entities.find(x => x.id === id); if (!e) return '';
+      const stage = getEvoStage(id);
+      const el = getElement(id);
+      const infused = state.elemOverride && state.elemOverride[id] ? ' <span style="color:#9ab4ff;font-size:8px">◆ infused</span>' : '';
+      const elBadge = `<span style="color:${ELEMENTS[el].color};font-size:9px">${ELEMENTS[el].icon} ${ELEMENTS[el].label}</span>${infused}`;
+      let evoRow;
+      if (stage >= 2) evoRow = `<span style="color:#caa86a;font-size:9px">★ MAX EVOLUTION</span>`;
+      else {
+        const cost = fuseEvolveCost(stage + 1); const ok = canAfford(cost);
+        evoRow = `<span ${ok?`onclick="fuseEvolve(${id})"`:''} style="cursor:${ok?'pointer':'default'};font-size:9px;color:${ok?'#e6dcc0':'#6a6452'}">⬆ EVOLVE → ${(EVO_SUFFIX[stage+1]||' EX').trim()} &nbsp;${costLabel(cost)} ${ok?'<span style="color:#f4c165">▶</span>':''}</span>`;
+      }
+      const chips = ['fire','ice','electric','water','wind'].map(elem => {
+        const on = el === elem; const cost = infuseCost(elem); const ok = canAfford(cost) && !on;
+        const tip = `${ELEMENTS[elem].label} — ${Object.keys(cost).map(k=>INGREDIENTS[k].icon+cost[k]).join(' ')}`;
+        return `<span ${ok?`onclick="fuseInfuse(${id},'${elem}')"`:''} title="${tip}" style="cursor:${ok?'pointer':'default'};padding:2px 5px;margin:1px;border-radius:4px;font-size:11px;${on?`background:${ELEMENTS[elem].color};color:#1a1208`:(ok?'background:#241f14':'background:#1a160e;opacity:.4')}">${ELEMENTS[elem].icon}</span>`;
+      }).join('');
+      return `<div style="padding:5px 8px;border-bottom:1px solid #2a2418"><b style="color:#e6dcc0">${e.e} ${getEvoName(id).toUpperCase()}</b> ${elBadge}`+
+        `<div style="margin-top:3px">${evoRow}</div>`+
+        `<div style="margin-top:3px;font-size:8px;color:#8a8470">INFUSE TYPE: ${chips} <span style="color:#6a6452">(${INFUSE_COST_N}× essence + 🧂)</span></div></div>`;
+    }).join('');
+    body += `<div style="font-size:9px;color:#8a8470;margin-top:6px;padding:0 8px">Catalyze an evolution, or re-type an Appliance to exploit a matchup. <span onclick="showTypeChart()" style="cursor:pointer;color:#9ab4ff">⚔ view chart</span></div>`;
   } else { // equip
     const fmtG = key => key && GARNISH_DEFS[key] ? `${GARNISH_DEFS[key].icon} ${GARNISH_DEFS[key].name}` : '<span style="color:#666">— none —</span>';
     const ownedKeys = Object.keys(GARNISH_DEFS).filter(k => (state.garnishes[k] || 0) > 0);
@@ -5787,7 +5815,7 @@ function openKitchen() {
     `<b style="color:#f4c165;letter-spacing:3px">🍳 THE KITCHEN</b>`+
     `<span style="float:right;font-size:9px;color:#8a8470"><span onclick="showTypeChart()" style="cursor:pointer;color:#9ab4ff">⚔ TYPE CHART</span> &bull; Chef Gourmand &bull; ESC to leave</span><br>`+
     `<div style="margin:6px 0;padding:4px 6px;background:rgba(0,0,0,.25);border-radius:4px;font-size:11px">${pantry}</div>`+
-    `<div style="display:flex;gap:6px;margin:6px 0">${tabBtn('cook','COOK DISHES')}${tabBtn('forge','FORGE GARNISH')}${tabBtn('equip','EQUIP')}</div>`+
+    `<div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap">${tabBtn('cook','COOK')}${tabBtn('forge','FORGE')}${tabBtn('equip','EQUIP')}${tabBtn('fuse','FUSION')}</div>`+
     `<div>${body}</div></div>`;
 }
 
@@ -5824,6 +5852,55 @@ function equipGarnish(id, key) {
     toast(`${g.icon} ${getEvoName(id).toUpperCase()} equips ${g.name}`);
   }
   audio.menuMove && audio.menuMove();
+  autoSave();
+  openKitchen();
+}
+
+// ── FUSION FORGE ──────────────────────────────────────────
+// Two genuinely-new uses for your pantry haul, both reusing existing systems:
+//   • Evolution Catalyst — spend rare ingredients to instantly evolve an
+//     appliance one stage (an alternative to grinding battle wins).
+//   • Type Infusion — re-type an appliance to counter a tough matchup.
+function fuseEvolveCost(targetStage) {
+  return targetStage === 1 ? { truffle:1, salt:3, flour:3 } : { truffle:2, goldenEgg:2, salt:4 };
+}
+const INFUSE_COST_N = 4;   // element-ingredient units per infusion
+function infuseCost(elem) {
+  const ing = ({ fire:'chili', ice:'iceShard', electric:'spark', water:'springwater', wind:'gust', neutral:'flour' })[elem] || 'flour';
+  return { [ing]: INFUSE_COST_N, salt:1 };
+}
+function fuseEvolve(id) {
+  const ent = entities.find(e => e.id === id); if (!ent) return;
+  const stage = getEvoStage(id);
+  if (stage >= 2) { toast('Already fully evolved!'); audio.bump(); return; }
+  const target = stage + 1;
+  const cost = fuseEvolveCost(target);
+  if (!canAfford(cost)) { toast('Not enough ingredients to catalyze!'); audio.bump(); return; }
+  spendCost(cost);
+  const thresholds = EVO_THRESHOLDS[ent.rarity] || [3, 8];
+  state.applianceWins[id] = Math.max(state.applianceWins[id] || 0, thresholds[target - 1]);
+  const newStage = getEvoStage(id);
+  const col = EVO_COLOR[newStage] || '#f4c165';
+  const hpGain = newStage === 2 ? 18 : 12;
+  if (id === state.activeAppliance) { gainMaxHp(hpGain); state.playerHp = Math.min(state.playerMaxHp, state.playerHp + hpGain); }
+  else { gainMaxHp(hpGain); }
+  dailyTrack && dailyTrack('evolve', {});
+  checkAchievements(); autoSave();
+  closeDialog && closeDialog();
+  audio.catchSuccess();
+  showEvoCutscene(id, ent.n, getEvoName(id), ent.e, ent.e, col, hpGain);
+}
+function fuseInfuse(id, elem) {
+  if (!ELEMENTS[elem]) return;
+  const cur = getElement(id);
+  if (cur === elem) { toast(`Already ${ELEMENTS[elem].label} type.`); audio.bump(); return; }
+  const cost = infuseCost(elem);
+  if (!canAfford(cost)) { toast('Not enough essence to infuse!'); audio.bump(); return; }
+  spendCost(cost);
+  if (elem === baseElement(id)) delete state.elemOverride[id];   // back to natural type — clear override
+  else state.elemOverride[id] = elem;
+  audio.catchSuccess();
+  toast(`${ELEMENTS[elem].icon} ${getEvoName(id).toUpperCase()} infused with ${ELEMENTS[elem].label}!`);
   autoSave();
   openKitchen();
 }
@@ -6388,7 +6465,9 @@ function _buildSaveData() {
     dishesCooked: state.dishesCooked || 0,
     cookAtkBonus: state.cookAtkBonus || 0,
     garnishes: state.garnishes || {},
-    equippedGarnish: state.equippedGarnish || {}
+    equippedGarnish: state.equippedGarnish || {},
+    elemOverride: state.elemOverride || {},
+    seen: Array.isArray(state.seen) ? state.seen : []
   };
 }
 
@@ -6441,6 +6520,8 @@ function _applySaveData(d) {
   state.cookAtkBonus = d.cookAtkBonus || 0;
   state.garnishes = d.garnishes || {};
   state.equippedGarnish = d.equippedGarnish || {};
+  state.elemOverride = d.elemOverride || {};
+  state.seen = Array.isArray(d.seen) ? d.seen : [];
   if (d.party && d.party.length) {
     // modern save: per-appliance HP store
     state.party = d.party;
@@ -6903,6 +6984,8 @@ const btMenu       = document.getElementById('btMenu');
 function startBattle(enemyEnt) {
   state.encounters++;
   state.ultGauge = 0;
+  // PANDEX: record this species as "seen" even if it escapes
+  if (enemyEnt && enemyEnt.id && ELEM_MAP[enemyEnt.id] && state.seen && !state.seen.includes(enemyEnt.id)) state.seen.push(enemyEnt.id);
   audio.encounter();
   // Classic Pokemon-style encounter transition: triple flash, then an iris
   // wipe that closes to black before the battle screen is revealed.
@@ -13492,7 +13575,8 @@ Object.assign(window, {
   renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
   buyItem, startTower, setGameVolume, closeWorldMap,
   continuePostgame, startNewGamePlus, toggleReducedFlash,
-  openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish, showTypeChart
+  openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish, showTypeChart,
+  fuseEvolve, fuseInfuse
 });
 window.__toggleParty = togglePartyMember;
 window.__potRoast = startPotRoast;
