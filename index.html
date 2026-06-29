@@ -536,7 +536,7 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
   position:absolute; inset:0; z-index: 40;
   background: linear-gradient(180deg, rgba(8,8,24,0.98), rgba(4,4,12,0.99));
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding: 40px 60px; text-align:center;
+  padding: 24px 60px; text-align:center; overflow-y:auto;
 }
 #intro h1, #ending h1 {
   color: var(--accent); letter-spacing: 10px; margin-bottom: 18px; font-size: 32px;
@@ -2167,15 +2167,23 @@ body { background: var(--bg-void) !important; }
       <h1>PANDEMONIUM</h1>
       <p style="color:#f4c165;letter-spacing:3px;font-size:13px;">&mdash; GOTTA COOK 'EM ALL &mdash;</p>
       <p>For as long as anyone remembers, the world has been home to wild, living kitchenware &mdash; mischievous <b>Appliances</b> that roam the homes, markets, caves, and crystal dimensions of the realm.</p>
-      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>81 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And three ULTRA entities whispered about only in chef's lore.</p>
+      <p>Professor <b>Bouillabaisse</b> has given you one task: complete the <b>PANDEX</b> &mdash; a registry of every known Appliance. All <b>86 species</b>. Common spatulas. Rare blenders. Mythic espresso machines. Legendary sous-vides. And three ULTRA entities whispered about only in chef's lore.</p>
       <p>Catching an Appliance requires skill. Battle it, weaken it below 30% HP, then throw a Takeout Box. Rarer Appliances demand sharper technique &mdash; and the tall golden grass hides surprise encounters.</p>
-      <p style="font-size:12px;color:#aac;">Earn <b style="color:#ffd700">🪙 coins</b> from every win and spend them at the <b>Grande Mart</b>. Evolve your team, bond with your favorites, face your <b>rival Marco</b>, conquer the <b>🏯 Battle Tower</b>, and press <b style="color:#f4c165">M</b> any time you're lost &mdash; the world map always shows your next objective.</p>
+      <p style="font-size:12px;color:#aac;">Battles drop <b style="color:#caa86a">🧺 ingredients</b> &mdash; bring them to <b>Chef Gourmand</b> at the Grande Mart to cook <b>🍳 dishes</b> for powerful buffs and forge <b>🔪 garnishes</b> your Appliances can equip. Earn <b style="color:#ffd700">🪙 coins</b> from every win, evolve your team, face your <b>rival Marco</b>, conquer the <b>🏯 Battle Tower</b>, and once you've earned your 2nd star, seek the sealed <b style="color:#f4c165">🔐 Pantry Vault</b>. Press <b style="color:#f4c165">M</b> any time you're lost &mdash; the world map always shows your next objective.</p>
       <div class="keys">
         ARROWS / WASD &mdash; move &nbsp; SPACE / E &mdash; interact &nbsp; P &mdash; PANDEX<br>
         M &mdash; WORLD MAP &nbsp; H &mdash; WARP HOME &nbsp; F &mdash; FAST TRAVEL &nbsp; F5 / F9 &mdash; SAVE / LOAD
       </div>
-      <div class="press" style="cursor:pointer" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}))">&gt; TAP or PRESS SPACE TO BEGIN &lt;</div>
-      <div id="introContinue" style="display:none;margin-top:12px;color:#7edc8b;letter-spacing:3px;font-size:12px;cursor:pointer;animation:blink 1s infinite" onclick="openSaveSlots('load')">&gt; TAP or F9 TO CONTINUE &lt;</div>
+      <div id="introMenu" style="margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:9px">
+        <div id="introContinue" style="display:none;cursor:pointer;letter-spacing:4px;font-size:13px;color:#0a0a14;background:#7edc8b;padding:7px 26px;border-radius:4px;font-weight:bold;box-shadow:0 0 16px rgba(126,220,139,.4);animation:blink 1.6s infinite" onclick="openSaveSlots('load')">↻ CONTINUE</div>
+        <div style="cursor:pointer;letter-spacing:4px;font-size:13px;color:#241a08;background:#f4c165;padding:7px 30px;border-radius:4px;font-weight:bold;box-shadow:0 0 16px rgba(244,193,101,.35)" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}))">▶ NEW GAME</div>
+        <div style="cursor:pointer;letter-spacing:3px;font-size:11px;color:#aac;border:1px solid #3a4a6a;padding:5px 22px;border-radius:4px" onclick="toggleIntroSettings()">⚙ SETTINGS</div>
+        <div id="introSettings" style="display:none;margin-top:6px;font-size:10px;color:#9ab;letter-spacing:1px">
+          🔊 VOLUME <input type="range" min="0" max="100" value="100" style="vertical-align:middle;width:120px;accent-color:#f4c165" oninput="setGameVolume(this.value/100)"> &nbsp;&bull;&nbsp;
+          <span style="cursor:pointer;text-decoration:underline" onclick="toggleReducedFlash();this.textContent='⚡ FLASH FX: '+(window.__pando&&window.__pando.state.reducedFlash?'REDUCED':'FULL')">⚡ FLASH FX: FULL</span>
+        </div>
+        <div style="font-size:9px;color:#556;letter-spacing:2px;margin-top:2px">SPACE / ENTER &mdash; NEW GAME &nbsp;&bull;&nbsp; F9 &mdash; CONTINUE</div>
+      </div>
     </div>
     <div id="starter">
       <h1>CHOOSE YOUR FIRST</h1>
@@ -2599,6 +2607,24 @@ const maps = {
       "######################"
     ]
   },
+  // ================ PANTRY VAULT (endgame area) ================
+  vault: {
+    w: 16, h: 12, music:'base',
+    tiles: [
+      "################",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "#MMMMMMMMMMMMMM#",
+      "################"
+    ]
+  },
   // ================ SHRINE DIMENSION (ultras) ================
   gallery: {
     w: 14, h: 10, music:'base',
@@ -2888,7 +2914,8 @@ const ELEM_MAP = {
   64:'fire', 65:'fire', 66:'fire', 67:'fire', 68:'fire',
   69:'neutral', 70:'ice', 71:'neutral', 72:'ice',
   73:'electric', 74:'electric', 75:'electric', 76:'electric', 77:'electric',
-  78:'ice', 79:'ice', 80:'electric', 81:'neutral'
+  78:'ice', 79:'ice', 80:'electric', 81:'neutral',
+  82:'fire', 83:'electric', 84:'ice', 85:'electric', 86:'neutral'
 };
 function getElement(id) { return ELEM_MAP[id] || 'neutral'; }
 
@@ -3082,7 +3109,7 @@ function isBuffActive(buffName) {
 
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
-const TOTAL_DEX = 81;
+const TOTAL_DEX = 86;
 
 // ======================================================================
 // ENTITIES
@@ -3289,7 +3316,25 @@ const entities = [
   { id:81, n:'Astrochef',   e:'🌟',  rarity:'ultra',     mg:'AIM',    m:'sky', x:11, y:9, habitat:'CELESTIAL',
     dex:'The third ULTRA. Cooks with starlight and plates on constellations. Reservations take light-years.' },
 
+  // =================== PANTRY VAULT (82-86) ===================
+  { id:82, n:'Airfryon',   e:'🍤', rarity:'epic',      mg:'AIM',    m:'vault', x:2,  y:3, habitat:'PANTRY VAULT',
+    dex:'A high-tech air fryer that guards the vault’s crisping shelves. Circulates air hot enough to flambé an intruder.' },
+  { id:83, n:'Voltkettle', e:'🫖', rarity:'epic',      mg:'MASH',   m:'vault', x:5,  y:3, habitat:'PANTRY VAULT',
+    dex:'Boils on command. Its whistle hits a frequency that shatters glass and resolve alike.' },
+  { id:84, n:'Cryochef',   e:'🧊', rarity:'epic',      mg:'HOLD',   m:'vault', x:10, y:3, habitat:'PANTRY VAULT',
+    dex:'A blast chiller that flash-freezes anything mid-step. The vault stays sub-zero because of it.' },
+  { id:85, n:'Magnetron',  e:'📡', rarity:'rare',      mg:'SEQUENCE', m:'vault', x:13, y:3, habitat:'PANTRY VAULT',
+    dex:'The beating heart of a microwave. Hums at a pitch that rattles fillings loose from teeth.' },
+  { id:86, n:'Goldwhisk',  e:'🥇', rarity:'legendary', mg:'RHYTHM', m:'vault', x:8,  y:2, habitat:'PANTRY VAULT',
+    dex:'The vault’s crown jewel. Whisks pure gold into immaculate, impossible peaks. Hums when admired.' },
+
   // =================== NPCS ===================
+  { m:'market', x:12, y:13, n:'Vault Keeper', e:'🔐', npc:true, vaultkeeper:true,
+    desc:'' },
+  { m:'vault', x:8, y:6, n:'Maître Flambeau', e:'🎩', npc:true, elite:'vault',
+    desc:'' },
+  { m:'vault', x:8, y:10, n:'Vault Door', e:'🚪', npc:true, vaultexit:true,
+    desc:'' },
   { m:'town', x:23, y:6, n:'Professor Bouillabaisse', e:'\uD83D\uDC68\u200D\uD83C\uDF73', npc:true, prof:true,
     desc:'' },
   { m:'town', x:21, y:6, n:'Heal Counter', e:'\uD83C\uDF7D\uFE0F', npc:true, heal:true,
@@ -3415,12 +3460,16 @@ const entities = [
   // =================== SHOP & TOWER ===================
   { m:'market', x:24, y:13, n:'Shopkeeper', e:'🧑‍💼', npc:true, shopkeep:true,
     desc:'' },
+  { m:'market', x:20, y:12, n:'Chef Gourmand', e:'🧑‍🍳', npc:true, chef:true,
+    desc:'' },
   { m:'town', x:10, y:12, n:'Battle Tower', e:'🏯', npc:true, tower:true,
     desc:'' },
 
   // =================== SHRINE ===================
-  { m:'wild', x:13, y:20, n:'The Shrine', e:'', shrine:true,
-    desc:'Old stones, older than language. Weighing what you carry.' }
+  { m:'wild', x:13, y:20, n:'The Shrine', e:'⛩️', shrine:true,
+    desc:'Old stones, older than language. Weighing what you carry.' },
+  { m:'wild', x:11, y:20, n:'Shrine Plaque', e:'🪧', npc:true, shrineplaque:true,
+    desc:'' }
 ];
 
 // ======================================================================
@@ -3700,7 +3749,12 @@ const state = {
   ngPlus: 0,               // New Game+ cycle count
   reducedFlash: false,     // accessibility: tame the impact-frame strobes
   potRoastDefeated: false, // true postgame superboss beaten
-  endingSeen: false        // ending screen already shown once
+  endingSeen: false,       // ending screen already shown once
+  ingredients: {},         // KITCHEN: ingredient key → count (dropped in battle)
+  dishesCooked: 0,         // KITCHEN: lifetime dishes cooked (achievements)
+  cookAtkBonus: 0,         // KITCHEN: permanent flat ATK from cooked dishes
+  garnishes: {},           // KITCHEN: garnish key → count owned
+  equippedGarnish: {}      // KITCHEN: appliance id → equipped garnish key
 };
 
 // ── LAKE GATEWAY (3-password secret entrance) ─────────────
@@ -3966,6 +4020,31 @@ function pendingBossStar() {
 }
 function caveUnlocked()      { return state.michelinStars >= 1; }
 function sacredFiveComplete(){ for (const id of SACRED_FIVE) if (!state.caught.has(id)) return false; return true; }
+function sacredFiveCaught(){ let n = 0; for (const id of SACRED_FIVE) if (state.caught.has(id)) n++; return n; }
+// Build an HTML checklist of the Sacred Five with caught status + where to find each.
+function sacredFiveChecklistHtml(){
+  return [...SACRED_FIVE].map(id => {
+    const e = entities.find(x => x.id === id);
+    const got = state.caught.has(id);
+    const where = e ? (e.habitat || (ZONE_NAMES[e.m] || e.m).toUpperCase()) : '???';
+    const mark = got ? '<span style="color:#7edc8b">✓</span>' : '<span style="color:#e06060">✗</span>';
+    const name = got ? `<b style="color:#7edc8b">${e ? e.n : '???'}</b>` : `<b style="color:#caa">${e ? e.n : '???'}</b>`;
+    const tag = e ? `<span style="font-size:9px;color:#888"> — ${RARITY_LABEL[e.rarity]} · ${where}</span>` : '';
+    return `<div style="padding:1px 0">${mark} ${name}${got ? '' : tag}</div>`;
+  }).join('');
+}
+function shrinePlaqueTalk(){
+  const n = sacredFiveCaught();
+  const done = n >= 5;
+  openDialog('Shrine Plaque', [
+    "Weathered letters, chiselled deep:",
+    `<i>"Bring the SACRED FIVE before these stones, and the way to the Crystal Dimension shall open."</i>`,
+    `<div style="margin-top:6px;text-align:left;display:inline-block">${sacredFiveChecklistHtml()}</div>`,
+    done
+      ? `<b style="color:#7edc8b">All five gathered (${n}/5). Step to the ⛩️ shrine and press SPACE to open the portal.</b>`
+      : `<b style="color:#f4c165">Progress: ${n}/5.</b> Catch the rest, then return to the ⛩️ shrine just east of here.`
+  ]);
+}
 
 // ----- WEB AUDIO STINGS -----
 const audio = (() => {
@@ -4936,7 +5015,7 @@ const audio = (() => {
     if (battleLoop) { stopLoop(battleLoop); battleLoop = null; }
     if (mapName === currentArea && areaLoop) return;
     stopArea();
-    const song = AREA_SONGS[mapName];
+    const song = AREA_SONGS[mapName === 'vault' ? 'dimension' : mapName];
     if (!song) return;
     currentArea = mapName;
     areaLoop = genericLoop(song);
@@ -5533,17 +5612,210 @@ function buyItem(i) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// THE KITCHEN — ingredients, dishes (buffs), garnishes (held items)
+// ═══════════════════════════════════════════════════════════
+const INGREDIENTS = {
+  flour:     { icon:'🌾', name:'Flour' },
+  chili:     { icon:'🌶️', name:'Chili' },
+  iceShard:  { icon:'🧊', name:'Ice Shard' },
+  spark:     { icon:'⚡', name:'Spark' },
+  salt:      { icon:'🧂', name:'Salt' },
+  truffle:   { icon:'🍄', name:'Truffle' },
+  goldenEgg: { icon:'🥚', name:'Golden Egg' }
+};
+const COOK_MIN = 15 * 60 * 1000;
+
+// Dishes are one-time consumables cooked from ingredients. Most grant a timed
+// battle buff (reusing the activeBuffs engine); a couple grant permanent power.
+const DISH_RECIPES = [
+  { key:'stirfry', name:'Searing Stir-Fry', icon:'🍳', cost:{ chili:2, flour:1 },
+    desc:'2× damage for 15 min', apply(){ state.activeBuffs.doubleDamage = Date.now() + COOK_MIN; } },
+  { key:'parfait', name:'Frost Parfait', icon:'🍧', cost:{ iceShard:2, flour:1 },
+    desc:'Enemies deal ½ damage for 15 min', apply(){ state.activeBuffs.halfEnemyDmg = Date.now() + COOK_MIN; } },
+  { key:'curry', name:'Voltage Curry', icon:'🍛', cost:{ spark:2, salt:1 },
+    desc:'30% crit chance for 15 min', apply(){ state.activeBuffs.critBoost = Date.now() + COOK_MIN; } },
+  { key:'stew', name:'Hearty Stew', icon:'🍲', cost:{ flour:3, salt:2 },
+    desc:'Heal party fully + PERMANENT +6 max HP', apply(){ gainMaxHp(6); healParty(); } },
+  { key:'banquet', name:"Chef's Grand Banquet", icon:'🍱', cost:{ truffle:1, goldenEgg:1, chili:1, iceShard:1, spark:1 },
+    desc:'PERMANENT +3 ATK (whole party)', apply(){ state.cookAtkBonus = (state.cookAtkBonus||0) + 3; } }
+];
+
+// Garnishes are forged once and EQUIPPED to an appliance for a passive battle
+// effect. Stats are read generically by the combat code (see garnishMods).
+const GARNISH_DEFS = {
+  knife:   { name:"Chef's Knife", icon:'🔪', atk:0.15, desc:'+15% attack power',           cost:{ chili:3, spark:2 } },
+  mitt:    { name:'Oven Mitt',    icon:'🧤', def:0.20, desc:'Take 20% less damage',         cost:{ flour:3, iceShard:2 } },
+  thermos: { name:'Lucky Thermos',icon:'🌡️', regen:6, desc:'Heal 6 HP every turn',          cost:{ iceShard:3, salt:2 } },
+  brand:   { name:'Searing Brand',icon:'🔥', crit:0.22,desc:'+22% crit chance',             cost:{ chili:4, goldenEgg:1 } },
+  whisk:   { name:'Golden Whisk',  icon:'🥄', atk:0.10, def:0.10, desc:'+10% attack & -10% damage taken', cost:{ truffle:2, goldenEgg:2 } }
+};
+
+function garnishMods(id) {
+  const key = state.equippedGarnish && state.equippedGarnish[id];
+  return (key && GARNISH_DEFS[key]) ? GARNISH_DEFS[key] : null;
+}
+function garnishAtkMult(id) { const g = garnishMods(id); return 1 + (g && g.atk ? g.atk : 0); }
+function garnishDefMult(id) { const g = garnishMods(id); return 1 - (g && g.def ? g.def : 0); }
+function garnishCritBonus(id) { const g = garnishMods(id); return (g && g.crit) ? g.crit : 0; }
+
+function canAfford(cost) {
+  for (const k in cost) if ((state.ingredients[k] || 0) < cost[k]) return false;
+  return true;
+}
+function spendCost(cost) { for (const k in cost) state.ingredients[k] = (state.ingredients[k] || 0) - cost[k]; }
+function costLabel(cost) {
+  return Object.keys(cost).map(k => {
+    const have = state.ingredients[k] || 0, need = cost[k];
+    const col = have >= need ? '#7edc8b' : '#e06060';
+    return `<span style="color:${col}">${INGREDIENTS[k].icon}${need}</span>`;
+  }).join(' ');
+}
+
+// Drop ingredients after a wild/grass victory or capture.
+function dropIngredients(ent) {
+  const elem = getElement(ent.id);
+  const tier = RARITY_TIER[ent.rarity] || 0;
+  const elemIng = ({ fire:'chili', ice:'iceShard', electric:'spark', neutral:'flour' })[elem] || 'flour';
+  const drops = {};
+  const add = (k, n) => { drops[k] = (drops[k] || 0) + n; };
+  add(elemIng, 1 + (Math.random() < 0.4 ? 1 : 0));
+  if (Math.random() < 0.5) add('salt', 1);
+  if (Math.random() < 0.5) add('flour', 1);
+  if (tier >= 2) add(elemIng, 1);
+  if (Math.random() < 0.06 + tier * 0.06) add('truffle', 1);
+  if (Math.random() < 0.04 + tier * 0.05) add('goldenEgg', 1);
+  for (const k in drops) state.ingredients[k] = (state.ingredients[k] || 0) + drops[k];
+  const txt = Object.keys(drops).map(k => `${INGREDIENTS[k].icon}×${drops[k]}`).join(' ');
+  if (txt) battleLog(`<span style="color:#caa86a">🧺 Salvaged ${txt}</span>`);
+}
+
+let _kitchenTab = 'cook';
+function kitchenTab(t) { _kitchenTab = t; openKitchen(); }
+
+function openKitchen() {
+  openDialog('THE KITCHEN', []);
+  _typewriterFinish();
+  const dlg = document.getElementById('dialogue');
+  if (!dlg) return;
+  const tabBtn = (t, label) => `<span onclick="kitchenTab('${t}')" style="cursor:pointer;padding:3px 10px;border-radius:4px;letter-spacing:2px;font-size:10px;${_kitchenTab===t?'background:#f4c165;color:#241a08;font-weight:bold':'color:#9a8'}">${label}</span>`;
+  const pantry = Object.keys(INGREDIENTS).map(k => {
+    const n = state.ingredients[k] || 0;
+    return `<span style="opacity:${n?1:0.35};margin-right:8px;white-space:nowrap">${INGREDIENTS[k].icon}<b style="color:${n?'#e8e0c8':'#666'}">${n}</b></span>`;
+  }).join('');
+
+  let body = '';
+  if (_kitchenTab === 'cook') {
+    body = DISH_RECIPES.map(r => {
+      const ok = canAfford(r.cost);
+      const click = ok ? `onclick="cookDish('${r.key}')"` : '';
+      const col = ok ? '#e6dcc0' : '#6a6452';
+      return `<div ${click} style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:${ok?'pointer':'default'};color:${col}" ${ok?`onmouseover="this.style.background='rgba(244,193,101,.1)'" onmouseout="this.style.background='transparent'"`:''}>`+
+        `<span><b>${r.icon} ${r.name}</b> <span style="font-size:9px;color:#8a8470">— ${r.desc}</span></span>`+
+        `<span style="white-space:nowrap">${costLabel(r.cost)} ${ok?'<span style="color:#f4c165">▶ COOK</span>':''}</span></div>`;
+    }).join('');
+  } else if (_kitchenTab === 'forge') {
+    body = Object.keys(GARNISH_DEFS).map(key => {
+      const g = GARNISH_DEFS[key];
+      const owned = state.garnishes[key] || 0;
+      const ok = canAfford(g.cost);
+      const click = ok ? `onclick="forgeGarnish('${key}')"` : '';
+      const col = ok ? '#e6dcc0' : '#6a6452';
+      return `<div ${click} style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:${ok?'pointer':'default'};color:${col}" ${ok?`onmouseover="this.style.background='rgba(244,193,101,.1)'" onmouseout="this.style.background='transparent'"`:''}>`+
+        `<span><b>${g.icon} ${g.name}</b>${owned?` <span style="color:#7edc8b;font-size:9px">×${owned}</span>`:''} <span style="font-size:9px;color:#8a8470">— ${g.desc}</span></span>`+
+        `<span style="white-space:nowrap">${costLabel(g.cost)} ${ok?'<span style="color:#f4c165">▶ FORGE</span>':''}</span></div>`;
+    }).join('');
+  } else { // equip
+    const fmtG = key => key && GARNISH_DEFS[key] ? `${GARNISH_DEFS[key].icon} ${GARNISH_DEFS[key].name}` : '<span style="color:#666">— none —</span>';
+    const ownedKeys = Object.keys(GARNISH_DEFS).filter(k => (state.garnishes[k] || 0) > 0);
+    const members = partyMembers();
+    if (!members.length) { body = '<div style="color:#8a8470;padding:8px">Catch an Appliance first!</div>'; }
+    else body = members.map(id => {
+      const e = entities.find(x => x.id === id);
+      const cur = state.equippedGarnish[id];
+      const chips = ownedKeys.map(k => {
+        const on = cur === k;
+        return `<span onclick="equipGarnish(${id},'${k}')" style="cursor:pointer;padding:2px 6px;margin:2px;border-radius:4px;font-size:10px;${on?'background:#f4c165;color:#241a08':'background:#241f14;color:#cbb'}">${GARNISH_DEFS[k].icon}</span>`;
+      }).join('');
+      const uneq = cur ? `<span onclick="equipGarnish(${id},'')" style="cursor:pointer;padding:2px 6px;margin:2px;border-radius:4px;font-size:9px;background:#3a2020;color:#e08">✕</span>` : '';
+      return `<div style="padding:5px 8px;border-bottom:1px solid #2a2418"><b style="color:#e6dcc0">${e?e.e:'?'} ${e?getEvoName(id).toUpperCase():'?'}</b> <span style="font-size:9px;color:#8a8470">holds ${fmtG(cur)}</span><div style="margin-top:3px">${chips||'<span style="color:#666;font-size:9px">forge a garnish to equip</span>'}${uneq}</div></div>`;
+    }).join('');
+  }
+
+  dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px;max-height:300px;overflow:auto">`+
+    `<b style="color:#f4c165;letter-spacing:3px">🍳 THE KITCHEN</b>`+
+    `<span style="float:right;font-size:9px;color:#8a8470">Chef Gourmand &bull; ESC to leave</span><br>`+
+    `<div style="margin:6px 0;padding:4px 6px;background:rgba(0,0,0,.25);border-radius:4px;font-size:11px">${pantry}</div>`+
+    `<div style="display:flex;gap:6px;margin:6px 0">${tabBtn('cook','COOK DISHES')}${tabBtn('forge','FORGE GARNISH')}${tabBtn('equip','EQUIP')}</div>`+
+    `<div>${body}</div></div>`;
+}
+
+function cookDish(key) {
+  const r = DISH_RECIPES.find(x => x.key === key); if (!r) return;
+  if (!canAfford(r.cost)) { toast('Not enough ingredients!'); audio.bump(); return; }
+  spendCost(r.cost);
+  r.apply();
+  state.dishesCooked = (state.dishesCooked || 0) + 1;
+  audio.catchSuccess();
+  toast(`${r.icon} Cooked ${r.name}! ${r.desc}`);
+  checkAchievements();
+  autoSave();
+  openKitchen();
+}
+function forgeGarnish(key) {
+  const g = GARNISH_DEFS[key]; if (!g) return;
+  if (!canAfford(g.cost)) { toast('Not enough ingredients!'); audio.bump(); return; }
+  spendCost(g.cost);
+  state.garnishes[key] = (state.garnishes[key] || 0) + 1;
+  audio.catchSuccess();
+  toast(`${g.icon} Forged ${g.name}!`);
+  autoSave();
+  openKitchen();
+}
+function equipGarnish(id, key) {
+  if (!key) { delete state.equippedGarnish[id]; }
+  else {
+    if ((state.garnishes[key] || 0) <= 0) return;
+    // a garnish is bound to one appliance — free it from anyone else holding this key
+    for (const oid in state.equippedGarnish) if (state.equippedGarnish[oid] === key) delete state.equippedGarnish[oid];
+    state.equippedGarnish[id] = key;
+    const g = GARNISH_DEFS[key];
+    toast(`${g.icon} ${getEvoName(id).toUpperCase()} equips ${g.name}`);
+  }
+  audio.menuMove && audio.menuMove();
+  autoSave();
+  openKitchen();
+}
+
+// PANTRY VAULT access — a late-game area unsealed by your 2nd Michelin Star.
+function enterVault() {
+  if ((state.michelinStars || 0) < 2) {
+    openDialog('Vault Keeper', ['"The Pantry Vault opens only to chefs of renown. Earn your 2nd Michelin Star — catch 10 Appliances — and the locks will know you."']);
+    return;
+  }
+  state.map = 'vault'; state.px = state.tx = 8; state.py = state.ty = 9; state.dir = 'up';
+  state.moving = false; state.prog = 0;
+  audio.startArea('vault'); audio.zoneTransition(); showAreaBanner('vault'); markVisited('vault');
+  toast('🔐 The Pantry Vault unseals before you...');
+  checkRivalAmbush();
+}
+function exitVault() {
+  state.map = 'market'; state.px = state.tx = 20; state.py = state.ty = 14; state.dir = 'down';
+  state.moving = false; state.prog = 0;
+  audio.startArea('market'); audio.zoneTransition(); showAreaBanner('market');
+}
+
+// ═══════════════════════════════════════════════════════════
 // WORLD MAP (M) + QUEST HINTS
 // ═══════════════════════════════════════════════════════════
 const MAP_GRID = {   // zone → [col,row] in rough world geography
   volcano:[0,2], sky:[1,1], mountain:[1,2], plains:[2,2], fungal:[2,3], swamp:[2,4],
   house:[3,0], town:[3,1], wild:[3,2], cave:[3,3], dimension:[3,4],
-  base:[4,0], market:[4,1], lake:[4,2], scrapyard:[4,3], beach:[5,2], neon:[6,2]
+  base:[4,0], market:[4,1], lake:[4,2], scrapyard:[4,3], beach:[5,2], neon:[6,2], vault:[5,1]
 };
 const MAP_ICONS = {
   house:'🏠', town:'🏘️', market:'🛒', wild:'🌲', cave:'🕳️', base:'🔩', dimension:'🔮',
   plains:'🌾', mountain:'🏔️', lake:'🌊', beach:'🏖️', fungal:'🍄', scrapyard:'⚙️',
-  volcano:'🌋', swamp:'🐸', neon:'🌆', sky:'☁️'
+  volcano:'🌋', swamp:'🐸', neon:'🌆', sky:'☁️', vault:'🔐'
 };
 
 function markVisited(m) {
@@ -5557,7 +5829,7 @@ function questHint() {
   if (c < 10) return `Catch 10 Appliances to earn Michelin Star 2 (${c}/10).`;
   if (!state.bossesDefeated.boss1) return 'Keep battling — a boss challenger approaches for Star 3!';
   if (![37,38,39].every(id => state.caught.has(id))) return 'Catch the 3 LEGENDARY Appliances in the Deep Cave for Star 4.';
-  if (!sacredFiveComplete()) return 'Gather the Sacred Five and visit the Shrine in the Wilderness.';
+  if (!sacredFiveComplete()) return `Catch the SACRED FIVE (${sacredFiveCaught()}/5), then enter the ⛩️ Shrine at the south edge of the Wilderness to open the Crystal Dimension.`;
   const elitesLeft = Object.values(ELITE_BOSSES).filter(e => !state.bossesDefeated[e.id]).length;
   if (elitesLeft) return `Defeat the ${elitesLeft} remaining ELITE boss${elitesLeft===1?'':'es'} in the frontier regions!`;
   if (c < TOTAL_DEX) return `Complete the Pandex — ${TOTAL_DEX - c} species remain!`;
@@ -6008,7 +6280,11 @@ const ACHIEVEMENTS = [
   { id:'tower10',     icon:'🌟', name:'TOWER LEGEND',    check:() => (state.towerBest||0) >= 10 },
   { id:'rich',        icon:'🪙', name:'LOADED',          check:() => (state.coinsEarned||0) >= 1000 },
   { id:'potroast',    icon:'🍖', name:'COOKED IT TWICE', check:() => !!state.potRoastDefeated },
-  { id:'ngplus',      icon:'🔁', name:'SECOND HELPING',  check:() => (state.ngPlus||0) >= 1 }
+  { id:'ngplus',      icon:'🔁', name:'SECOND HELPING',  check:() => (state.ngPlus||0) >= 1 },
+  { id:'firstdish',   icon:'🍳', name:'LINE COOK',       check:() => (state.dishesCooked||0) >= 1 },
+  { id:'masterchef',  icon:'🍱', name:'MASTER CHEF',     check:() => (state.dishesCooked||0) >= 10 },
+  { id:'garnish',     icon:'🔪', name:'WELL-GARNISHED',  check:() => Object.values(state.garnishes||{}).some(n => n > 0) },
+  { id:'vault',       icon:'🔐', name:'VAULT RAIDER',    check:() => !!state.bossesDefeated.elite_vault }
 ];
 
 function checkAchievements() {
@@ -6065,7 +6341,12 @@ function _buildSaveData() {
     ngPlus: state.ngPlus || 0,
     reducedFlash: state.reducedFlash || false,
     potRoastDefeated: state.potRoastDefeated || false,
-    endingSeen: state.endingSeen || false
+    endingSeen: state.endingSeen || false,
+    ingredients: state.ingredients || {},
+    dishesCooked: state.dishesCooked || 0,
+    cookAtkBonus: state.cookAtkBonus || 0,
+    garnishes: state.garnishes || {},
+    equippedGarnish: state.equippedGarnish || {}
   };
 }
 
@@ -6113,6 +6394,11 @@ function _applySaveData(d) {
   state.reducedFlash = d.reducedFlash || false;
   state.potRoastDefeated = d.potRoastDefeated || false;
   state.endingSeen = d.endingSeen || (d.won || false);
+  state.ingredients = d.ingredients || {};
+  state.dishesCooked = d.dishesCooked || 0;
+  state.cookAtkBonus = d.cookAtkBonus || 0;
+  state.garnishes = d.garnishes || {};
+  state.equippedGarnish = d.equippedGarnish || {};
   if (d.party && d.party.length) {
     // modern save: per-appliance HP store
     state.party = d.party;
@@ -6463,11 +6749,15 @@ function interact() {
   if (!e) return;
 
   if (e.shrine) return shrineInteract();
+  if (e.shrineplaque) return shrinePlaqueTalk();
   if (e.prof)   return professorTalk();
   if (e.heal)   return healStation(e);
   if (e.gate)   return gateNpcTalk(e);
   if (e.elite)  return startEliteBattle(e.elite);
   if (e.shopkeep) return openShop();
+  if (e.chef)   return openKitchen();
+  if (e.vaultkeeper) return enterVault();
+  if (e.vaultexit)   return exitVault();
   if (e.tower)  return openTowerDialog();
   if (e.potroast) {
     if (state._potRoastRematch) { state._potRoastRematch = false; return startPotRoast(); }
@@ -6690,7 +6980,12 @@ const ELITE_BOSSES = {
     quote:'Heaven\'s kitchen has standards.',
     intro:'The Seraph Sous-Chef descends in a column of light, wings dusted with flour! "Your audition begins NOW."',
     defeat:'The Seraph nods once. "Heaven\'s kitchen will set a place for you." (+50 MAX HP!)',
-    rewardHp: 50 }
+    rewardHp: 50 },
+  vault: { id:'elite_vault', name:'Maître Flambeau', emoji:'🎩', element:'fire', hp:900, atk:36,
+    quote:'You dare raid MY pantry?',
+    intro:'The vault doors groan shut behind you. Maître Flambeau steps from the dark, flambé torch hissing blue. "Thieves in my pantry? You shall be PLATED — garnish and all."',
+    defeat:'Flambeau snuffs his torch between two fingers and slow-claps. "The vault... and every recipe within... is yours, chef." (+55 MAX HP!)',
+    rewardHp: 55 }
 };
 
 function startEliteBattle(key) {
@@ -7744,7 +8039,7 @@ function renderBattle() {
   const eElem = b.isBoss && b.bossData ? ELEMENTS[b.bossData.element] : ELEMENTS[getElement(e.id)];
   const bossTag = b.isBoss ? ' <span style="color:#ff6080;font-size:9px">BOSS</span>' : '';
   btEnemyName.innerHTML = `${e.n.toUpperCase()} <span style="font-size:11px;color:${eElem.color}">${eElem.icon}</span>${bossTag}`;
-  btEnemyRarity.textContent = b.isBoss ? `★ STAR ${b.bossData.star}` : RARITY_LABEL[e.rarity];
+  btEnemyRarity.textContent = b.isBoss ? (b.bossData.star ? `★ STAR ${b.bossData.star}` : (b.bossData.potRoast ? '★ SUPERBOSS' : (b.bossData.rivalEvent ? '★ RIVAL' : '★ ELITE'))) : RARITY_LABEL[e.rarity];
   btEnemyRarity.style.color = b.isBoss ? '#ff6080' : RARITY_COLOR[e.rarity];
   btEnemySprite.textContent = e.e || '?';
   btEnemySprite.dataset.rarity = b.isBoss ? '' : (e.rarity || '');
@@ -10046,15 +10341,16 @@ function resolveBattleMove(score, gotGood) {
     setTimeout(() => enemyTurn(), 900); return;
   }
   b.lastMinigame = mv.mg;
-  const base = mv.power + playerAtkBonus();
-  const critThreshold = isBuffActive('critBoost') ? 0.7 : 0.92;
+  const base = mv.power + playerAtkBonus() + (state.cookAtkBonus || 0);   // KITCHEN: banquet ATK
+  const critThreshold = Math.max(0.55, (isBuffActive('critBoost') ? 0.7 : 0.92) - garnishCritBonus(state.activeAppliance));
   const crit = score > critThreshold;
   const enemyElem = b.isBoss && b.bossData ? b.bossData.element : getElement(b.enemy.id);
   const matchup = elemMatchup(activeElement(), enemyElem);
   const shinyBonus = state.shinies[state.activeAppliance] ? 1.5 : 1;
   const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
   const bondBonus = 1 + bondLevel(state.activeAppliance) * 0.02;   // up to +20% from battling together
-  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus);
+  const garnishAtk = garnishAtkMult(state.activeAppliance);        // KITCHEN: held-item ATK
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus * garnishAtk);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
   else { b.enemyHp = Math.max(0, b.enemyHp - dmg); chargeUlt(dmg); }
@@ -10084,6 +10380,13 @@ function resolveBattleMove(score, gotGood) {
     applyEnemyStatus(mv.status);
     const sd = STATUS_DEFS[mv.status];
     if (sd) setTimeout(() => battleLog(`<span style="color:${sd.color}">${b.enemy.n} is now ${sd.label}! ${sd.desc}</span>`), 200);
+  }
+  // KITCHEN: Lucky Thermos regen — heal a little each turn the holder acts
+  const _gReg = garnishMods(state.activeAppliance);
+  if (_gReg && _gReg.regen && state.playerHp > 0 && state.playerHp < state.playerMaxHp) {
+    const heal = Math.min(_gReg.regen, state.playerMaxHp - state.playerHp);
+    state.playerHp += heal; commitActiveHp();
+    setTimeout(() => { battleLog(`<span style="color:#7edc8b">🌡️ Lucky Thermos restores ${heal} HP.</span>`); playHpGainFloat && playHpGainFloat(heal); }, 320);
   }
   renderBattle();
   if (b.enemyHp <= 0) { setTimeout(() => triggerDefeatFinisher(), 250); return; }
@@ -10138,7 +10441,8 @@ function enemyTurn() {
   const eMatchup = b.isBoss ? elemMatchup(b.bossData.element, activeElement()) : elemMatchup(getElement(b.enemy.id), activeElement());
   const buffReduce = isBuffActive('halfEnemyDmg') ? 0.5 : 1;
   const towerMult = b.isTower ? (1 + (b.towerRound || 1) * 0.05) : 1;
-  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult);
+  const garnishDef = garnishDefMult(state.activeAppliance);   // KITCHEN: held-item defense
+  const realDmg = state.adminMode ? 0 : Math.round(atk.dmg * eMatchup * buffReduce * towerMult * garnishDef);
   state.playerHp = Math.max(0, state.playerHp - realDmg);
   commitActiveHp();
   const atkTypes = ['TIMING','MASH','HOLD','SEQUENCE','AIM'];
@@ -10331,6 +10635,7 @@ function onEnemyFaint() {
   const _coinGain = (b.isTower ? 14 + b.towerRound * 6 : 12 + RARITY_TIER[b.enemy.rarity] * 10) + (b.enemyShiny ? 25 : 0);
   addCoins(_coinGain, true);
   battleLog(`🪙 Earned <b style="color:#ffd700">${_coinGain} coins</b>!`);
+  if (!b.isTower) dropIngredients(b.enemy);   // KITCHEN: salvage cooking ingredients
   if (b.isTower && state.tower) {
     state.tower.round++;
     battleLog(`<b style="color:#f4c165">🏯 ROUND ${b.towerRound} CLEARED!</b> Next round incoming...`);
@@ -10509,14 +10814,12 @@ function professorTalk() {
 
 function shrineInteract() {
   if (!sacredFiveComplete()) {
-    const missing = [];
-    for (const id of SACRED_FIVE) if (!state.caught.has(id)) {
-      const m = entities.find(x => x.id === id);
-      if (m) missing.push(`${m.n} (${RARITY_LABEL[m.rarity]})`);
-    }
+    const n = sacredFiveCaught();
     openDialog('The Shrine', [
       "The old stones hum faintly. You feel them weighing what you carry.",
-      "They want the Sacred Five: <b>" + missing.join(', ') + "</b>. Without them, the portal stays shut."
+      `The portal is sealed. It demands the <b>SACRED FIVE</b> &mdash; you have <b style="color:#f4c165">${n} of 5</b>:`,
+      `<div style="margin-top:4px;text-align:left;display:inline-block">${sacredFiveChecklistHtml()}</div>`,
+      "Catch the ones still marked ✗, then return. The way will open."
     ]);
     return;
   }
@@ -10897,13 +11200,16 @@ function renderInventoryModal() {
         `${inParty ? '⚔ IN PARTY' : 'NOT IN PARTY'} &nbsp;&bull;&nbsp; HP ${Math.ceil(hpOf(sel.id))}/${maxHpFor(sel.id)} &nbsp;&bull;&nbsp; BOND ❤${bondLevel(sel.id)}` +
         ` &nbsp;&bull;&nbsp; <span style="color:#f4c165;cursor:pointer;text-decoration:underline" onclick="window.__toggleParty(${sel.id})">ENTER — ${inParty ? 'REMOVE' : 'ADD TO PARTY'}</span></div>`
       : '';
-    const body = reveal
+    const sacredTag = SACRED_FIVE.has(sel.id)
+      ? `<div class="act" style="color:#c8a0ff;letter-spacing:1px">⛩️ SACRED FIVE — one of the keys to the Crystal Dimension${isCaught ? ' <span style="color:#7edc8b">(secured ✓)</span>' : ''}</div>`
+      : '';
+    const body = sacredTag + (reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
         `<div class="act">HABITAT: ${sel.habitat}${NOCTURNAL.has(sel.id) ? ' <span style="color:#8fa8ff">🌙 NOCTURNAL</span>' : ''} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}${itemEvoHint}</div>` +
         partyLine +
         (isCaught ? `<div style="margin-top:6px">${renderStatBars(sel)}</div>${renderEvoChain(sel)}` : '')
       : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
-        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`;
+        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`);
     invDetail.innerHTML = head + body;
     if (reveal && isCaught && !invDetail._hasLoreAnim) {
       invDetail._hasLoreAnim = true;
@@ -11851,22 +12157,33 @@ function drawFloor(ch, sx, sy, tx, ty, h, p) {
       }
       break;
     }
-    case 'q': { // crystal dimension floor
-      ctx.fillStyle = p.dk;
-      ctx.fillRect(sx, sy, TILE, TILE);
-      ctx.fillStyle = p.base;
-      ctx.fillRect(sx + 1, sy + 1, 14, 14);
-      ctx.fillStyle = p.hl;
-      const pat = h & 0xF;
-      if (pat < 4)       { ctx.fillRect(sx + 3, sy + 3, 2, 2); ctx.fillRect(sx + 10, sy + 10, 1, 1); }
-      else if (pat < 8)  { ctx.fillRect(sx + 10, sy + 4, 1, 1); ctx.fillRect(sx + 5, sy + 11, 2, 1); }
-      else if (pat < 12) { ctx.fillRect(sx + 6, sy + 6, 1, 1); ctx.fillRect(sx + 12, sy + 12, 1, 1); }
-      else               { ctx.fillRect(sx + 4, sy + 9, 1, 1); ctx.fillRect(sx + 13, sy + 4, 1, 2); }
-      // shimmer animated (time-based)
-      const t = Math.floor(performance.now() / 140) & 0x7;
-      if (((tx * 3 + ty * 5 + t) & 0x7) === 0) {
-        ctx.fillStyle = '#d0a0ff';
-        ctx.fillRect(sx + ((h >> 2) & 13) + 1, sy + ((h >> 6) & 13) + 1, 1, 1);
+    case 'q': { // crystal dimension floor — faceted glass with caustic glow
+      // smooth depth gradient (deep indigo -> violet) faked with 4 bands — no per-tile gradient alloc
+      const _qb = ['#170c36','#20114c','#291660','#341d74'];
+      for (let i = 0; i < 4; i++) { ctx.fillStyle = _qb[i]; ctx.fillRect(sx, sy + i * 4, TILE, 4); }
+      // faceted crystal cut — a translucent shard whose shape varies per tile
+      const f = h & 3;
+      ctx.fillStyle = 'rgba(150,112,232,0.16)';
+      ctx.beginPath();
+      if (f === 0)      { ctx.moveTo(sx, sy);            ctx.lineTo(sx + TILE, sy + 6);   ctx.lineTo(sx, sy + 12); }
+      else if (f === 1) { ctx.moveTo(sx + TILE, sy);     ctx.lineTo(sx + 4, sy + TILE);   ctx.lineTo(sx + TILE, sy + TILE); }
+      else if (f === 2) { ctx.moveTo(sx, sy + TILE);     ctx.lineTo(sx + 10, sy);         ctx.lineTo(sx + TILE, sy + TILE); }
+      else              { ctx.moveTo(sx, sy + 4);        ctx.lineTo(sx + TILE, sy);       ctx.lineTo(sx + TILE, sy + 9); }
+      ctx.closePath(); ctx.fill();
+      // beveled tile seams for tiling depth + a lit top edge
+      ctx.fillStyle = 'rgba(8,3,26,0.55)'; ctx.fillRect(sx, sy + 15, TILE, 1); ctx.fillRect(sx + 15, sy, 1, TILE);
+      ctx.fillStyle = 'rgba(150,118,228,0.22)'; ctx.fillRect(sx, sy, TILE, 1); ctx.fillRect(sx, sy, 1, TILE);
+      // slow caustic specular glint that breathes across the floor
+      const _qt = performance.now() * 0.001;
+      const _glow = (Math.sin(_qt * 1.4 + tx * 0.7 + ty * 1.3) + 1) * 0.5;
+      if (_glow > 0.6) {
+        const a = (_glow - 0.6) * 1.7;
+        const gx = sx + 3 + ((h >> 2) & 7), gy = sy + 3 + ((h >> 5) & 7);
+        ctx.fillStyle = `rgba(214,184,255,${a})`;
+        ctx.fillRect(gx, gy, 2, 2);
+        ctx.fillStyle = `rgba(240,224,255,${a * 0.8})`;
+        ctx.fillRect(gx, gy - 1, 1, 1); ctx.fillRect(gx, gy + 2, 1, 1);
+        ctx.fillRect(gx - 1, gy + 1, 1, 1); ctx.fillRect(gx + 2, gy + 1, 1, 1);
       }
       break;
     }
@@ -12283,12 +12600,21 @@ function drawFeature(ch, sx, sy, tx, ty, h) {
       ctx.fillStyle = '#d8eaff'; ctx.fillRect(sx + 3, sy + 3, 3, 3);
       break;
     }
-    case 'H': { // shrine stone
-      ctx.fillStyle = '#3e7030'; ctx.fillRect(sx, sy, TILE, TILE);
-      ctx.fillStyle = '#54484a'; ctx.fillRect(sx + 3, sy + 3, 10, 11);
-      ctx.fillStyle = '#786868'; ctx.fillRect(sx + 3, sy + 3, 10, 2);
-      ctx.fillStyle = '#342828'; ctx.fillRect(sx + 3, sy + 13, 10, 1);
-      ctx.fillStyle = '#f4c165'; ctx.fillRect(sx + 7, sy + 7, 2, 2);
+    case 'H': { // shrine / altar stone — carved block with a glowing rune
+      ctx.fillStyle = 'rgba(0,0,0,0.32)'; ctx.fillRect(sx, sy + 12, TILE, 4);     // ground shadow
+      ctx.fillStyle = '#5a5258'; ctx.fillRect(sx + 2, sy + 2, 12, 12);            // stone body
+      ctx.fillStyle = '#706874'; ctx.fillRect(sx + 2, sy + 2, 12, 3);             // lit top face
+      ctx.fillStyle = '#403a44'; ctx.fillRect(sx + 2, sy + 13, 12, 1);            // base shadow
+      ctx.fillStyle = '#48424c'; ctx.fillRect(sx + 2, sy + 2, 1, 12);             // left edge
+      ctx.fillStyle = '#7c7484'; ctx.fillRect(sx + 13, sy + 2, 1, 12);            // right rim
+      ctx.fillStyle = '#36303a'; ctx.fillRect(sx + 6, sy + 5, 1, 4); ctx.fillRect(sx + 9, sy + 8, 2, 1); // cracks
+      const _ht = performance.now() * 0.001;
+      const _hpu = (Math.sin(_ht * 2.2) + 1) * 0.5;
+      ctx.fillStyle = `rgba(244,193,101,${0.5 + _hpu * 0.5})`;
+      ctx.fillRect(sx + 7, sy + 6, 2, 2);
+      ctx.fillStyle = `rgba(255,232,168,${0.3 + _hpu * 0.55})`;
+      ctx.fillRect(sx + 6, sy + 7, 1, 1); ctx.fillRect(sx + 9, sy + 7, 1, 1);
+      ctx.fillRect(sx + 7, sy + 5, 1, 1); ctx.fillRect(sx + 7, sy + 9, 1, 1);
       break;
     }
     case 'd': { // trapdoor in floor
@@ -12338,22 +12664,32 @@ function drawFeature(ch, sx, sy, tx, ty, h) {
       ctx.fillStyle = '#d0a020'; ctx.fillRect(sx + 6, sy + 6, 1, 1); ctx.fillRect(sx + 9, sy + 6, 1, 1);
       break;
     }
-    case '&': { // crystal pillar (dimension decor, blocks)
-      // base tile
-      ctx.fillStyle = '#14094a'; ctx.fillRect(sx, sy, TILE, TILE);
-      ctx.fillStyle = '#2a1a50'; ctx.fillRect(sx + 1, sy + 1, 14, 14);
-      // crystal
-      ctx.fillStyle = '#4a20a0';
-      ctx.fillRect(sx + 6, sy + 2, 4, 12);
-      ctx.fillStyle = '#7848d8';
-      ctx.fillRect(sx + 5, sy + 5, 1, 8);
-      ctx.fillRect(sx + 10, sy + 3, 1, 8);
-      ctx.fillStyle = '#b088f0';
-      ctx.fillRect(sx + 7, sy + 4, 2, 6);
-      // shimmer
-      const t = Math.floor(performance.now() / 200) & 0x3;
-      ctx.fillStyle = ['#e0c0ff','#ffe0ff','#d0b0ff','#c090ff'][t];
-      ctx.fillRect(sx + 7, sy + 3 + t, 1, 1);
+    case '&': { // crystal pillar (dimension decor, blocks) — faceted gem with halo
+      // floor underneath (match q gradient)
+      const _pb = ['#170c36','#20114c','#291660','#341d74'];
+      for (let i = 0; i < 4; i++) { ctx.fillStyle = _pb[i]; ctx.fillRect(sx, sy + i * 4, TILE, 4); }
+      // soft ground glow / halo beneath the crystal
+      const _pt = performance.now() * 0.001;
+      const _pulse = (Math.sin(_pt * 2 + tx + ty) + 1) * 0.5;
+      ctx.fillStyle = `rgba(150,90,240,${0.12 + _pulse * 0.16})`;
+      ctx.beginPath(); ctx.ellipse(sx + 8, sy + 13, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+      // crystal body — diamond/hex facets
+      ctx.fillStyle = '#3a1888';
+      ctx.beginPath();
+      ctx.moveTo(sx + 8, sy + 1); ctx.lineTo(sx + 12, sy + 6); ctx.lineTo(sx + 11, sy + 14);
+      ctx.lineTo(sx + 5, sy + 14); ctx.lineTo(sx + 4, sy + 6); ctx.closePath(); ctx.fill();
+      // lit left facet
+      ctx.fillStyle = '#6a3cd0';
+      ctx.beginPath();
+      ctx.moveTo(sx + 8, sy + 1); ctx.lineTo(sx + 8, sy + 14); ctx.lineTo(sx + 5, sy + 14);
+      ctx.lineTo(sx + 4, sy + 6); ctx.closePath(); ctx.fill();
+      // bright inner highlight + edge gleam
+      ctx.fillStyle = '#b89cf4'; ctx.fillRect(sx + 7, sy + 4, 2, 7);
+      ctx.fillStyle = 'rgba(235,220,255,0.9)'; ctx.fillRect(sx + 6, sy + 3, 1, 3);
+      // travelling sparkle on a facet
+      const _sp = Math.floor(_pt * 3) & 0x3;
+      ctx.fillStyle = ['#efe0ff','#ffffff','#dcc6ff','#cbb0ff'][_sp];
+      ctx.fillRect(sx + 9, sy + 3 + _sp * 2, 1, 1);
       break;
     }
   }
@@ -12566,10 +12902,55 @@ function render() {
   renderAmbient();
   renderCloudShadows();
   renderDayNight();
+  renderDimensionFx();
   renderFireflies();
   renderRoamerSprite();
   renderWeather();
   renderHeatShimmer();
+}
+
+// ── Crystal Dimension atmosphere: vignette, breathing bloom, god-rays, shards ──
+function renderDimensionFx() {
+  if (!state.started || state.battle || state.won) return;
+  if (state.map !== 'dimension') return;
+  const t = performance.now() * 0.001;
+  const pulse = (Math.sin(t * 0.6) + 1) * 0.5;
+  // deep vignette pulls focus inward
+  const vg = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.22, VW / 2, VH / 2, VH * 0.8);
+  vg.addColorStop(0, 'rgba(20,8,48,0)');
+  vg.addColorStop(1, 'rgba(6,1,20,0.62)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+  // breathing violet bloom from the upper-centre
+  const bx = VW / 2, by = VH * 0.4;
+  const bg = ctx.createRadialGradient(bx, by, 8, bx, by, VH * 0.6);
+  bg.addColorStop(0, `rgba(158,98,244,${(0.10 + pulse * 0.06).toFixed(3)})`);
+  bg.addColorStop(0.5, `rgba(96,44,186,${(0.05 + pulse * 0.03).toFixed(3)})`);
+  bg.addColorStop(1, 'rgba(40,0,90,0)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, VW, VH);
+  // slanting god-rays
+  ctx.save();
+  ctx.globalAlpha = 0.07 + pulse * 0.04;
+  ctx.fillStyle = '#c0a0ff';
+  for (let i = 0; i < 5; i++) {
+    const rx = (i * VW / 4) + Math.sin(t * 0.3 + i) * 28;
+    ctx.beginPath();
+    ctx.moveTo(rx, -10); ctx.lineTo(rx + 24, -10); ctx.lineTo(rx + 70, VH); ctx.lineTo(rx + 34, VH);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  // large slow crystal shards drifting upward for foreground depth
+  for (let i = 0; i < 9; i++) {
+    const seed = i * 97.13;
+    const speed = 7 + (i % 4) * 5;
+    const fx = (Math.sin(seed) * 0.5 + 0.5) * VW;
+    const fy = VH + 10 - (((t * speed + i * 53) % (VH + 50)));
+    const sw = 2 + (i % 3);
+    const fa = 0.18 + (Math.sin(t * 1.3 + i) + 1) * 0.16;
+    ctx.fillStyle = `rgba(${i % 2 ? '206,176,255' : '150,214,238'},${fa.toFixed(2)})`;
+    ctx.fillRect(fx, fy, sw, sw);
+    ctx.fillStyle = `rgba(255,255,255,${(fa * 0.7).toFixed(2)})`;
+    ctx.fillRect(fx, fy - 1, 1, 1);
+  }
 }
 
 // ── fading footprints pressed into sand and snow ──
@@ -12735,7 +13116,8 @@ const ZONE_NAMES = { house: 'HOME', town: 'TOWN', market: 'GRANDE MART', wild: '
                 cave: 'DEEP CAVE', base: 'UNDERGROUND BASE', dimension: 'CRYSTAL DIMENSION',
                 plains: 'GOLDEN PLAINS', mountain: 'FROSTPEAK MOUNTAIN', lake: 'STILLWATER LAKE', beach: 'SUNBURN BEACH',
                 fungal: 'FUNGAL HOLLOW', scrapyard: 'THE SCRAPYARD', gallery: '✨ SECRET GALLERY ✨',
-                volcano: 'EMBER CALDERA', swamp: 'MURKMIRE SWAMP', neon: 'NEON DISTRICT', sky: 'CELESTIAL KITCHEN' };
+                volcano: 'EMBER CALDERA', swamp: 'MURKMIRE SWAMP', neon: 'NEON DISTRICT', sky: 'CELESTIAL KITCHEN',
+                vault: '🔐 PANTRY VAULT' };
 
 // Pokemon-style sliding area banner shown whenever you enter a new zone
 let _bannerTimer = null;
@@ -13020,10 +13402,15 @@ Object.assign(window, {
   saveGame, loadGame, openSaveSlots, closeSaveModal, deleteSaveSlot,
   renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
   buyItem, startTower, setGameVolume, closeWorldMap,
-  continuePostgame, startNewGamePlus, toggleReducedFlash
+  continuePostgame, startNewGamePlus, toggleReducedFlash,
+  openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish
 });
 window.__toggleParty = togglePartyMember;
 window.__potRoast = startPotRoast;
+window.toggleIntroSettings = function () {
+  const p = document.getElementById('introSettings');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+};
 // debug/testing handle (read-mostly; also powers automated playtests)
 window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene };
 
