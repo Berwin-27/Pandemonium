@@ -11245,9 +11245,10 @@ function renderInventoryModal() {
 
   // header progress
   const adminTag = state.adminMode ? ' &nbsp; <span style="color:#f067ff;letter-spacing:3px;font-weight:bold">&#9889; ADMIN &#9889;</span>' : '';
+  const seenCount = (() => { const u = new Set(state.caught); (state.seen || []).forEach(id => u.add(id)); return u.size; })();
   document.getElementById('invprogress').innerHTML =
-    `<span class="num">${caught}</span> / ${TOTAL_DEX} CAUGHT &nbsp; ` +
-    `<span class="stars">${stars}</span>${adminTag}`;
+    `<span class="num">${caught}</span> / ${TOTAL_DEX} CAUGHT &nbsp; <span style="color:#9ab4ff;font-size:11px">👁 ${seenCount} SEEN</span> &nbsp; ` +
+    `<span class="stars">${stars}</span>${adminTag} &nbsp; <span onclick="showTypeChart()" style="cursor:pointer;color:#9ab4ff;font-size:11px;border:1px solid #3a4a7a;border-radius:3px;padding:1px 6px">⚔ TYPE CHART</span>`;
 
   // tabs
   const tabs = ['all', ...RARITY_ORDER];
@@ -11283,10 +11284,12 @@ function renderInventoryModal() {
       const partyBadge = state.party.includes(it.id)
         ? `<div style="position:absolute;top:1px;left:2px;font-size:9px;color:#7edc8b;text-shadow:0 0 4px #7edc8b">⚔</div>` : '';
       const face = reveal ? it.e : '?';
+      const isSeen = !isCaught && state.seen && state.seen.includes(it.id);
+      const seenBadge = isSeen ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:#9ab4ff;text-shadow:0 0 3px #4a5a8a">👁</div>` : '';
       const isShinySlot = state.shinies[it.id];
-      const border = admin ? '#f067ff' : (isShinySlot ? '#ffd700' : (isCaught ? '#7edc8b' : '#2a2e5a'));
+      const border = admin ? '#f067ff' : (isShinySlot ? '#ffd700' : (isCaught ? '#7edc8b' : (isSeen ? '#4a5a8a' : '#2a2e5a')));
       const shinyGlow = isShinySlot ? ';box-shadow:0 0 8px #ffd700' : '';
-      html += `<div class="${cls}" data-idx="${i}" data-rarity="${it.rarity}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}${partyBadge}</div>`;
+      html += `<div class="${cls}" data-idx="${i}" data-rarity="${it.rarity}" style="border-color:${border}${shinyGlow}">${face}${num}${badge}${partyBadge}${seenBadge}</div>`;
     } else {
       html += `<div class="invslot empty"></div>`;
     }
@@ -11331,13 +11334,24 @@ function renderInventoryModal() {
     const sacredTag = SACRED_FIVE.has(sel.id)
       ? `<div class="act" style="color:#c8a0ff;letter-spacing:1px">⛩️ SACRED FIVE — one of the keys to the Crystal Dimension${isCaught ? ' <span style="color:#7edc8b">(secured ✓)</span>' : ''}</div>`
       : '';
+    const _el = getElement(sel.id);
+    const _beats = elemBeats(_el), _weak = elemBeatenBy(_el);
+    const _infusedTag = (state.elemOverride && state.elemOverride[sel.id]) ? ' <span style="color:#9ab4ff;font-size:8px">◆ INFUSED</span>' : '';
+    const matchupLine = isCaught
+      ? `<div class="act" style="font-size:10px">⚔ FIELD NOTES: <span style="color:#7edc8b">Strong vs ${_beats ? ELEMENTS[_beats].icon + ' ' + ELEMENTS[_beats].label : '—'}</span> &nbsp; <span style="color:#e06868">Weak to ${_weak ? ELEMENTS[_weak].icon + ' ' + ELEMENTS[_weak].label : '—'}</span></div>`
+      : '';
+    const isSeenSel = !isCaught && state.seen && state.seen.includes(sel.id);
     const body = sacredTag + (reveal
       ? `<div class="desc">${sel.dex}${admin ? ' <i style="color:#f067ff">[ADMIN OVERRIDE — one-shot capture unlocked]</i>' : ''}</div>` +
-        `<div class="act">HABITAT: ${sel.habitat}${NOCTURNAL.has(sel.id) ? ' <span style="color:#8fa8ff">🌙 NOCTURNAL</span>' : ''} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[getElement(sel.id)].color}">${ELEMENTS[getElement(sel.id)].icon} ${ELEMENTS[getElement(sel.id)].label}</span>${evoProgress}${itemEvoHint}</div>` +
+        `<div class="act">HABITAT: ${sel.habitat}${NOCTURNAL.has(sel.id) ? ' <span style="color:#8fa8ff">🌙 NOCTURNAL</span>' : ''} &nbsp;&bull;&nbsp; MINIGAME: ${sel.mg} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[_el].color}">${ELEMENTS[_el].icon} ${ELEMENTS[_el].label}</span>${_infusedTag}${evoProgress}${itemEvoHint}</div>` +
+        matchupLine +
         partyLine +
         (isCaught ? `<div style="margin-top:6px">${renderStatBars(sel)}</div>${renderEvoChain(sel)}` : '')
-      : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
-        `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`);
+      : isSeenSel
+        ? `<div class="desc" style="opacity:0.85">👁 SEEN IN THE WILD — you've crossed paths with this Appliance but never caught it. Your scanner logged its element; the full file unlocks on capture.</div>` +
+          `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]} &nbsp;&bull;&nbsp; <span style="color:${ELEMENTS[_el].color}">${ELEMENTS[_el].icon} ${ELEMENTS[_el].label}</span></div>`
+        : `<div class="desc" style="opacity:0.65">Silhouette not yet identified. Catch this Appliance to register its data.</div>` +
+          `<div class="act">HABITAT: ${sel.habitat} &nbsp;&bull;&nbsp; RARITY: ${RARITY_LABEL[sel.rarity]}</div>`);
     invDetail.innerHTML = head + body;
     if (reveal && isCaught && !invDetail._hasLoreAnim) {
       invDetail._hasLoreAnim = true;
