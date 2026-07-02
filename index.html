@@ -90,6 +90,14 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
   background: rgba(12,12,28,0.8); border:1px solid #444;
   padding: 4px 8px; font-size: 10px; letter-spacing: 2px; color: #aaa;
 }
+#objHud {
+  position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index: 8;
+  background: rgba(12,12,28,0.82); border:1px solid rgba(212,175,55,0.35); border-radius:3px;
+  padding: 4px 12px; font-size: 10px; letter-spacing: 1px; color: #d8c98a;
+  font-family: 'Courier New',monospace; max-width: 46%; text-align:center;
+  pointer-events:none; transition: opacity .3s ease;
+}
+.mobile #objHud { font-size:8px; max-width:60%; padding:2px 8px; }
 /* Dialog */
 #dialogue {
   position:absolute; left:14px; right:14px; bottom:14px; z-index: 10;
@@ -1994,6 +2002,7 @@ body { background: var(--bg-void) !important; }
       <div class="row"><span>&#129689;</span><span class="cnt" id="coinCount" style="color:#ffd700">0</span></div>
     </div>
     <div id="zone">HOME</div>
+    <div id="objHud" style="opacity:0">🎯</div>
     <div id="dexHud" style="position:absolute;bottom:4px;left:8px;font-family:'Courier New',monospace;font-size:9px;color:#888;letter-spacing:2px;z-index:50"></div>
     <div id="hint">P = PANDEX &bull; M = MAP &bull; H = WARP HOME &bull; F = FAST TRAVEL &bull; F5 = SAVE &bull; F9 = LOAD</div>
     <div id="streakHud" style="display:none;position:absolute;top:4px;right:8px;font-family:'Courier New',monospace;font-size:9px;color:#f4c165;letter-spacing:2px;z-index:50"></div>
@@ -2186,7 +2195,7 @@ body { background: var(--bg-void) !important; }
       </div>
     </div>
     <div id="starter">
-      <h1>CHOOSE YOUR FIRST</h1>
+      <h1>CHOOSE YOUR FIRST APPLIANCE</h1>
       <div class="sub">Professor Bouillabaisse sets three Appliances on the bench. "Every trainee chef begins with one. Choose carefully &mdash; you'll be cooking together for a long time."</div>
       <div id="starterRow">
         <div class="starterCard" data-id="1" data-key="1">
@@ -3156,8 +3165,8 @@ const entities = [
     dex:'Made of nervous plastic. Crinkles warnings.' },
   { id:15, n:'Strainer',  e:'\uD83C\uDF5D', rarity:'common', mg:'AIM',      m:'market', x:14, y:16, habitat:'MARKET',
     dex:'Holds water in contempt, but traces of starch remain.' },
-  { id:16, n:'Sifton',    e:'\uD83C\uDF3E', rarity:'common', mg:'MASH',     m:'town', x:6, y:7,  habitat:'BAKERY',
-    dex:'Dusts passersby in flour as a blessing.' },
+  { id:16, n:'Sifton',    e:'\uD83C\uDF3E', rarity:'common', mg:'MASH',     m:'town', x:6, y:10,  habitat:'BAKERY',
+    dex:'Dusts passersby in flour as a blessing. Loiters outside the bakery door.' },
 
   // =================== RARE (10) ===================
   { id:17, n:'Toasty',    e:'\uD83C\uDF5E', rarity:'rare', mg:'SEQUENCE', m:'wild', x:18, y:17, habitat:'FIELDS',
@@ -5607,6 +5616,7 @@ const SHOP_STOCK = [
   { key:'potion',     name:'POTION',       icon:'🧪', price:60,  desc:'Restores 50 HP mid-battle' },
   { key:'maxPotion',  name:'MAX POTION',   icon:'💖', price:150, desc:'Fully restores HP mid-battle' },
   { key:'bait',       name:'TASTY BAIT',   icon:'🍖', price:50,  desc:'+20% catch chance for one battle' },
+  { key:'snare',      name:'SOUS SNARE',   icon:'🪢', price:45,  desc:'Your attacks leave the enemy at 1 HP this battle' },
   { key:'rareLure',   name:'RARE LURE',    icon:'🎏', price:120, desc:'Next grass encounter: RARE or better', flag:'rareLureActive' },
   { key:'shinyLure',  name:'SHINY LURE',   icon:'✨', price:500, desc:'Next encounter: 50% shiny chance', flag:'shinyLureActive' },
   { key:'premiumBox', name:'PREMIUM BOX',  icon:'📦', price:400, desc:'PERMANENT +10% catch chance', oneTime:true }
@@ -6273,6 +6283,9 @@ function checkRivalAmbush() {
   const ev = RIVAL_EVENTS.find(v => v.map === state.map && !state.rivalBeaten[v.n]);
   if (!ev) return;
   if (ev.n > 1 && !state.rivalBeaten[ev.n - 1]) return;   // beats happen in order
+  // Marco waits until you have a real team — ambushing a 1-appliance rookie
+  // with an inescapable 104 HP boss soft-locked the early game.
+  if (ev.n === 1 && state.caught.size < 4) return;
   setTimeout(() => {
     if (state.battle || state.dialog || state.mini || state.map !== ev.map) return;
     const team = rivalTeamFor(ev);
@@ -6698,6 +6711,10 @@ function pickStarter(id) {
   state.applianceHp = {};
   state.playerMaxHp = maxHpFor(id);
   state.playerHp = state.playerMaxHp;
+  // Professor's starter kit — teaches that items exist before the first rough fight
+  state.items.potion = (state.items.potion || 0) + 2;
+  state.items.bait = (state.items.bait || 0) + 1;
+  setTimeout(() => toast('🎒 The Professor packs your bag: 2× POTION, 1× TASTY BAIT!'), 1400);
   computeMichelin();
   state.screen = 'world';
   state.started = true;
@@ -7110,6 +7127,20 @@ function startBattle(enemyEnt) {
   battleLog(`A wild <b style="color:${RARITY_COLOR[enemyEnt.rarity]}">${enemyEnt.n.toUpperCase()}</b> <span style="color:${eEl.color}">${eEl.icon} ${eEl.label}</span>${shinyTag} appears!`);
   if (state.battle.enemyShiny) battleLog('<span style="color:#ffd700">It glitters with a golden sheen!</span>');
   battleLog(`${enemyEnt.dex}`);
+  // Threat readout — how many hits you can trade vs how many you need
+  {
+    const _moves = getMovesForAppliance(state.activeAppliance);
+    const _avgPow = _moves.length ? _moves.reduce((a, m) => a + m.power, 0) / _moves.length : 14;
+    const _pDmg = Math.max(1, (_avgPow + playerAtkBonus()) * 0.8);
+    const _tier = RARITY_TIER[enemyEnt.rarity] || 0;
+    const _eDmg = Math.max(3, Math.floor(state.playerMaxHp * (0.12 + _tier * 0.03)));
+    const _ratio = (state.playerMaxHp / _eDmg) / (state.battle.enemyMaxHp / _pDmg);
+    const _threat = _ratio >= 1.5 ? ['#7edc8b', 'LOOKS EASY']
+      : _ratio >= 1.0 ? ['#f4c165', 'EVEN MATCH']
+      : _ratio >= 0.65 ? ['#f48240', 'RISKY — bring potions']
+      : ['#ff6080', 'OUTMATCHED — grow your Pandex first!'];
+    battleLog(`⚔ THREAT: <b style="color:${_threat[0]}">${_threat[1]}</b>`);
+  }
   renderBattle();
   setBattleMenu('continue');
   audio.stopArea();
@@ -9852,11 +9883,14 @@ function setBattleMenu(kind) {
     if (b.isBoss) {
       const hasSwitch = partyMembers().some(id => id !== state.activeAppliance && hpOf(id) > 0);
       const bossItemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0);
+      const isRival = !!(b.bossData && b.bossData.rivalEvent);
       const opts = [
         { a:'fight',  label:'FIGHT',  disabled:false },
         { a:'switch', label:'SWITCH', disabled:!hasSwitch },
         { a:'item',   label: bossItemCount > 0 ? `ITEM<span class="bt-mg" style="color:#7edc8b">×${bossItemCount} IN BAG</span>` : `<span style="opacity:0.55">ITEM</span><span class="bt-mg" style="color:#777">BAG EMPTY</span>`, disabled:bossItemCount === 0 },
-        { a:'run',    label:'<span style="opacity:0.35">RUN</span><span class="bt-mg" style="color:#e55">BOSS — NO ESCAPE</span>', disabled:true }
+        isRival
+          ? { a:'run', label:'RETREAT<span class="bt-mg" style="color:#f4c165">HE WILL BE BACK...</span>', disabled:false }
+          : { a:'run', label:'<span style="opacity:0.35">RUN</span><span class="bt-mg" style="color:#e55">BOSS — NO ESCAPE</span>', disabled:true }
       ];
       btMenu.innerHTML = opts.map((o, i) => {
         const cls = `bt-btn ${i===0?'focus':''} ${o.disabled?'dim':''}`;
@@ -9871,11 +9905,12 @@ function setBattleMenu(kind) {
     } else {
     const canCatch = !b.isTower && b.enemyHp > 0 && (b.enemyHp / b.enemyMaxHp) < 0.30;
     const hasSwitchTargets = entities.some(e => e.id && state.caught.has(e.id) && e.id !== state.activeAppliance);
-    const itemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0);
+    const itemCount = (state.items.potion||0) + (state.items.maxPotion||0) + (state.items.bait||0) + (state.items.snare||0);
+    const catchPct = canCatch ? Math.round(catchChance(b.enemy.rarity, b.enemyHp / b.enemyMaxHp) * 100) : 0;
     const catchLabel = b.isTower
       ? `<span style="opacity:0.35">CATCH</span><span class="bt-mg" style="color:#e55">TOWER — NO CATCHING</span>`
       : canCatch
-      ? `CATCH<span class="bt-mg" style="color:#f4c165">★ READY ★</span>`
+      ? `CATCH<span class="bt-mg" style="color:#f4c165">★ ${catchPct}% ★</span>`
       : `<span style="opacity:0.55">CATCH</span><span class="bt-mg" style="color:#777">HP &lt; 30%</span>`;
     const itemLabel = itemCount > 0
       ? `ITEM<span class="bt-mg" style="color:#7edc8b">×${itemCount} IN BAG</span>`
@@ -9977,7 +10012,8 @@ function setBattleMenu(kind) {
     const defs = [
       { k:'potion',    label:'🧪 POTION',     sub:'RESTORE 50 HP',               n: state.items.potion || 0 },
       { k:'maxPotion', label:'💖 MAX POTION', sub:'FULL RESTORE',                n: state.items.maxPotion || 0 },
-      { k:'bait',      label:'🍖 TASTY BAIT', sub:'+20% CATCH (THIS BATTLE)',    n: state.items.bait || 0 }
+      { k:'bait',      label:'🍖 TASTY BAIT', sub:'+20% CATCH (THIS BATTLE)',    n: state.items.bait || 0 },
+      ...(!b.isBoss && !b.isTower ? [{ k:'snare', label:'🪢 SOUS SNARE', sub: b.snareActive ? 'ALREADY SET' : 'ATTACKS LEAVE IT AT 1 HP', n: b.snareActive ? 0 : (state.items.snare || 0) }] : [])
     ].filter(d => d.n > 0);
     btMenu.innerHTML = defs.map((d, i) =>
       `<div class="bt-btn ${i===0?'focus':''}" data-it="${d.k}">${d.label} ×${d.n}<span class="bt-mg">${d.sub}</span></div>`
@@ -10052,6 +10088,10 @@ function useBattleItem(k) {
     b.baitActive = true;
     audio.blip();
     battleLog(`🍖 Tasty Bait scattered! Catch chance <b style="color:#f4c165">+20%</b> this battle.`);
+  } else if (k === 'snare') {
+    b.snareActive = true;
+    audio.blip();
+    battleLog(`🪢 Sous Snare set! Your attacks <b style="color:#f4c165">can't knock it out</b> — weaken it and CATCH!`);
   }
   commitActiveHp();
   renderBattle();
@@ -10078,6 +10118,13 @@ function attemptRun() {
     endTower();
     return;
   }
+  if (b.isBoss && b.bossData && b.bossData.rivalEvent) {
+    battleLog(`You back out of the duel. MARCO smirks: <i>"Thought so. Come back when you can actually cook!"</i>`);
+    b.ended = true;
+    setBattleMenu('end');
+    return;
+  }
+  if (b.isBoss) return;
   const chance = enemyRunChance(b.enemy);
   if (Math.random() < chance) {
     battleLog('You slip away before it notices.');
@@ -10397,7 +10444,7 @@ function useStruggle() {
   setBattleMenu('none');
   const base = 5;
   const dmg = Math.max(1, base + playerAtkBonus());
-  b.enemyHp = Math.max(0, b.enemyHp - dmg);
+  b.enemyHp = Math.max(b.snareActive && !b.isBoss ? 1 : 0, b.enemyHp - dmg);
   chargeUlt(dmg);
   btAttackAnim(btPlayerSprite);
   setTimeout(() => {
@@ -10511,7 +10558,8 @@ function resolveBattleMove(score, gotGood) {
   let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus * garnishAtk);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
-  else { b.enemyHp = Math.max(0, b.enemyHp - dmg); chargeUlt(dmg); }
+  else { b.enemyHp = Math.max(b.snareActive && !b.isBoss ? 1 : 0, b.enemyHp - dmg); chargeUlt(dmg); }
+  if (b.snareActive && !b.isBoss && b.enemyHp === 1 && dmg > 0) battleLog('🪢 The Sous Snare holds it at 1 HP!');
   btAttackAnim(btPlayerSprite);
   setTimeout(() => {
     btAttackEffect(mv.mg, true);
@@ -13648,6 +13696,15 @@ window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene,
   document.body.appendChild(d);
   setTimeout(() => { try { d.remove(); } catch (e) {} }, 4000);
 })();
+
+// Persistent objective ribbon — surfaces questHint() without opening the map
+setInterval(() => {
+  const el = document.getElementById('objHud');
+  if (!el) return;
+  const show = state.screen === 'world' && state.started && !state.battle && !state.mini && !state.mapOpen && !state.won;
+  el.style.opacity = show ? '1' : '0';
+  if (show) el.textContent = '🎯 ' + questHint();
+}, 1200);
 
 setupTouchControls();
 requestAnimationFrame(tick);
