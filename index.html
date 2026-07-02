@@ -2201,22 +2201,22 @@ body { background: var(--bg-void) !important; }
         <div class="starterCard" data-id="1" data-key="1">
           <div class="emoji">&#129374;</div>
           <div class="name">SPATULON</div>
-          <div class="role">BALANCE</div>
-          <div class="desc">Reliable flipper. Even stats across timing, mash, and precision. A trustworthy starter.</div>
+          <div class="role">BALANCE &middot; STEADY HANDS</div>
+          <div class="desc">Reliable flipper. <b style="color:#7edc8b">Perk:</b> your moves never lock out &mdash; repeat any minigame back-to-back.</div>
           <div class="pick">[1] PICK</div>
         </div>
         <div class="starterCard" data-id="2" data-key="2">
           <div class="emoji">&#129370;</div>
           <div class="name">WHISK-ER</div>
-          <div class="role">SPEED</div>
-          <div class="desc">Wire-frame sprinter. Excels at rapid MASH encounters. Loud when anxious.</div>
+          <div class="role">SPEED &middot; QUICK WHISK</div>
+          <div class="desc">Wire-frame sprinter. <b style="color:#7edc8b">Perk:</b> every minigame runs 10% slower with 15% more time.</div>
           <div class="pick">[2] PICK</div>
         </div>
         <div class="starterCard" data-id="17" data-key="3">
           <div class="emoji">&#127838;</div>
           <div class="name">TOASTY</div>
-          <div class="role">POWER</div>
-          <div class="desc">Chrome-plated bruiser. Strong HOLD and SEQUENCE performance. Slightly burnt.</div>
+          <div class="role">POWER &middot; EXTRA CRISPY</div>
+          <div class="desc">Chrome-plated bruiser. <b style="color:#7edc8b">Perk:</b> +12% attack damage and +10% coins from battles.</div>
           <div class="pick">[3] PICK</div>
         </div>
       </div>
@@ -5356,6 +5356,15 @@ function starterBaseHp(id) {
   const t = ent ? RARITY_TIER[ent.rarity] : 0;
   return 60 + t * 18 + evoHpBonus(id);
 }
+// Starter perk — a run-defining "chef style" chosen with your starter.
+// steady (Spatulon): moves never lock out. quick (Whisk-er): minigames run
+// slower with more time. crispy (Toasty): +12% damage, +10% battle coins.
+const STARTER_PERKS = {
+  1:  { key:'steady', name:'STEADY HANDS',  desc:'Moves never lock out — repeat any minigame back-to-back.' },
+  2:  { key:'quick',  name:'QUICK WHISK',   desc:'All minigames run 10% slower with 15% more time.' },
+  17: { key:'crispy', name:'EXTRA CRISPY',  desc:'+12% attack damage and +10% coins from battles.' }
+};
+function starterPerk() { return (STARTER_PERKS[state.starter] || {}).key || null; }
 function playerAtkBonus() { return Math.floor(state.caught.size * 0.7); }
 function playerLevel() { return 1 + state.caught.size; }
 function enemyMaxHp(ent) { return Math.round((50 + RARITY_TIER[ent.rarity] * 42 + Math.floor(Math.random()*8)) * ngHpMult()); }
@@ -6061,6 +6070,7 @@ function renderWorldMap() {
     `<div style="position:relative;width:${7*cellW}px;height:${5*cellH}px">${cells}</div>` +
     `<div style="margin-top:10px">⚔ ${partyStrip}</div>` +
     `<div style="margin-top:10px;color:#ffe08a;font-size:10px;letter-spacing:1px;max-width:440px;text-align:center">📜 ${questHint()}</div>` +
+    (STARTER_PERKS[state.starter] ? `<div style="margin-top:6px;color:#7edc8b;font-size:9px;letter-spacing:1px;max-width:440px;text-align:center">✨ CHEF STYLE — ${STARTER_PERKS[state.starter].name}: ${STARTER_PERKS[state.starter].desc}</div>` : '') +
     roamHint +
     `<div style="margin-top:8px;color:#888;font-size:9px;letter-spacing:2px">🪙 ${state.coins} &nbsp;&bull;&nbsp; 🏆 ${state.achievements.length}/${achTotal} &nbsp;&bull;&nbsp; 🏯 BEST: ${state.towerBest||0}</div>` +
     `<div style="margin-top:10px;color:#888;font-size:9px;letter-spacing:1px">🔊 VOLUME <input type="range" min="0" max="100" value="${Math.round((state.volume??1)*100)}" style="vertical-align:middle;width:120px;accent-color:#f4c165" oninput="setGameVolume(this.value/100)"> &nbsp;&bull;&nbsp; <span style="cursor:pointer;color:${state.reducedFlash?'#7edc8b':'#aaa'};text-decoration:underline" onclick="toggleReducedFlash()">⚡ FLASH FX: ${state.reducedFlash?'REDUCED':'FULL'}</span></div>` +
@@ -6728,7 +6738,9 @@ function pickStarter(id) {
     _sf.style.transition='opacity .5s ease-out'; _sf.style.opacity='0';
     setTimeout(()=>_sf.remove(),560);
     const e=entities.find(x=>x.id===id);
-    toast(`STARTER: ${e?e.n.toUpperCase():''}`);
+    const _perk = STARTER_PERKS[id];
+    toast(`STARTER: ${e?e.n.toUpperCase():''}${_perk ? ` — ✨ ${_perk.name}` : ''}`);
+    if (_perk) setTimeout(() => toast(`✨ ${_perk.name}: ${_perk.desc}`), 2800);
     audio.startArea(state.map);
     showAreaBanner(state.map);
   },190);
@@ -10430,7 +10442,7 @@ function useMove(idx) {
   const b = state.battle; if (!b) return;
   const moves = getMovesForAppliance(state.activeAppliance);
   const mv = moves[idx]; if (!mv) return;
-  if (mv.mg === b.lastMinigame) return;
+  if (mv.mg === b.lastMinigame && starterPerk() !== 'steady') return;
   b.pendingMove = mv;
   b.phase = 'awaitMg';
   battleLog(`${getEvoName(state.activeAppliance).toUpperCase()} uses <b style="color:#7edc8b">${mv.name}</b>!`);
@@ -10545,7 +10557,7 @@ function resolveBattleMove(score, gotGood) {
     b.enemyHp = Math.max(0, b.enemyHp - 1); renderBattle();
     setTimeout(() => enemyTurn(), 900); return;
   }
-  b.lastMinigame = mv.mg;
+  b.lastMinigame = starterPerk() === 'steady' ? null : mv.mg;   // STEADY HANDS: no lockout
   const base = mv.power + playerAtkBonus() + (state.cookAtkBonus || 0);   // KITCHEN: banquet ATK
   const critThreshold = Math.max(0.5, (isBuffActive('critBoost') ? 0.7 : 0.92) - garnishCritBonus(state.activeAppliance) - setBonusCrit());
   const crit = score > critThreshold;
@@ -10555,7 +10567,8 @@ function resolveBattleMove(score, gotGood) {
   const buffDmg = isBuffActive('doubleDamage') ? 2 : 1;
   const bondBonus = 1 + bondLevel(state.activeAppliance) * 0.02;   // up to +20% from battling together
   const garnishAtk = garnishAtkMult(state.activeAppliance) * setBonusAtkMult();   // KITCHEN: held-item + set ATK
-  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus * garnishAtk);
+  const perkDmg = starterPerk() === 'crispy' ? 1.12 : 1;   // EXTRA CRISPY
+  let dmg = Math.round(base * (0.35 + score * 0.95) * elemDmgMult() * matchup * shinyBonus * buffDmg * bondBonus * garnishAtk * perkDmg);
   if (crit) dmg = Math.round(dmg * 1.35);
   if (state.adminMode && !b.adminHit) { b.enemyHp = 1; b.adminHit = true; }
   else { b.enemyHp = Math.max(b.snareActive && !b.isBoss ? 1 : 0, b.enemyHp - dmg); chargeUlt(dmg); }
@@ -10841,7 +10854,8 @@ function onEnemyFaint() {
   }
   dailyTrack('win', {});
   state.totalWins = (state.totalWins || 0) + 1;
-  const _coinGain = (b.isTower ? 14 + b.towerRound * 6 : 12 + RARITY_TIER[b.enemy.rarity] * 10) + (b.enemyShiny ? 25 : 0);
+  const _coinBase = (b.isTower ? 14 + b.towerRound * 6 : 12 + RARITY_TIER[b.enemy.rarity] * 10) + (b.enemyShiny ? 25 : 0);
+  const _coinGain = Math.round(_coinBase * (starterPerk() === 'crispy' ? 1.10 : 1));   // EXTRA CRISPY
   addCoins(_coinGain, true);
   battleLog(`🪙 Earned <b style="color:#ffd700">${_coinGain} coins</b>!`);
   if (!b.isTower) dropIngredients(b.enemy);   // KITCHEN: salvage cooking ingredients
@@ -11594,17 +11608,19 @@ function elemZoneMult() {
 }
 function elemSpeedMult() {
   const el = activeElement();
-  if (el === 'fire') return 1.3;    // hot and fast
-  if (el === 'wind') return 1.2;    // quick tempo
-  if (el === 'ice') return 0.8;     // slow and steady
-  if (el === 'water') return 0.9;   // gentle flow
-  return 1;
+  const perk = starterPerk() === 'quick' ? 0.9 : 1;   // QUICK WHISK: everything runs slower
+  if (el === 'fire') return 1.3 * perk;    // hot and fast
+  if (el === 'wind') return 1.2 * perk;    // quick tempo
+  if (el === 'ice') return 0.8 * perk;     // slow and steady
+  if (el === 'water') return 0.9 * perk;   // gentle flow
+  return 1 * perk;
 }
 function elemTimeMult() {
   const el = activeElement();
-  if (el === 'ice') return 1.25;    // extra time to aim
-  if (el === 'water') return 1.15;  // patient
-  return 1;
+  const perk = starterPerk() === 'quick' ? 1.15 : 1;  // QUICK WHISK: more time
+  if (el === 'ice') return 1.25 * perk;    // extra time to aim
+  if (el === 'water') return 1.15 * perk;  // patient
+  return 1 * perk;
 }
 function elemDmgMult() {
   const el = activeElement();
@@ -13681,7 +13697,8 @@ window.toggleIntroSettings = function () {
 };
 // debug/testing handle (read-mostly; also powers automated playtests)
 window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene,
-  ELEMENTS, elemMatchup, getElement, partyMembers, activeSets, elemBeats, elemBeatenBy };
+  ELEMENTS, elemMatchup, getElement, partyMembers, activeSets, elemBeats, elemBeatenBy,
+  starterPerk, STARTER_PERKS };
 
 // Pre-rasterize the Impact font and filtered-emoji silhouettes the finishers
 // use, so the very first finisher doesn't pay a one-time ~hundreds-of-ms
