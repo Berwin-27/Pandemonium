@@ -214,6 +214,7 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
 }
 #mini.show { display:flex; }
 #minipanel {
+  position: relative;
   width: 640px; padding: 24px 28px;
   background: linear-gradient(180deg, #1b1434, #0a0716);
   border: 2px solid var(--accent); border-radius: 4px;
@@ -538,6 +539,27 @@ body.if-active #filmgrain, body.if-active #scanlines, body.if-active #vignette {
   from { transform:translate(-50%,-50%) scale(.2); opacity:1; }
   to   { transform:translate(-50%,-50%) scale(10); opacity:0; }
 }
+/* minigame juice: floating hit text, micro-pop, pre-roll countdown */
+.mini-float {
+  position:absolute; z-index:12; font-family:'Courier New',monospace; font-weight:bold;
+  letter-spacing:2px; pointer-events:none; white-space:nowrap;
+  text-shadow:0 2px 6px rgba(0,0,0,.85);
+  animation: miniFloatUp .75s ease-out forwards;
+}
+@keyframes miniFloatUp {
+  0%   { opacity:0; transform:translate(-50%, 6px) scale(.7); }
+  18%  { opacity:1; transform:translate(-50%, 0)   scale(1.18); }
+  100% { opacity:0; transform:translate(-50%,-28px) scale(1); }
+}
+#minipanel.pop { animation: miniPop .15s ease-out; }
+@keyframes miniPop { 0% { transform:scale(1); } 40% { transform:scale(1.015); } 100% { transform:scale(1); } }
+.mini-ready {
+  position:absolute; inset:0; z-index:11; display:flex; align-items:center; justify-content:center;
+  background:rgba(6,4,18,0.55); border-radius:4px;
+  font-family:'Courier New',monospace; font-size:30px; letter-spacing:8px; font-weight:bold;
+  color:#ffe08a; text-shadow:0 0 18px rgba(244,193,101,.85); pointer-events:none;
+}
+.mini-ready.go { color:#7edc8b; text-shadow:0 0 18px rgba(126,220,139,.9); }
 
 /* Intro / Ending */
 #intro, #ending {
@@ -2261,7 +2283,7 @@ body { background: var(--bg-void) !important; }
     </div>
   </div>
   <div id="help">
-    <b>ARROWS</b> MOVE &nbsp;&bull;&nbsp; <b>SPACE</b> INTERACT &nbsp;&bull;&nbsp; <b>P</b> PANDEX &nbsp;&bull;&nbsp; <b>M</b> MAP &nbsp;&bull;&nbsp; <b>H</b> HOME &nbsp;&bull;&nbsp; <b>ESC</b> CLOSE
+    <b>ARROWS</b> MOVE &nbsp;&bull;&nbsp; <b>SPACE</b> INTERACT &nbsp;&bull;&nbsp; <b>P</b> PANDEX &nbsp;&bull;&nbsp; <b>M</b> MAP &nbsp;&bull;&nbsp; <b>Q</b> QUESTS &nbsp;&bull;&nbsp; <b>H</b> HOME &nbsp;&bull;&nbsp; <b>ESC</b> CLOSE
   </div>
 </div>
 
@@ -2287,6 +2309,7 @@ body { background: var(--bg-void) !important; }
 <div class="touch-util">
   <div class="touch-btn" id="touchSave" data-key="f5"><span class="icon">&#128190;</span><span class="label">SAVE</span></div>
   <div class="touch-btn" id="touchMap" data-key="m"><span class="icon">&#128506;</span><span class="label">MAP</span></div>
+  <div class="touch-btn" id="touchQuest" data-key="q"><span class="icon">&#128220;</span><span class="label">QUEST</span></div>
 </div>
 <script>
 (() => {
@@ -3119,6 +3142,328 @@ function isBuffActive(buffName) {
   return state.activeBuffs[buffName] && Date.now() < state.activeBuffs[buffName];
 }
 
+// ======================================================================
+// QUEST CHAINS & REPUTATION
+// ======================================================================
+// Multi-step side quests handed out by world NPCs (npc.quest = chain key).
+// Step types:
+//   catch / win / cook / forge — counted live via questTrack(type, data)
+//   bring — fetch quest, live-checked against state.ingredients, consumed on turn-in
+//   elite — live-checked against state.bossesDefeated
+// Progress persists in state.quests; finished steps are turned in AT the giver
+// (classic quest loop — drives the player back into the world).
+const QUEST_REP_STEP  = 5;    // rep per step turned in
+const QUEST_REP_CHAIN = 10;   // bonus rep for finishing a whole chain
+
+const QUEST_CHAINS = [
+  { key:'busker', giver:'Street Performer', icon:'🎻', name:'OPENING ACT', where:'Town',
+    intro:["Psst — you! You've got the look of someone who collects Appliances. My kind of audience.",
+           "The kettles whistle harmony and the blenders keep time, but a show needs a STAR. Help me warm up the crowd?"],
+    steps:[
+      { desc:'Catch 3 Appliances', type:'catch', target:3, reward:{ coins:60 },
+        say:'The crowd loves fresh faces. Catch 3 Appliances — any kind will do!',
+        turnin:'Look at them! The kettles are already whistling your theme song.' },
+      { desc:'Win 4 battles', type:'win', target:4, reward:{ coins:90, items:{ potion:1 } },
+        say:'Now we need DRAMA. Win 4 battles — audiences adore a fighter.',
+        turnin:'Four victories! The blenders composed a percussion piece about you.' },
+      { desc:'Bring 2 Flour (confetti cannons)', type:'bring', ing:'flour', target:2, reward:{ coins:150, items:{ bait:1 } },
+        say:'Finale time! Bring me 2 Flour — flour cannons are cheaper than confetti and twice as dramatic.',
+        turnin:'POOF! Magnificent! The whole plaza looks like a powdered donut!' }
+    ],
+    done:"You're headlining the harvest festival with us, kid. The kettles are writing your fanfare as we speak." },
+
+  { key:'retiredchef', giver:'Retired Chef', icon:'👨‍🍳', name:'ONE LAST SERVICE', where:'Wilderness',
+    intro:["I used to run the hottest kitchen in the region. Then a toaster burned me — literally.",
+           "But watching you... maybe the old fire isn't out yet. Care to cook a service with a washed-up chef? Chef Gourmand's Kitchen is in the Market."],
+    steps:[
+      { desc:'Cook 1 dish at The Kitchen', type:'cook', target:1, reward:{ ing:{ salt:3 } },
+        say:'Visit Chef Gourmand in the Market and cook ANY dish. Mind the heat.',
+        turnin:'You cooked! And nothing exploded! Better than my first service already.' },
+      { desc:'Forge 1 garnish', type:'forge', target:1, reward:{ coins:120 },
+        say:'A chef is only as good as their tools. Forge a garnish at the Kitchen.',
+        turnin:'A fine tool. Treat it better than I treated my sous chefs.' },
+      { desc:'Cook 3 more dishes', type:'cook', target:3, reward:{ coins:250, ing:{ truffle:1 } },
+        say:'Now the real test: a full service. Cook 3 more dishes.',
+        turnin:'A full service without a single fire. I retire in peace — again.' }
+    ],
+    done:'The pigeons and I agree: you cook like the legends. My whites are yours in spirit.' },
+
+  { key:'fisherman', giver:'Old Fisherman', icon:'🎣', name:'THE ONE THAT GOT AWAY', where:'Lake Shore',
+    intro:["Twelve years. Not one fish. Just Appliances — whisks, colanders, a kettle with ATTITUDE.",
+           "But there's one out there... big, gleaming, rare. Help this old angler prove he isn't crazy?"],
+    steps:[
+      { desc:'Catch 2 WATER-type Appliances', type:'catch', elem:'water', target:2, reward:{ coins:100 },
+        say:'Water types school near water — check the lake, the river, the beach. Catch me 2.',
+        turnin:'Beautiful specimens! My wife still thinks I\'m making all this up.' },
+      { desc:'Win 6 battles (patience training)', type:'win', target:6, reward:{ coins:150, ing:{ springwater:2 } },
+        say:'Fishing is patience. Battling is patience with more sparks. Win 6 battles.',
+        turnin:'Steady hands. You\'d have made a fine angler in a saner world.' },
+      { desc:'Catch 1 RARE-or-better Appliance', type:'catch', minTier:1, target:1, reward:{ coins:300, ing:{ goldenEgg:1 } },
+        say:'Now for the big one. Catch something RARE or better — I need to SEE it.',
+        turnin:'THAT\'S IT! That\'s the gleam I saw! Twelve years vindicated in one cast!' }
+    ],
+    done:'I mounted a photo of it over the fireplace. My wife apologized. Best catch of my life — and I didn\'t even reel it in.' },
+
+  { key:'spelunker', giver:'Spelunker', icon:'⛏️', name:'ECHOES IN THE DEEP', where:'Forest Cave',
+    intro:["Shh — hear that? The deep hums. Something down there processes more than food.",
+           "I map the dark for a living, but my lantern only goes so far. Lend a caver a hand?"],
+    steps:[
+      { desc:'Win 5 battles', type:'win', target:5, reward:{ coins:120 },
+        say:'The deep respects strength. Win 5 battles so it knows your name.',
+        turnin:'The echoes carry your victories. The dark is... politer now.' },
+      { desc:'Bring 3 Ice Shards (lantern coolant)', type:'bring', ing:'iceShard', target:3, reward:{ coins:180, items:{ potion:1 } },
+        say:'My lantern overheats past the second fork. Bring 3 Ice Shards to cool it.',
+        turnin:'Ahh, that hiss means it\'s working. Deeper we go.' },
+      { desc:'Catch 1 EPIC-or-better Appliance', type:'catch', minTier:2, target:1, reward:{ coins:350, ing:{ truffle:1 } },
+        say:'Something EPIC guards the deepest shelf. Catch one — any epic will convince me it can be done.',
+        turnin:'You CAUGHT one?! I once saw a Mythic food processor and simply left the country.' }
+    ],
+    done:'My map of the deep is finished — and there\'s a little drawing of you at the bottom. Legend status.' },
+
+  { key:'vulcan', giver:'Vulcanologist', icon:'🌡️', name:'FIELD RESEARCH', where:'Ember Caldera',
+    intro:["This caldera reads 1,200 degrees at the rim, and the Appliances COOK WITH IT.",
+           "My grant runs out next month. Help me finish the field research and we both get famous?"],
+    steps:[
+      { desc:'Catch 2 FIRE-type Appliances', type:'catch', elem:'fire', target:2, reward:{ coins:150 },
+        say:'I need live FIRE-type samples. Catch 2 — carefully. They bite AND sear.',
+        turnin:'Magnificent thermal readings! One of them singed my clipboard. Worth it.' },
+      { desc:'Bring 3 Chili (calibration fuel)', type:'bring', ing:'chili', target:3, reward:{ coins:200, items:{ maxPotion:1 } },
+        say:'My thermometer needs calibrating against something spicy. 3 Chili should do it.',
+        turnin:'Readings confirmed: these chilis are hotter than the lava. Fascinating. Terrifying.' },
+      { desc:'Defeat Magma Lord Cinder', type:'elite', boss:'elite_volcano', target:1, reward:{ coins:500, ing:{ goldenEgg:1 } },
+        say:'The Magma Lord at the rim distorts every reading I take. Defeat it and the caldera is science\'s again.',
+        turnin:'The readings are CLEAN! You beat a lava demon for peer review. I\'m citing you first.' }
+    ],
+    done:'Published! "Thermal Dynamics of Combat Cookware" — dedicated to you. The academy wept.' },
+
+  { key:'shepherd', giver:'Cloud Shepherd', icon:'🐑', name:'FLOCK ABOVE THE CLOUDS', where:'Celestial Kitchen',
+    intro:["I herd cumulus. Fluffy work, mostly — until the sky Appliances started whipping my flock into dessert.",
+           "The sheep don't mind, but I have STANDARDS. Help a shepherd restore order to the stratosphere?"],
+    steps:[
+      { desc:'Catch 2 WIND-type Appliances', type:'catch', elem:'wind', target:2, reward:{ coins:200 },
+        say:'The gusty ones spook the flock most. Catch 2 WIND types.',
+        turnin:'The flock grazes in peace. One sheep un-meringued itself out of sheer relief.' },
+      { desc:'Win 8 battles', type:'win', target:8, reward:{ coins:250, ing:{ gust:2 } },
+        say:'Word travels on the wind. Win 8 battles and the sky itself will behave.',
+        turnin:'Even the thunderheads gossip about you now. Respectfully.' },
+      { desc:'Bring 1 Golden Egg (cloud seed)', type:'bring', ing:'goldenEgg', target:1, reward:{ coins:600, ing:{ truffle:3 } },
+        say:'Legend says a Golden Egg seeds a permanent fair-weather cloud. Bring me one and the flock is safe forever.',
+        turnin:'It\'s... beautiful. A golden cloud, right there. The sheep are singing. Sheep don\'t sing!' }
+    ],
+    done:'The golden cloud shades my flock eternal. You\'re an honorary shepherd — the hat is in the mail.' }
+];
+
+// ── Reputation ─────────────────────────────────────────────
+const REP_LEVELS = [
+  { at:0,  name:'UNKNOWN',             perk:'Complete quest steps to earn reputation.' },
+  { at:15, name:'PROMISING SOUS',      perk:'5% Grande Mart discount' },
+  { at:35, name:'LOCAL LEGEND',        perk:'+5% catch chance' },
+  { at:60, name:'STAR OF THE KITCHEN', perk:'10% shop discount + bonus battle salvage' },
+  { at:90, name:'FOLK HERO',           perk:'15% shop discount + 10% more battle coins' }
+];
+function repLevel() {
+  let lv = 0;
+  for (let i = 0; i < REP_LEVELS.length; i++) if ((state.rep || 0) >= REP_LEVELS[i].at) lv = i;
+  return lv;
+}
+function repDiscount() {
+  const lv = repLevel();
+  return lv >= 4 ? 0.85 : lv >= 3 ? 0.90 : lv >= 1 ? 0.95 : 1;
+}
+function repGain(n) {
+  const before = repLevel();
+  state.rep = (state.rep || 0) + n;
+  toast(`⭐ +${n} REPUTATION`);
+  const after = repLevel();
+  if (after > before) {
+    setTimeout(() => {
+      toast(`⭐ RANK UP — ${REP_LEVELS[after].name}! ${REP_LEVELS[after].perk}`);
+      audio.stinger();
+    }, 1000);
+  }
+}
+
+// ── Quest progress engine ──────────────────────────────────
+function questCurStep(chain) {
+  const q = state.quests[chain.key];
+  if (!q || q.complete) return null;
+  return chain.steps[q.step];
+}
+function questStepReady(chain) {
+  const q = state.quests[chain.key];
+  if (!q || q.complete) return false;
+  const s = chain.steps[q.step];
+  if (s.type === 'bring') return (state.ingredients[s.ing] || 0) >= s.target;
+  if (s.type === 'elite') return !!state.bossesDefeated[s.boss];
+  return (q.prog || 0) >= s.target;
+}
+function questProgLabel(chain) {
+  const q = state.quests[chain.key];
+  const s = chain.steps[q.step];
+  if (s.type === 'bring') return `${Math.min(state.ingredients[s.ing] || 0, s.target)}/${s.target}`;
+  if (s.type === 'elite') return state.bossesDefeated[s.boss] ? '1/1' : '0/1';
+  return `${Math.min(q.prog || 0, s.target)}/${s.target}`;
+}
+// Called wherever the matching thing happens (next to dailyTrack calls).
+function questTrack(type, data) {
+  data = data || {};
+  for (const chain of QUEST_CHAINS) {
+    const q = state.quests[chain.key];
+    if (!q || q.complete) continue;
+    const s = chain.steps[q.step];
+    if (s.type !== type) continue;
+    if ((q.prog || 0) >= s.target) continue;           // done, awaiting turn-in
+    if (s.elem && data.elem !== s.elem) continue;
+    if (s.minTier !== undefined && (RARITY_TIER[data.rarity] || 0) < s.minTier) continue;
+    q.prog = (q.prog || 0) + 1;
+    if (q.prog >= s.target) {
+      toast(`📜 "${s.desc}" — done! Return to the ${chain.giver}.`);
+      audio.stinger();
+    }
+  }
+}
+
+// ── Quest giver dialog ─────────────────────────────────────
+function questNpcTalk(e) {
+  const chain = QUEST_CHAINS.find(c => c.key === e.quest);
+  if (!chain) return openDialog(e.n, [e.desc]);
+  const q = state.quests[chain.key];
+
+  // Chain finished — a warm epilogue
+  if (q && q.complete) {
+    return openDialog(`${chain.icon} ${e.n}`,
+      [chain.done, `<span style="color:#7edc8b;letter-spacing:2px">✓ ${chain.name} — COMPLETE</span>`]);
+  }
+
+  // Not accepted yet — pitch it, then offer the choice after the intro pages
+  if (!q) {
+    state.dialog = {
+      name: `${chain.icon} ${e.n}`, pages: chain.intro, page: 0, choices: null,
+      finalChoices: [
+        { label:'✅ ACCEPT QUEST', k:'y', onPick(){
+            closeDialog();
+            state.quests[chain.key] = { step: 0, prog: 0 };
+            toast(`📜 QUEST STARTED — ${chain.name}`);
+            audio.stinger();
+            const s0 = chain.steps[0];
+            setTimeout(() => openDialog(`${chain.icon} ${chain.name}`,
+              [`<b>OBJECTIVE:</b> ${s0.desc}<br><span style="font-size:11px;color:#9ab">${s0.say}</span><br><span style="font-size:10px;color:#667">Press Q anytime to review your quests.</span>`]), 80);
+            autoSave();
+          } },
+        { label:'MAYBE LATER', k:'n', onPick(){ closeDialog(); } }
+      ]
+    };
+    renderDialog();
+    return;
+  }
+
+  const s = chain.steps[q.step];
+
+  // Step complete — turn in, pay out, advance
+  if (questStepReady(chain)) {
+    if (s.type === 'bring') state.ingredients[s.ing] = (state.ingredients[s.ing] || 0) - s.target;
+    const r = s.reward || {};
+    const parts = [];
+    if (r.coins) { addCoins(r.coins, true); parts.push(`🪙 ${r.coins} coins`); }
+    if (r.items) for (const k in r.items) {
+      state.items[k] = (state.items[k] || 0) + r.items[k];
+      const def = SHOP_STOCK.find(i => i.key === k);
+      parts.push(`${def ? def.icon + ' ' + def.name : k} ×${r.items[k]}`);
+    }
+    if (r.ing) for (const k in r.ing) {
+      state.ingredients[k] = (state.ingredients[k] || 0) + r.ing[k];
+      parts.push(`${INGREDIENTS[k].icon} ${INGREDIENTS[k].name} ×${r.ing[k]}`);
+    }
+    q.step++; q.prog = 0;
+    const finished = q.step >= chain.steps.length;
+    if (finished) q.complete = true;
+    repGain(QUEST_REP_STEP + (finished ? QUEST_REP_CHAIN : 0));
+    audio.catchSuccess();
+    const pages = [
+      s.turnin || 'Outstanding work, chef!',
+      `<b style="color:#f4c165">REWARD:</b> ${parts.join(' &bull; ') || '—'}<br>` +
+      `<span style="color:#8fd8ff">⭐ +${QUEST_REP_STEP + (finished ? QUEST_REP_CHAIN : 0)} REPUTATION</span>`
+    ];
+    if (finished) {
+      pages.push(`<b style="color:#7edc8b;letter-spacing:2px">✓ QUEST CHAIN COMPLETE — ${chain.name}!</b><br><span style="font-size:11px;color:#9ab">${chain.done}</span>`);
+    } else {
+      const nx = chain.steps[q.step];
+      pages.push(`<b>NEXT OBJECTIVE:</b> ${nx.desc}<br><span style="font-size:11px;color:#9ab">${nx.say}</span>`);
+    }
+    openDialog(`${chain.icon} ${e.n}`, pages);
+    checkAchievements();
+    autoSave();
+    return;
+  }
+
+  // In progress — remind
+  openDialog(`${chain.icon} ${e.n}`, [
+    s.say,
+    `<b>OBJECTIVE:</b> ${s.desc} <span style="color:#f4c165">(${questProgLabel(chain)})</span><br>` +
+    `<span style="font-size:11px;color:#889">${chain.name} — step ${q.step + 1}/${chain.steps.length}</span>`
+  ]);
+}
+
+// ── Quest log overlay (Q) ──────────────────────────────────
+function toggleQuestLog() {
+  if (state.questLogOpen) { closeQuestLog(); return; }
+  if (!state.started || state.battle || state.mini || state.dialog || state.invOpen || state.won || state.mapOpen) return;
+  state.questLogOpen = true;
+  renderQuestLog();
+}
+function closeQuestLog() {
+  state.questLogOpen = false;
+  const el = document.getElementById('questLog');
+  if (el) el.remove();
+}
+function renderQuestLog() {
+  let el = document.getElementById('questLog');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'questLog';
+    document.getElementById('stage').appendChild(el);
+  }
+  el.style.cssText = 'position:absolute;inset:0;z-index:60;background:rgba(4,6,16,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:\'Courier New\',monospace;overflow-y:auto;';
+  const lv = repLevel();
+  const cur = REP_LEVELS[lv];
+  const next = REP_LEVELS[lv + 1];
+  const rep = state.rep || 0;
+  const pct = next ? Math.min(100, Math.round(((rep - cur.at) / (next.at - cur.at)) * 100)) : 100;
+  const repBar =
+    `<div style="width:280px;margin:4px auto 2px;height:8px;background:#1a1a2e;border:1px solid #3a4a6a;border-radius:4px;overflow:hidden">` +
+    `<div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#8fd8ff,#f4c165)"></div></div>` +
+    `<div style="font-size:9px;color:#889">${next ? `${rep} / ${next.at} to ${next.name}` : `${rep} REP — MAX RANK`}</div>`;
+  const rows = QUEST_CHAINS.map(chain => {
+    const q = state.quests[chain.key];
+    if (!q) {
+      return `<div style="padding:7px 10px;border-bottom:1px solid #1c2438;color:#667">` +
+        `🗨 <b style="color:#99a">${chain.name}</b> <span style="font-size:9px">— speak to the ${chain.giver} (${chain.where})</span></div>`;
+    }
+    if (q.complete) {
+      return `<div style="padding:7px 10px;border-bottom:1px solid #1c2438;color:#4a7a55">` +
+        `✓ <b>${chain.icon} ${chain.name}</b> <span style="font-size:9px">— COMPLETE</span></div>`;
+    }
+    const s = chain.steps[q.step];
+    const ready = questStepReady(chain);
+    const status = ready
+      ? `<span style="color:#ffd24d;font-weight:bold">READY — return to the ${chain.giver}!</span>`
+      : `<span style="color:#8fd8ff">${questProgLabel(chain)}</span>`;
+    return `<div style="padding:7px 10px;border-bottom:1px solid #1c2438;color:#cbd">` +
+      `${chain.icon} <b style="color:#ffe08a">${chain.name}</b> <span style="font-size:9px;color:#778">(step ${q.step + 1}/${chain.steps.length} &bull; ${chain.giver}, ${chain.where})</span><br>` +
+      `<span style="font-size:11px;color:#aab">&rsaquo; ${s.desc}</span> &nbsp;${status}</div>`;
+  }).join('');
+  const doneCount = QUEST_CHAINS.filter(c => (state.quests[c.key] || {}).complete).length;
+  el.innerHTML =
+    `<div style="max-width:520px;width:92%;text-align:center">` +
+    `<div style="color:#f4c165;letter-spacing:5px;font-size:16px;margin-bottom:2px">📜 QUEST LOG</div>` +
+    `<div style="color:#8fd8ff;letter-spacing:3px;font-size:11px">⭐ REPUTATION: <b>${cur.name}</b></div>` +
+    repBar +
+    `<div style="font-size:9px;color:#9a8;margin:2px 0 10px">PERK: ${cur.perk}</div>` +
+    `<div style="text-align:left;background:rgba(14,18,34,0.85);border:1px solid #2a3450;border-radius:6px;max-height:52vh;overflow-y:auto">${rows}</div>` +
+    `<div style="color:#667;font-size:10px;letter-spacing:2px;margin-top:10px">${doneCount}/${QUEST_CHAINS.length} CHAINS COMPLETE &nbsp;&bull;&nbsp; <span style="cursor:pointer;color:#f4c165" onclick="closeQuestLog()">Q / ESC TO CLOSE</span></div>` +
+    `</div>`;
+}
+
 // Sacred Five — required to open the dimension portal
 const SACRED_FIVE = new Set([33, 34, 35, 36, 39]);  // Fridgeon, Washeon, Ovenar, Espressius, Thermomixite
 const TOTAL_DEX = 86;
@@ -3358,7 +3703,7 @@ const entities = [
   { m:'town', x:15, y:12, n:'Daily Challenge Board', e:'📋', npc:true, bulletin:true },
 
   // =================== WILD NPCS ===================
-  { m:'wild', x:5, y:5, n:'Retired Chef', e:'👨‍🍳', npc:true,
+  { m:'wild', x:5, y:5, n:'Retired Chef', e:'👨‍🍳', npc:true, quest:'retiredchef',
     desc:'"I used to catch Appliances for a living. Then a toaster burned me — literally. Now I just watch the clouds and feed the pigeons. They\'re not Appliances, they\'re just pigeons."' },
   { m:'wild', x:24, y:3, n:'Berry Forager', e:'🧑‍🌾', npc:true,
     desc:'"Don\'t eat the red berries. Or the blue ones. Actually, everything out here is either an Appliance or poisonous. I\'ve been living off crackers for a week."' },
@@ -3380,7 +3725,7 @@ const entities = [
     desc:'"These rocks are fascinating — 200 million years old! That Grindstone over there? About 3 weeks old. Somehow angrier than the rocks."' },
 
   // =================== LAKE NPCS ===================
-  { m:'lake', x:5, y:8, n:'Old Fisherman', e:'🎣', npc:true,
+  { m:'lake', x:5, y:8, n:'Old Fisherman', e:'🎣', npc:true, quest:'fisherman',
     desc:'"I haven\'t caught a single fish in twelve years. Just Appliances. Last week I reeled in a whisk. The week before, a colander. My wife thinks I\'m making it up."' },
   { m:'lake', x:26, y:14, n:'Birdwatcher', e:'🧓', npc:true,
     desc:'"Shh! I\'m watching a rare Spatula-Billed Heron. ...wait, that\'s just a spatula. And it\'s staring at me. Oh no. Oh no no no."' },
@@ -3392,7 +3737,7 @@ const entities = [
     desc:'"I built the BIGGEST sandcastle but a rolling pin squished it. Mommy says the rolling pin was \'just being an Appliance\' but I think it was MEAN."' },
 
   // =================== CAVE NPC ===================
-  { m:'cave', x:4, y:10, n:'Spelunker', e:'⛏️', npc:true,
+  { m:'cave', x:4, y:10, n:'Spelunker', e:'⛏️', npc:true, quest:'spelunker',
     desc:'"Careful down here. The deeper you go, the stronger the Appliances get. I once saw a Mythic-class food processor. It processed my courage into nothing."' },
 
   // =================== FUNGAL NPCS ===================
@@ -3420,7 +3765,7 @@ const entities = [
     desc:'A grizzled mechanic guards the path north. "The Scrapyard ain\'t no playground, kid. Bring me proof you caught a Boatsworth and I\'ll let you through."' },
 
   // =================== VOLCANO NPCS ===================
-  { m:'volcano', x:3, y:13, n:'Vulcanologist', e:'🌡️', npc:true,
+  { m:'volcano', x:3, y:13, n:'Vulcanologist', e:'🌡️', npc:true, quest:'vulcan',
     desc:'"This caldera registers 1,200 degrees at the rim. The Appliances here COOK WITH IT. I watched a wok do a backflip through a lava plume. I\'m never leaving."' },
   { m:'volcano', x:22, y:12, n:'Sweaty Tourist', e:'🥵', npc:true,
     desc:'"The brochure said \'warm springs.\' WARM. SPRINGS. My shoes melted an hour ago and a ladle keeps offering me soup made of rocks."' },
@@ -3446,7 +3791,7 @@ const entities = [
     desc:'' },
 
   // =================== SKY NPCS ===================
-  { m:'sky', x:3, y:9, n:'Cloud Shepherd', e:'🐑', npc:true,
+  { m:'sky', x:3, y:9, n:'Cloud Shepherd', e:'🐑', npc:true, quest:'shepherd',
     desc:'"I herd the cumulus flocks. The Cloudwhisk keeps whipping my sheep into dessert. They don\'t mind. They come back fluffier."' },
   { m:'sky', x:18, y:3, n:'Star Sommelier', e:'🍷', npc:true,
     desc:'"Tonight\'s pairing: braised nebula with a 4-billion-year vintage of starlight. The Astrochef\'s tasting menu has a waitlist measured in lifetimes."' },
@@ -3454,7 +3799,7 @@ const entities = [
     desc:'' },
 
   // =================== EXTRA TOWN/MARKET NPCS ===================
-  { m:'town', x:8, y:11, n:'Street Performer', e:'🎻', npc:true,
+  { m:'town', x:8, y:11, n:'Street Performer', e:'🎻', npc:true, quest:'busker',
     desc:'"I used to play for coins. Now I play for the Appliances. The kettles whistle harmony. The blenders keep time. We\'re booked for the harvest festival."' },
   { m:'market', x:20, y:12, n:'Coupon Goblin', e:'🧌', npc:true,
     desc:'"FORTY PERCENT OFF! Expired in 2019! I DON\'T CARE! The register Appliance accepts them out of fear! HAHAHA!"' },
@@ -3768,7 +4113,10 @@ const state = {
   garnishes: {},           // KITCHEN: garnish key → count owned
   equippedGarnish: {},     // KITCHEN: appliance id → equipped garnish key
   elemOverride: {},        // FUSION: appliance id → infused element (overrides ELEM_MAP)
-  seen: []                 // PANDEX: ids encountered in battle (seen but maybe not caught)
+  seen: [],                // PANDEX: ids encountered in battle (seen but maybe not caught)
+  quests: {},              // QUESTS: chain key → { step, prog, complete }
+  rep: 0,                  // QUESTS: reputation points from quest turn-ins
+  questLogOpen: false      // quest log overlay open (Q)
 };
 
 // ── LAKE GATEWAY (3-password secret entrance) ─────────────
@@ -5505,6 +5853,12 @@ function onKeyDown(e) {
     return;
   }
 
+  // quest log overlay eats input until closed
+  if (state.questLogOpen) {
+    if (k === 'q' || k === 'escape') { closeQuestLog(); e.preventDefault(); }
+    return;
+  }
+
   // minigame priority
   if (state.mini) {
     if (!state.mini.done) {
@@ -5592,6 +5946,7 @@ function onKeyDown(e) {
   // world
   if (k === 'p' || k === 'i') { openInventory(); e.preventDefault(); return; }
   if (k === 'm') { toggleWorldMap(); e.preventDefault(); return; }
+  if (k === 'q') { toggleQuestLog(); e.preventDefault(); return; }
   if (k === 'h') { teleportHome(); e.preventDefault(); return; }
   if (k === 'f' && state.screen === 'world' && !state.battle && !state.invOpen && !state.mini && !state.dialog) {
     openFastTravel(); e.preventDefault(); return;
@@ -5631,34 +5986,44 @@ const SHOP_STOCK = [
   { key:'premiumBox', name:'PREMIUM BOX',  icon:'📦', price:400, desc:'PERMANENT +10% catch chance', oneTime:true }
 ];
 
+function shopPrice(it) {
+  return Math.max(1, Math.round(it.price * repDiscount()));   // reputation perk discount
+}
+
 function openShop() {
   openDialog('GRANDE MART', []);
   _typewriterFinish();
   const dlg = document.getElementById('dialogue');
   if (!dlg) return;
+  const disc = Math.round((1 - repDiscount()) * 100);
   const rows = SHOP_STOCK.map((it, i) => {
     const soldOut = it.oneTime && state.premiumBox;
     const active = it.flag && state[it.flag];
+    const price = shopPrice(it);
     const owned = state.items && state.items[it.key] !== undefined ? ` <span style="color:#888">(×${state.items[it.key]})</span>` : '';
+    const priceTag = disc > 0
+      ? `<span style="color:#666;text-decoration:line-through;font-size:9px">${it.price}</span> <span style="color:#ffd700">🪙 ${price}</span>`
+      : `<span style="color:#ffd700">🪙 ${price}</span>`;
     const right = soldOut ? '<span style="color:#666">SOLD OUT</span>'
                 : active  ? '<span style="color:#7edc8b">ACTIVE</span>'
-                : `<span style="color:#ffd700">🪙 ${it.price}</span>`;
+                : priceTag;
     const click = (soldOut || active) ? '' : `onclick="buyItem(${i})"`;
-    const col = (soldOut || active) ? '#555' : (state.coins >= it.price ? '#e0e0e0' : '#775');
+    const col = (soldOut || active) ? '#555' : (state.coins >= price ? '#e0e0e0' : '#775');
     return `<span style="display:flex;justify-content:space-between;padding:3px 8px;cursor:${click?'pointer':'default'};color:${col};border-radius:3px" ${click} onmouseover="this.style.background='rgba(244,193,101,.08)'" onmouseout="this.style.background='transparent'">` +
       `<span>${it.icon} ${it.name}${owned} <span style="font-size:9px;color:#888">— ${it.desc}</span></span>${right}</span>`;
   }).join('');
+  const discLine = disc > 0 ? ` &bull; <span style="color:#8fd8ff">⭐ ${REP_LEVELS[repLevel()].name} — ${disc}% OFF</span>` : '';
   dlg.innerHTML = `<div style="font-family:'Courier New',monospace;padding:4px">` +
     `<b style="color:#f4c165;letter-spacing:3px">🛒 GRANDE MART</b> <span style="float:right;color:#ffd700">🪙 ${state.coins}</span><br>` +
-    `<span style="font-size:9px;color:#666">Win battles to earn coins &bull; click to buy &bull; ESC to leave</span><br><br>${rows}</div>`;
+    `<span style="font-size:9px;color:#666">Win battles to earn coins &bull; click to buy &bull; ESC to leave${discLine}</span><br><br>${rows}</div>`;
 }
 
 function buyItem(i) {
   const it = SHOP_STOCK[i]; if (!it) return;
   if (it.oneTime && state.premiumBox) return;
   if (it.flag && state[it.flag]) return;
-  if (state.coins < it.price) { toast('Not enough coins!'); audio.bump(); return; }
-  state.coins -= it.price;
+  if (state.coins < shopPrice(it)) { toast('Not enough coins!'); audio.bump(); return; }
+  state.coins -= shopPrice(it);
   if (it.key === 'premiumBox') { state.premiumBox = true; toast('📦 Premium Box! Catch chance +10% forever!'); }
   else if (it.flag) { state[it.flag] = true; toast(`${it.icon} ${it.name} activated!`); }
   else { state.items[it.key] = (state.items[it.key] || 0) + 1; toast(`Bought ${it.icon} ${it.name}!`); }
@@ -5770,6 +6135,7 @@ function dropIngredients(ent) {
   if (tier >= 2) add(elemIng, 1);
   if (Math.random() < 0.06 + tier * 0.06) add('truffle', 1);
   if (Math.random() < 0.04 + tier * 0.05) add('goldenEgg', 1);
+  if (repLevel() >= 3 && Math.random() < 0.45) add(elemIng, 1);   // STAR OF THE KITCHEN rep perk
   for (const k in drops) state.ingredients[k] = (state.ingredients[k] || 0) + drops[k];
   const txt = Object.keys(drops).map(k => `${INGREDIENTS[k].icon}×${drops[k]}`).join(' ');
   if (txt) battleLog(`<span style="color:#caa86a">🧺 Salvaged ${txt}</span>`);
@@ -5877,6 +6243,7 @@ function cookDish(key) {
   spendCost(r.cost);
   r.apply();
   state.dishesCooked = (state.dishesCooked || 0) + 1;
+  questTrack('cook', { key });
   audio.catchSuccess();
   toast(`${r.icon} Cooked ${r.name}! ${r.desc}`);
   checkAchievements();
@@ -5888,6 +6255,7 @@ function forgeGarnish(key) {
   if (!canAfford(g.cost)) { toast('Not enough ingredients!'); audio.bump(); return; }
   spendCost(g.cost);
   state.garnishes[key] = (state.garnishes[key] || 0) + 1;
+  questTrack('forge', { key });
   audio.catchSuccess();
   toast(`${g.icon} Forged ${g.name}!`);
   autoSave();
@@ -5997,6 +6365,8 @@ function questHint() {
   const c = state.caught.size;
   if (!state.starter) return 'Choose your starter Appliance!';
   if (c === 0) return 'Head south of Town into the Wilderness and catch your first Appliance!';
+  const readyChain = QUEST_CHAINS.find(ch => questStepReady(ch));
+  if (readyChain) return `📜 Quest step done — return to the ${readyChain.giver} (${readyChain.where})!`;
   if (c < 10) return `Catch 10 Appliances to earn Michelin Star 2 (${c}/10).`;
   if (!state.bossesDefeated.boss1) return 'Keep battling — a boss challenger approaches for Star 3!';
   if (![37,38,39].every(id => state.caught.has(id))) return 'Catch the 3 LEGENDARY Appliances in the Deep Cave for Star 4.';
@@ -6242,6 +6612,7 @@ function startNewGamePlus() {
   state.hiddenItemsFound = new Set();
   state.visited = []; state.gadget = false; state.adminMode = false;
   state.frostCore = false; state.luckyCharmBonus = 0;
+  state.quests = {};   // chains replay in NG+; reputation (state.rep) carries over
   state.map = 'house'; state.px = state.tx = 10; state.py = state.ty = 12;
   state.moving = false; state.prog = 0;
   document.getElementById('ending').style.display = 'none';
@@ -6459,7 +6830,11 @@ const ACHIEVEMENTS = [
   { id:'firstdish',   icon:'🍳', name:'LINE COOK',       check:() => (state.dishesCooked||0) >= 1 },
   { id:'masterchef',  icon:'🍱', name:'MASTER CHEF',     check:() => (state.dishesCooked||0) >= 10 },
   { id:'garnish',     icon:'🔪', name:'WELL-GARNISHED',  check:() => Object.values(state.garnishes||{}).some(n => n > 0) },
-  { id:'vault',       icon:'🔐', name:'VAULT RAIDER',    check:() => !!state.bossesDefeated.elite_vault }
+  { id:'vault',       icon:'🔐', name:'VAULT RAIDER',    check:() => !!state.bossesDefeated.elite_vault },
+  { id:'quest1',      icon:'📜', name:'ERRAND RUNNER',   check:() => (state.rep||0) >= QUEST_REP_STEP },
+  { id:'questchain',  icon:'🗞️', name:'CHAIN OF FAVORS', check:() => QUEST_CHAINS.some(c => (state.quests[c.key]||{}).complete) },
+  { id:'questall',    icon:'🏘️', name:'PEOPLE\'S CHAMPION', check:() => QUEST_CHAINS.every(c => (state.quests[c.key]||{}).complete) },
+  { id:'rep60',       icon:'⭐', name:'STAR OF THE KITCHEN', check:() => (state.rep||0) >= 60 }
 ];
 
 function checkAchievements() {
@@ -6523,7 +6898,9 @@ function _buildSaveData() {
     garnishes: state.garnishes || {},
     equippedGarnish: state.equippedGarnish || {},
     elemOverride: state.elemOverride || {},
-    seen: Array.isArray(state.seen) ? state.seen : []
+    seen: Array.isArray(state.seen) ? state.seen : [],
+    quests: state.quests || {},
+    rep: state.rep || 0
   };
 }
 
@@ -6578,6 +6955,8 @@ function _applySaveData(d) {
   state.equippedGarnish = d.equippedGarnish || {};
   state.elemOverride = d.elemOverride || {};
   state.seen = Array.isArray(d.seen) ? d.seen : [];
+  state.quests = d.quests || {};
+  state.rep = d.rep || 0;
   if (d.party && d.party.length) {
     // modern save: per-appliance HP store
     state.party = d.party;
@@ -6949,6 +7328,7 @@ function interact() {
     return potRoastInteract();
   }
   if (e.bulletin) return bulletinBoardInteract();
+  if (e.quest)  return questNpcTalk(e);   // quest-chain giver
   if (e.lines)  return npcCycleTalk(e);   // cycling-dialogue NPC
   if (e.npc)    return openDialog(e.n, [e.desc]);
   if (e.id && !state.caught.has(e.id)) return encounter(e);
@@ -10159,7 +10539,8 @@ function catchChance(rarity, hpPct) {
   const streakBonus = (state.streakBonusExpiry && Date.now() < state.streakBonusExpiry) ? 0.10 : 0;
   const premium = state.premiumBox ? 0.10 : 0;
   const bait = (state.battle && state.battle.baitActive) ? 0.20 : 0;
-  return Math.min(0.98, base + hpBoost + luckBonus + streakBonus + premium + bait);
+  const repBonus = repLevel() >= 2 ? 0.05 : 0;   // LOCAL LEGEND reputation perk
+  return Math.min(0.98, base + hpBoost + luckBonus + streakBonus + premium + bait + repBonus);
 }
 
 function startCatchSequence() {
@@ -10847,15 +11228,18 @@ function onEnemyFaint() {
     setTimeout(() => playLevelUpFloat(), 300);
     if (b.enemyShiny) state.shinies[b.enemy.id] = true;
     dailyTrack('catch', { elem: getElement(b.enemy.id), rarity: b.enemy.rarity });
+    questTrack('catch', { elem: getElement(b.enemy.id), rarity: b.enemy.rarity });
     setTimeout(() => { const r = btArena.getBoundingClientRect(); spawnConfetti(r.left + r.width/2, r.top + r.height/3); }, 400);
   } else {
     battleLog(`<b style="color:${RARITY_COLOR[b.enemy.rarity]}">${b.enemy.n.toUpperCase()}</b> faints! It flickers and warps to a new location...`);
     teleportEntityToRandomPosition(b.enemy);
   }
   dailyTrack('win', {});
+  questTrack('win', { map: state.map });
   state.totalWins = (state.totalWins || 0) + 1;
   const _coinBase = (b.isTower ? 14 + b.towerRound * 6 : 12 + RARITY_TIER[b.enemy.rarity] * 10) + (b.enemyShiny ? 25 : 0);
-  const _coinGain = Math.round(_coinBase * (starterPerk() === 'crispy' ? 1.10 : 1));   // EXTRA CRISPY
+  const _coinGain = Math.round(_coinBase * (starterPerk() === 'crispy' ? 1.10 : 1)
+                                         * (repLevel() >= 4 ? 1.10 : 1));   // EXTRA CRISPY · FOLK HERO rep
   addCoins(_coinGain, true);
   battleLog(`🪙 Earned <b style="color:#ffd700">${_coinGain} coins</b>!`);
   if (!b.isTower) dropIngredients(b.enemy);   // KITCHEN: salvage cooking ingredients
@@ -11527,6 +11911,37 @@ const miniSpinPointer = document.getElementById('miniSpinPointer');
 
 const ARROW_GLYPH = { up:'\u2191', down:'\u2193', left:'\u2190', right:'\u2192' };
 
+// ── minigame juice helpers ─────────────────────────────────
+// Floating hit text ("PERFECT!", "MISS") over the minigame panel.
+function miniFloat(text, color, xPct) {
+  const f = document.createElement('div');
+  f.className = 'mini-float';
+  f.textContent = text;
+  f.style.color = color || '#7edc8b';
+  f.style.fontSize = text.length <= 2 ? '20px' : '15px';
+  f.style.left = (xPct !== undefined ? xPct : 38 + Math.random() * 24) + '%';
+  f.style.top = '42%';
+  miniPanel.appendChild(f);
+  setTimeout(() => { try { f.remove(); } catch (e) {} }, 800);
+}
+// Tiny scale pop on the panel — punctuation for every successful input.
+function miniPop() {
+  miniPanel.classList.remove('pop');
+  void miniPanel.offsetWidth;
+  miniPanel.classList.add('pop');
+}
+let _miniReadyEl = null;
+function _miniReadyShow() {
+  _miniReadyClear();
+  _miniReadyEl = document.createElement('div');
+  _miniReadyEl.className = 'mini-ready';
+  _miniReadyEl.textContent = 'READY...';
+  miniPanel.appendChild(_miniReadyEl);
+}
+function _miniReadyClear() {
+  if (_miniReadyEl) { try { _miniReadyEl.remove(); } catch (e) {} _miniReadyEl = null; }
+}
+
 function hideAllSub() {
   miniTimingWrap.style.display = 'none';
   miniMash.classList.remove('show');
@@ -11569,9 +11984,14 @@ function startMinigame(entity) {
   const elemHint = el === 'fire' ? ' [🔥 FIRE: tighter zones, faster bars]'
     : el === 'ice' ? ' [❄️ ICE: slower speed, more time]'
     : el === 'electric' ? ' [⚡ ELECTRIC: +20% DMG, random glitches]' : '';
-  miniSub.textContent   = labels[type].s + elemHint;
+  const diffStars = entity.rarity !== undefined && RARITY_TIER[entity.rarity] !== undefined
+    ? `  ${'★'.repeat(RARITY_TIER[entity.rarity] + 1)}${'☆'.repeat(5 - RARITY_TIER[entity.rarity])}`
+    : '';
+  miniSub.textContent   = labels[type].s + elemHint + diffStars;
 
-  state.mini = { entity, type, done:false, result:null, startTs: performance.now() };
+  state.mini = { entity, type, done:false, result:null, startTs: performance.now(),
+                 readyUntil: performance.now() + 850 };   // pre-roll so the game never starts mid-blink
+  _miniReadyShow();
 
   if (type === 'TIMING')        setupTiming();
   else if (type === 'MASH')     setupMash();
@@ -11878,6 +12298,20 @@ function setupSpin() {
 
 function miniTick(dt) {
   const m = state.mini; if (!m || m.done) return;
+  // READY... GO! pre-roll — the game is frozen and input ignored until it fires
+  if (m.readyUntil) {
+    const left = m.readyUntil - performance.now();
+    if (left > 0) {
+      if (_miniReadyEl && left <= 300 && !_miniReadyEl.classList.contains('go')) {
+        _miniReadyEl.classList.add('go');
+        _miniReadyEl.textContent = 'GO!';
+      }
+      return;
+    }
+    m.readyUntil = 0;
+    _miniReadyClear();
+    m.startTs = performance.now();   // RHYTHM's note clock starts at GO
+  }
   const ds = dt / 1000;
   if (activeElement() === 'electric' && Math.random() < 0.02) {
     if (m.type === 'TIMING') {
@@ -11908,7 +12342,10 @@ function miniTick(dt) {
     miniMashFill.style.width = pct + '%';
     miniMashCount.textContent = `${Math.floor(m.mashCount)} / ${m.mashTarget}`;
     miniMashTimerFill.style.width = Math.max(0, (m.mashTimeLeft / m.mashTime) * 100) + '%';
-    if (m.mashTimeLeft <= 0) miniResolve(m.mashCount >= m.mashTarget ? 'good' : 'bad');
+    if (m.mashTimeLeft <= 0) {
+      m.nearMiss = m.mashCount >= m.mashTarget * 0.75;
+      miniResolve(m.mashCount >= m.mashTarget ? 'good' : 'bad');
+    }
   } else if (m.type === 'HOLD') {
     if (m.holding) {
       m.holdFill += m.holdSpeed * ds;
@@ -11918,7 +12355,7 @@ function miniTick(dt) {
   } else if (m.type === 'SEQUENCE') {
     m.seqTimeLeft -= ds;
     miniSeqTimerFill.style.width = Math.max(0, (m.seqTimeLeft / m.seqTime) * 100) + '%';
-    if (m.seqTimeLeft <= 0) miniResolve('bad');
+    if (m.seqTimeLeft <= 0) { m.nearMiss = m.seqIdx >= m.seq.length - 1; miniResolve('bad'); }
   } else if (m.type === 'AIM') {
     if (m.aimStage === 'x') {
       m.cx += m.cvx * ds;
@@ -11958,11 +12395,11 @@ function miniTick(dt) {
         const t = Math.min(1, (elapsed - atk.spawnTime) / 0.8);
         atk.el.style.left = (atk.sx + (atk.tx - atk.sx) * t) + 'px';
         atk.el.style.top  = (atk.sy + (atk.ty - atk.sy) * t) + 'px';
-        if (t >= 1 && !atk.dodged) { miniResolve('bad'); return; }
+        if (t >= 1 && !atk.dodged) { m.nearMiss = m.dodgeDodged >= m.dodgeTotal - 1; miniResolve('bad'); return; }
       }
     }
     if (m.dodgeTimeLeft <= 0 && m.dodgeDodged >= m.dodgeTotal) miniResolve('good');
-    else if (m.dodgeTimeLeft <= 0) miniResolve('bad');
+    else if (m.dodgeTimeLeft <= 0) { m.nearMiss = m.dodgeDodged >= m.dodgeTotal - 1; miniResolve('bad'); }
   } else if (m.type === 'RHYTHM') {
     const elapsed = (performance.now() - m.startTs) / 1000;
     let allDone = true;
@@ -11982,11 +12419,13 @@ function miniTick(dt) {
       note.el.style.top = note.y + 'px';
       if (note.y > m.rhythmFieldH + 10) {
         note.miss = true;
+        miniFloat('MISS', '#f06a6a');
         if (note.el) note.el.classList.add('miss');
       } else { allDone = false; }
     }
     if (allDone) {
       const ratio = m.rhythmHits / m.rhythmTotal;
+      m.nearMiss = ratio >= 0.35 && ratio < 0.55;
       miniResolve(ratio >= 0.55 ? 'good' : 'bad');
     }
   } else if (m.type === 'VOLLEY') {
@@ -12009,7 +12448,10 @@ function miniTick(dt) {
     if (m.sliceX > m.sliceW) { m.sliceX = m.sliceW; m.sliceDir = -1; }
     miniSliceBlade.style.left = m.sliceX + 'px';
     miniSliceTimerFill.style.width = Math.max(0, (m.sliceTimeLeft / m.sliceTime) * 100) + '%';
-    if (m.sliceTimeLeft <= 0) miniResolve(m.sliceCut >= m.sliceTotal ? 'good' : 'bad');
+    if (m.sliceTimeLeft <= 0) {
+      m.nearMiss = m.sliceCut >= m.sliceTotal - 1;
+      miniResolve(m.sliceCut >= m.sliceTotal ? 'good' : 'bad');
+    }
   } else if (m.type === 'MEMORY') {
     if (m.memPhase === 'show') {
       m.memTimer += ds;
@@ -12043,15 +12485,22 @@ function miniTick(dt) {
 
 function miniAction(key) {
   const m = state.mini; if (!m || m.done) return;
+  if (m.readyUntil) return;   // input ignored during the READY pre-roll
   if (m.type === 'TIMING') {
     if (key === ' ' || key === 'enter') {
       const buf = m.zoneW * 0.35;
       const inZone = m.cursor >= (m.zx - buf) && m.cursor <= (m.zx + m.zoneW + buf);
+      if (!inZone) {
+        const over = m.cursor < (m.zx - buf) ? (m.zx - buf) - m.cursor : m.cursor - (m.zx + m.zoneW + buf);
+        m.nearMiss = over <= m.zoneW * 0.5;
+      }
       miniResolve(inZone ? 'good' : 'bad');
     }
   } else if (m.type === 'MASH') {
     if (key === ' ' || key === 'enter') {
       m.mashCount = Math.min(m.mashTarget * 1.5, m.mashCount + 1);
+      if (!m._fbHalf && m.mashCount >= m.mashTarget * 0.5) { m._fbHalf = true; miniFloat('HALFWAY!', '#ffe08a'); miniPop(); }
+      if (!m._fbAlmost && m.mashCount >= m.mashTarget * 0.85) { m._fbAlmost = true; miniFloat('ALMOST THERE!', '#ffd24d'); miniPop(); }
       if (m.mashCount >= m.mashTarget) miniResolve('good');
     }
   } else if (m.type === 'SEQUENCE') {
@@ -12062,6 +12511,7 @@ function miniAction(key) {
     const el = miniSeqRow.querySelector(`.seqKey[data-idx="${m.seqIdx}"]`);
     if (dir === expect) {
       if (el) { el.classList.remove('active'); el.classList.add('hit'); }
+      miniFloat('✓', '#7edc8b'); miniPop();
       m.seqIdx++;
       if (m.seqIdx >= m.seq.length) miniResolve('good');
       else {
@@ -12070,6 +12520,7 @@ function miniAction(key) {
       }
     } else {
       if (el) { el.classList.remove('active'); el.classList.add('miss'); }
+      m.nearMiss = m.seqIdx >= m.seq.length - 1;
       miniResolve('bad');
     }
   } else if (m.type === 'AIM') {
@@ -12086,7 +12537,9 @@ function miniAction(key) {
         miniAimLockY.style.top = m.cy + 'px';
         miniAimLockY.style.display = 'block';
         const dx = m.cx - m.aimTx, dy = m.cy - m.aimTy;
-        miniResolve(Math.sqrt(dx*dx + dy*dy) <= m.aimR * 1.8 ? 'good' : 'bad');
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > m.aimR * 1.8) m.nearMiss = dist <= m.aimR * 2.7;
+        miniResolve(dist <= m.aimR * 1.8 ? 'good' : 'bad');
       }
     }
   } else if (m.type === 'DODGE') {
@@ -12100,6 +12553,7 @@ function miniAction(key) {
       if (t >= 0.3 && t <= 1.0 && atk.dir === dir) {
         atk.dodged = true;
         m.dodgeDodged++;
+        miniFloat('DODGED!', '#7edc8b'); miniPop();
         if (atk.el) { atk.el.style.opacity = '0.3'; atk.el.textContent = '✓'; }
         miniDodgeCount.textContent = `${m.dodgeDodged} / ${m.dodgeTotal}`;
         const offsets = { left:'translateX(-50%) translateX(-60px)', right:'translateX(-50%) translateX(60px)',
@@ -12121,6 +12575,9 @@ function miniAction(key) {
       if (closest && closestDist <= m.rhythmHitWindow) {
         closest.hit = true;
         m.rhythmHits++;
+        const perfect = closestDist <= m.rhythmHitWindow * 0.45;
+        miniFloat(perfect ? 'PERFECT!' : 'GOOD!', perfect ? '#ffd24d' : '#7edc8b');
+        miniPop();
         if (closest.el) closest.el.classList.add('hit');
         miniRhythmScore.textContent = `${m.rhythmHits} / ${m.rhythmTotal} HITS`;
       }
@@ -12131,9 +12588,11 @@ function miniAction(key) {
         m.volleyNeedReturn = false;
         m.volleyDir = 1;
         m.volleyRallies++;
+        miniFloat(`RALLY ×${m.volleyRallies}!`, '#7edc8b'); miniPop();
         miniVolleyCount.textContent = `RALLY: ${m.volleyRallies} / ${m.volleyTarget}`;
         if (m.volleyRallies >= m.volleyTarget) miniResolve('good');
       } else if (m.volleyX > m.volleyPlayerZone) {
+        m.nearMiss = m.volleyRallies >= m.volleyTarget - 1;
         miniResolve('bad');
       }
     }
@@ -12146,6 +12605,7 @@ function miniAction(key) {
           t.cut = true; hit = true;
           t.el.classList.add('cut');
           m.sliceCut++;
+          miniFloat('SLICE!', '#7edc8b'); miniPop();
           miniSliceCount.textContent = `${m.sliceCut} / ${m.sliceTotal}`;
           if (m.sliceCut >= m.sliceTotal) miniResolve('good');
           break;
@@ -12154,6 +12614,7 @@ function miniAction(key) {
       if (!hit) {
         // whiff costs time — keeps spam in check without instant failure
         m.sliceTimeLeft = Math.max(0, m.sliceTimeLeft - 0.5);
+        miniFloat('WHIFF −0.5s', '#f06a6a');
         miniPanel.classList.remove('shake'); void miniPanel.offsetWidth; miniPanel.classList.add('shake');
       }
     }
@@ -12166,10 +12627,12 @@ function miniAction(key) {
     const el = miniMemoryRow.querySelector(`.memKey[data-idx="${m.memIdx}"]`);
     if (dir === expect) {
       if (el) { el.classList.add('hit'); el.textContent = ARROW_GLYPH[dir]; }
+      miniFloat('✓', '#7edc8b'); miniPop();
       m.memIdx++;
       if (m.memIdx >= m.memSeq.length) miniResolve('good');
     } else {
       if (el) { el.classList.add('miss'); el.textContent = ARROW_GLYPH[expect]; }
+      m.nearMiss = m.memIdx >= m.memSeq.length - 1;
       miniResolve('bad');
     }
   } else if (m.type === 'SPIN') {
@@ -12177,13 +12640,15 @@ function miniAction(key) {
       const center = m.spinWedgeStart + m.spinWedge / 2;
       const d = Math.abs(((m.spinAngle - center) % 360 + 540) % 360 - 180);
       const buf = m.spinWedge * 0.25;
-      miniResolve(d <= m.spinWedge / 2 + buf ? 'good' : 'bad');
+      const good = d <= m.spinWedge / 2 + buf;
+      if (!good) m.nearMiss = d <= m.spinWedge / 2 + buf + m.spinWedge * 0.5;
+      miniResolve(good ? 'good' : 'bad');
     }
   }
 }
 
 function miniHoldDown() {
-  const m = state.mini; if (!m || m.done || m.type !== 'HOLD') return;
+  const m = state.mini; if (!m || m.done || m.type !== 'HOLD' || m.readyUntil) return;
   m.holding = true; m.holdHasPressed = true;
 }
 function miniHoldUp() {
@@ -12192,6 +12657,10 @@ function miniHoldUp() {
   m.holding = false;
   const hBuf = m.holdZoneW * 0.3;
   const inZone = m.holdFill >= (m.holdZx - hBuf) && m.holdFill <= (m.holdZx + m.holdZoneW + hBuf);
+  if (!inZone) {
+    const over = m.holdFill < (m.holdZx - hBuf) ? (m.holdZx - hBuf) - m.holdFill : m.holdFill - (m.holdZx + m.holdZoneW + hBuf);
+    m.nearMiss = over <= m.holdZoneW * 0.5;
+  }
   miniResolve(inZone ? 'good' : 'bad');
 }
 
@@ -12229,6 +12698,7 @@ function miniResolve(result) {
     state.caught.add(ent.id);
     autoJoinParty(ent.id);
     dailyTrack('catch', { elem: getElement(ent.id), rarity: ent.rarity });
+    questTrack('catch', { elem: getElement(ent.id), rarity: ent.rarity });
     const prev = state.michelinStars;
     computeMichelin();
     audio.catchSuccess();
@@ -12253,15 +12723,16 @@ function miniResolve(result) {
     setTimeout(checkEnding, 20);
   } else {
     audio.catchFail();
-    const rtitle = 'IT ESCAPED';
-    const flavor = ent && ent.rarity === 'ultra'   ? 'The creature shrugs, utterly unbothered, and slips back into the crystal haze.'
+    const rtitle = m.nearMiss ? 'SO CLOSE!' : 'IT ESCAPED';
+    const flavor = m.nearMiss ? 'A whisker away — it slipped out at the very last instant. One more try and it\'s yours!'
+                 : ent && ent.rarity === 'ultra'   ? 'The creature shrugs, utterly unbothered, and slips back into the crystal haze.'
                  : ent && ent.rarity === 'legendary' ? 'With a hiss of steam, the Appliance vanishes into deeper shadow.'
                  : ent && ent.rarity === 'mythic'    ? 'It hums a final E-flat and phases out of reach.'
                  : ent && ent.rarity === 'epic'      ? 'It beeps mockingly and scuttles away.'
                  : ent && ent.rarity === 'rare'      ? 'It dodges your attempt and rattles off.'
                  :                                     'It wiggles free and waddles off unharmed.';
     miniResult.className = 'bad';
-    miniResult.innerHTML = `<div class="rt">${rtitle}</div><div class="rb">${flavor}</div>
+    miniResult.innerHTML = `<div class="rt"${m.nearMiss ? ' style="color:#ffb84d"' : ''}>${rtitle}</div><div class="rb">${flavor}</div>
       <div style="color:#777;font-size:11px;letter-spacing:2px;margin-top:14px">SPACE / ESC TO CLOSE &mdash; TRY AGAIN LATER</div>`;
   }
 }
@@ -13027,6 +13498,22 @@ function drawEntitySprite(e, sx, sy) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(e.e, sx + TILE / 2, sy + TILE / 2 + _bob);
+  // quest-giver marker: gold ! = quest available, gold ? = ready to turn in, grey ? = in progress
+  if (e.quest) {
+    const chain = QUEST_CHAINS.find(c => c.key === e.quest);
+    const q = chain && state.quests[chain.key];
+    let glyph = null, col = '#ffd24d';
+    if (chain && !q) glyph = '!';
+    else if (chain && !q.complete) { glyph = '?'; col = questStepReady(chain) ? '#ffd24d' : '#8a90a8'; }
+    if (glyph) {
+      const _qb = Math.sin(performance.now() * 0.005) * 1.5;
+      ctx.font = 'bold 10px "Courier New", monospace';
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 2.5;
+      ctx.strokeText(glyph, sx + TILE / 2, sy - 4 + _qb);
+      ctx.fillStyle = col;
+      ctx.fillText(glyph, sx + TILE / 2, sy - 4 + _qb);
+    }
+  }
 }
 
 function drawPlayer(sx, sy) {
@@ -13633,7 +14120,9 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
     'Build a PARTY of 6 in the Pandex (ENTER) — each appliance has its own HP!',
     'Some species are NOCTURNAL — they only appear at night. Shinies love the dark too.',
     '✨ A golden glimmer roams the world. Find it for a guaranteed SHINY legendary!',
-    'F5 saves anytime • F opens fast travel • P opens your PANDEX'
+    'F5 saves anytime • F opens fast travel • P opens your PANDEX',
+    '📜 Folk with a gold ! overhead offer QUEST CHAINS — press Q for your quest log',
+    '⭐ Quests build REPUTATION: shop discounts, catch bonuses, richer salvage!'
   ];
   let tipIdx = 0;
   const tipEl = document.getElementById('loadTip');
@@ -13687,7 +14176,7 @@ Object.assign(window, {
   buyItem, startTower, setGameVolume, closeWorldMap,
   continuePostgame, startNewGamePlus, toggleReducedFlash,
   openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish, showTypeChart,
-  fuseEvolve, fuseInfuse
+  fuseEvolve, fuseInfuse, toggleQuestLog, closeQuestLog
 });
 window.__toggleParty = togglePartyMember;
 window.__potRoast = startPotRoast;
@@ -13698,7 +14187,8 @@ window.toggleIntroSettings = function () {
 // debug/testing handle (read-mostly; also powers automated playtests)
 window.__pando = { state, entities, maps, startBattle, audio, showEvoCutscene,
   ELEMENTS, elemMatchup, getElement, partyMembers, activeSets, elemBeats, elemBeatenBy,
-  starterPerk, STARTER_PERKS };
+  starterPerk, STARTER_PERKS,
+  QUEST_CHAINS, questTrack, questStepReady, repLevel, repDiscount, REP_LEVELS };
 
 // Pre-rasterize the Impact font and filtered-emoji silhouettes the finishers
 // use, so the very first finisher doesn't pay a one-time ~hundreds-of-ms
