@@ -8482,18 +8482,18 @@ function playCritBurst(perfect) {
 // ── Impact punch: white flash + whack SFX + hitstop freeze + knockback + directional particles + tiny shake ──
 function flashWhite(el, ms) {
   if (!el) return;
-  ms = ms || 90;
-  const prev = el.style.filter || '';
-  el.style.transition = 'filter .03s linear';
-  el.style.filter = 'brightness(5) saturate(0) drop-shadow(0 0 8px #fff)';
-  setTimeout(() => { el.style.transition = 'filter .18s ease-out'; el.style.filter = prev; }, ms);
+  ms = ms || 110;
+  // the .hurt element-flinch classes animate `filter` via CSS keyframes, which always
+  // wins over a plain inline style — use !important so the flash actually shows through it
+  el.style.setProperty('filter', 'brightness(9) saturate(0) drop-shadow(0 0 14px #fff)', 'important');
+  setTimeout(() => { el.style.removeProperty('filter'); }, ms);
 }
 function knockback(el, dx, dy, dur) {
   if (!el) return;
-  dur = dur || 180;
-  el.style.transition = 'translate .07s ease-out';
+  dur = dur || 220;
+  el.style.transition = 'translate .08s ease-out';
   el.style.translate = `${dx}px ${dy}px`;
-  setTimeout(() => { el.style.transition = `translate ${dur}ms ease-out`; el.style.translate = '0px 0px'; }, 70);
+  setTimeout(() => { el.style.transition = `translate ${dur}ms ease-out`; el.style.translate = '0px 0px'; }, 80);
 }
 function hitFreeze(els, ms) {
   els.forEach(el => { if (el) el.style.animationPlayState = 'paused'; });
@@ -8535,18 +8535,18 @@ function impactPunch(attackerSprite, defenderSprite, power, fromPlayer) {
   const dist = Math.hypot(nx, ny) || 1;
   nx /= dist; ny /= dist;
 
-  flashWhite(defenderSprite, 70 + power*15);
+  flashWhite(defenderSprite, 100 + power*25);
   audio.whack(power >= 3);
 
-  const freezeMs = [25, 45, 65, 95][power];
+  const freezeMs = [55, 80, 110, 150][power];
   hitFreeze([btArena, attackerSprite, defenderSprite], freezeMs);
 
   setTimeout(() => {
-    const kb = [4, 7, 11, 16][power];
-    knockback(defenderSprite, nx*kb, ny*kb, 150 + power*25);
-    knockback(attackerSprite, -nx*kb*0.4, -ny*kb*0.4, 150 + power*25);
+    const kb = [9, 15, 22, 32][power];
+    knockback(defenderSprite, nx*kb, ny*kb, 180 + power*30);
+    knockback(attackerSprite, -nx*kb*0.45, -ny*kb*0.45, 180 + power*30);
     spawnHitParticles(dx, dy, nx, ny, fromPlayer ? '#ffe060' : '#ff5a6e', power >= 2);
-    triggerScreenShake([1.5, 3, 5, 8][power], [100, 150, 220, 300][power]);
+    triggerScreenShake([2, 4, 7, 12][power], [120, 180, 260, 360][power]);
   }, freezeMs);
 }
 function playLevelUpFloat() {
@@ -9825,8 +9825,9 @@ function explodeDefeatedEnemy(onDone) {
   const col = (rarity && RARITY_COLOR[rarity]) || '#c0392b';
   audio.boom();
   triggerScreenShake(6, 260);
-  sprite.style.transition = 'opacity .12s ease-out, filter .12s ease-out';
-  sprite.style.filter = 'brightness(3) saturate(0)';
+  sprite.classList.remove('hurt');   // stop any in-progress flinch animation from fighting our filter/opacity
+  sprite.style.transition = 'opacity .12s ease-out';
+  sprite.style.setProperty('filter', 'brightness(3) saturate(0)', 'important');
   sprite.style.opacity = '0';
   const n = 28;
   for (let i = 0; i < n; i++) {
