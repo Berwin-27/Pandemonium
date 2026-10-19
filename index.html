@@ -7224,25 +7224,26 @@ function transitions(m, x, y) {
   const map = maps[m];
 
   // === Indoor door-based transitions (house, cave, base, dimension, market) ===
+  // door:true + label → tryMove() asks "enter / exit?" instead of auto-warping on contact
   if (m === 'gallery' && x === 6 && y === 8) { hideGalleryOverlay(); return { to:'lake', x:15, y:8 }; }
-  if (m === 'house' && x === 10 && y === 13) return { to:'town', x:15, y:3 };
-  if (m === 'town'  && x === 15 && y === 2)  return { to:'house', x:10, y:12 };
-  if (m === 'town'  && x === 23 && y === 14) return { to:'market', x:13, y:16 };
-  if (m === 'market'&& x === 13 && y === 17) return { to:'town', x:23, y:13 };
-  if (m === 'house' && x === 5 && y === 11) return { to:'base', x:9, y:9 };
-  if (m === 'base'  && x === 9 && y === 10) return { to:'house', x:5, y:12 };
+  if (m === 'house' && x === 10 && y === 13) return { to:'town', x:15, y:3, door:true, label:'Leave the house?' };
+  if (m === 'town'  && x === 15 && y === 2)  return { to:'house', x:10, y:12, door:true, label:'Enter your house?' };
+  if (m === 'town'  && x === 23 && y === 14) return { to:'market', x:13, y:16, door:true, label:'Enter Grande Mart?' };
+  if (m === 'market'&& x === 13 && y === 17) return { to:'town', x:23, y:13, door:true, label:'Leave Grande Mart?' };
+  if (m === 'house' && x === 5 && y === 11) return { to:'base', x:9, y:9, door:true, label:'Enter the secret base?' };
+  if (m === 'base'  && x === 9 && y === 10) return { to:'house', x:5, y:12, door:true, label:'Leave the secret base?' };
   if (m === 'wild' && x === 6 && y === 13) {
     if (!caveUnlocked()) { toast('THE CAVE HUMS. CATCH 5 COMMONS TO ENTER.'); return null; }
-    return { to:'cave', x:6, y:12 };
+    return { to:'cave', x:6, y:12, door:true, label:'Enter the cave?' };
   }
-  if (m === 'cave' && x === 6 && y === 13) return { to:'wild', x:6, y:14 };
-  if (m === 'dimension' && x === 9 && y === 10) return { to:'wild', x:13, y:19 };
+  if (m === 'cave' && x === 6 && y === 13) return { to:'wild', x:6, y:14, door:true, label:'Exit the cave?' };
+  if (m === 'dimension' && x === 9 && y === 10) return { to:'wild', x:13, y:19, door:true, label:'Leave the Crystal Dimension?' };
   // mountain summit portal <-> celestial kitchen
   if (m === 'mountain' && x === 9 && y === 2) {
     if (!checkGate('sky', true)) return null;
-    return { to:'sky', x:10, y:10 };
+    return { to:'sky', x:10, y:10, door:true, label:'Ascend to the Celestial Kitchen?' };
   }
-  if (m === 'sky' && x === 10 && y === 11) return { to:'mountain', x:9, y:3 };
+  if (m === 'sky' && x === 10 && y === 11) return { to:'mountain', x:9, y:3, door:true, label:'Descend from the Celestial Kitchen?' };
 
   // === Edge-based outdoor transitions ===
   let edge = null;
@@ -7273,18 +7274,29 @@ function transitions(m, x, y) {
   }
   return null;
 }
+function doMapTransition(tr) {
+  state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition(); showAreaBanner(state.map);
+  checkRivalAmbush();
+  const tf=document.createElement('div');
+  Object.assign(tf.style,{position:'fixed',inset:'0',zIndex:'4000',background:'rgba(0,0,0,0)',pointerEvents:'none',transition:'background .14s ease-in'});
+  document.body.appendChild(tf); void tf.offsetWidth; tf.style.background='rgba(0,0,0,.82)';
+  setTimeout(()=>{ tf.style.transition='background .2s ease-out'; tf.style.background='rgba(0,0,0,0)'; setTimeout(()=>tf.remove(),230); },160);
+}
+function promptDoorTransition(tr) {
+  if (state.dialog) return;
+  openDialog('DOOR', [tr.label || 'Enter?'], [
+    { label:'✅ YES', k:'y', onPick(){ closeDialog(); doMapTransition(tr); } },
+    { label:'❌ NO',  k:'n', onPick(){ closeDialog(); } }
+  ]);
+}
 function tryMove(dx, dy, dirName) {
   state.dir = dirName;
   if (state.moving) return;
   const nx = state.px + dx, ny = state.py + dy;
   const tr = transitions(state.map, nx, ny);
   if (tr) {
-    state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition(); showAreaBanner(state.map);
-    checkRivalAmbush();
-    const tf=document.createElement('div');
-    Object.assign(tf.style,{position:'fixed',inset:'0',zIndex:'4000',background:'rgba(0,0,0,0)',pointerEvents:'none',transition:'background .14s ease-in'});
-    document.body.appendChild(tf); void tf.offsetWidth; tf.style.background='rgba(0,0,0,.82)';
-    setTimeout(()=>{ tf.style.transition='background .2s ease-out'; tf.style.background='rgba(0,0,0,0)'; setTimeout(()=>tf.remove(),230); },160);
+    if (tr.door) { promptDoorTransition(tr); return; }
+    doMapTransition(tr);
     return;
   }
   if (canWalk(state.map, nx, ny)) {
