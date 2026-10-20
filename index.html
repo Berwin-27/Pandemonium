@@ -6367,6 +6367,18 @@ function markVisited(m) {
   if (m && MAP_GRID[m] && !state.visited.includes(m)) state.visited.push(m);
 }
 
+// Some areas (cave/vault/dimension) aren't gated through the catch-based AREA_GATES system —
+// they unlock via Michelin stars or the shrine ritual — but still need to read as "locked" on
+// the world map instead of looking like any other normal, walkable-but-unvisited zone.
+function areaLockInfo(m) {
+  const g = AREA_GATES[m];
+  if (g) return !checkGate(m, false) ? g.msg : null;
+  if (m === 'cave' && !caveUnlocked()) return 'Catch your first Appliance (Michelin Star 1) to open the cave.';
+  if (m === 'vault' && (state.michelinStars || 0) < 2) return 'Catch 10 Appliances (Michelin Star 2) to unlock the Pantry Vault — talk to the Vault Keeper in Grande Mart.';
+  if (m === 'dimension' && !sacredFiveComplete()) return `Catch the Sacred Five (${sacredFiveCaught()}/5), then visit the shrine at the south edge of the Wilderness.`;
+  return null;
+}
+
 function questHint() {
   const c = state.caught.size;
   if (!state.starter) return 'Choose your starter Appliance!';
@@ -6411,7 +6423,8 @@ function renderWorldMap() {
   for (const [m, [cx, cy]] of Object.entries(MAP_GRID)) {
     const here = m === state.map;
     const seen = state.visited.includes(m);
-    const locked = AREA_GATES[m] && !checkGate(m, false);
+    const lockMsg = areaLockInfo(m);
+    const locked = !!lockMsg;
     let inner, border, color, bg;
     if (here) {
       inner = `${MAP_ICONS[m]}<br><span style="font-size:7px">${(ZONE_NAMES[m]||m).split(' ')[0]}</span>`;
@@ -6426,7 +6439,7 @@ function renderWorldMap() {
       inner = `?<br><span style="font-size:7px">???</span>`;
       border = '1px dashed #333'; color = '#555'; bg = 'rgba(20,20,30,0.4)';
     }
-    cells += `<div style="position:absolute;left:${cx*cellW}px;top:${cy*cellH}px;width:${cellW-6}px;height:${cellH-6}px;border:${border};border-radius:4px;background:${bg};color:${color};font-size:13px;text-align:center;line-height:1.2;padding-top:3px;letter-spacing:1px;${here?'box-shadow:0 0 14px rgba(244,193,101,.5);animation:blink 1.4s infinite;':''}">${inner}</div>`;
+    cells += `<div title="${locked ? lockMsg : ''}" style="position:absolute;left:${cx*cellW}px;top:${cy*cellH}px;width:${cellW-6}px;height:${cellH-6}px;border:${border};border-radius:4px;background:${bg};color:${color};font-size:13px;text-align:center;line-height:1.2;padding-top:3px;letter-spacing:1px;${here?'box-shadow:0 0 14px rgba(244,193,101,.5);animation:blink 1.4s infinite;':''}">${inner}</div>`;
   }
   const achTotal = ACHIEVEMENTS.length;
   // party strip: each member with live HP
