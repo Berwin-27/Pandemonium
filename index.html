@@ -5783,6 +5783,7 @@ function fastTravelTo(idx) {
   audio.startArea(w.map); audio.zoneTransition(); showAreaBanner(w.map);
   toast(`Warped to ${w.label}!`);
   checkRivalAmbush();
+  _mapFade();
 }
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
@@ -7228,8 +7229,10 @@ function transitions(m, x, y) {
   if (m === 'gallery' && x === 6 && y === 8) { hideGalleryOverlay(); return { to:'lake', x:15, y:8 }; }
   if (m === 'house' && x === 10 && y === 13) return { to:'town', x:15, y:3, door:true, label:'Leave the house?' };
   if (m === 'town'  && x === 15 && y === 2)  return { to:'house', x:10, y:12, door:true, label:'Enter your house?' };
-  if (m === 'town'  && x === 23 && y === 14) return { to:'market', x:13, y:16, door:true, label:'Enter Grande Mart?' };
-  if (m === 'market'&& x === 13 && y === 17) return { to:'town', x:23, y:13, door:true, label:'Leave Grande Mart?' };
+  // Grande Mart is skipped from the door-confirm prompt — it's the most-revisited building
+  // (shop + Kitchen crafting), so the extra click on every trip was pure friction.
+  if (m === 'town'  && x === 23 && y === 14) return { to:'market', x:13, y:16 };
+  if (m === 'market'&& x === 13 && y === 17) return { to:'town', x:23, y:13 };
   if (m === 'house' && x === 5 && y === 11) return { to:'base', x:9, y:9, door:true, label:'Enter the secret base?' };
   if (m === 'base'  && x === 9 && y === 10) return { to:'house', x:5, y:12, door:true, label:'Leave the secret base?' };
   if (m === 'wild' && x === 6 && y === 13) {
@@ -7274,13 +7277,16 @@ function transitions(m, x, y) {
   }
   return null;
 }
-function doMapTransition(tr) {
-  state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition(); showAreaBanner(state.map);
-  checkRivalAmbush();
+function _mapFade() {
   const tf=document.createElement('div');
   Object.assign(tf.style,{position:'fixed',inset:'0',zIndex:'4000',background:'rgba(0,0,0,0)',pointerEvents:'none',transition:'background .14s ease-in'});
   document.body.appendChild(tf); void tf.offsetWidth; tf.style.background='rgba(0,0,0,.82)';
   setTimeout(()=>{ tf.style.transition='background .2s ease-out'; tf.style.background='rgba(0,0,0,0)'; setTimeout(()=>tf.remove(),230); },160);
+}
+function doMapTransition(tr) {
+  state.map = tr.to; state.px = state.tx = tr.x; state.py = state.ty = tr.y; audio.startArea(state.map); audio.zoneTransition(); showAreaBanner(state.map);
+  checkRivalAmbush();
+  _mapFade();
 }
 function promptDoorTransition(tr) {
   if (state.dialog) return;
@@ -8485,8 +8491,9 @@ function flashWhite(el, ms) {
   ms = ms || 110;
   // the .hurt element-flinch classes animate `filter` via CSS keyframes, which always
   // wins over a plain inline style — use !important so the flash actually shows through it
-  el.style.setProperty('filter', 'brightness(9) saturate(0) drop-shadow(0 0 14px #fff)', 'important');
-  setTimeout(() => { el.style.removeProperty('filter'); }, ms);
+  const flash = state.reducedFlash ? 'brightness(2.4) saturate(0.3)' : 'brightness(9) saturate(0) drop-shadow(0 0 14px #fff)';
+  el.style.setProperty('filter', flash, 'important');
+  setTimeout(() => { el.style.removeProperty('filter'); }, state.reducedFlash ? Math.min(ms, 70) : ms);
 }
 function knockback(el, dx, dy, dur) {
   if (!el) return;
@@ -8538,8 +8545,10 @@ function impactPunch(attackerSprite, defenderSprite, power, fromPlayer) {
   flashWhite(defenderSprite, 100 + power*25);
   audio.whack(power >= 3);
 
+  // only the sprites get frozen, not the arena — the arena's own crit-zoom punch (added
+  // right after this call) needs to play uninterrupted or it snaps instead of easing out
   const freezeMs = [55, 80, 110, 150][power];
-  hitFreeze([btArena, attackerSprite, defenderSprite], freezeMs);
+  hitFreeze([attackerSprite, defenderSprite], freezeMs);
 
   setTimeout(() => {
     const kb = [9, 15, 22, 32][power];
@@ -9124,21 +9133,9 @@ function triggerFinisher() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// ANIME IMPACT-FRAME FINISHERS — 6–7s cinematics on every defeat/capture.
-// Hard-cut monochrome frames, manga speed lines, hit-stop strobes,
-// silhouette montage, shatter/vacuum endings. SPACE skips.
+// ANIME CINEMATIC ENGINE — shared hard-cut-frame/manga-panel renderer.
+// Used by the evolution finisher (_ifEvolutionScene). SPACE skips.
 // ════════════════════════════════════════════════════════════════════
-const _IF_THEMES = {
-  fire:     { c:'#ff7030', glyph:'🔥', kill:'INFERNO BREAK',  catch:'BLAZING BIND',
-              pal:['#ff7030','#ff2820','#ffb060','#ff2080','#ffe0a0','#ff5500','#ffd040','#ff70b0'] },
-  electric: { c:'#ffe060', glyph:'⚡', kill:'PLASMA RUPTURE', catch:'STATIC SNARE',
-              pal:['#ffe060','#80d0ff','#fff8c0','#c060ff','#40ffd0','#ff80f0','#a0ff60','#60a0ff'] },
-  ice:      { c:'#7ec8ff', glyph:'❄',  kill:'ZERO HOUR',      catch:'PERMAFROST SEAL',
-              pal:['#7ec8ff','#e8f8ff','#40ffd8','#4060ff','#b0e8ff','#80fff0','#c0a0ff','#f0ffff'] },
-  neutral:  { c:'#ffd24a', glyph:'⚔',  kill:'GRAND FINALE',   catch:'MASTER SEAL',
-              pal:['#ffd24a','#ff8040','#ff2860','#fff0c0','#d060ff','#40e0c0','#ff60a0','#80c0ff'] }
-};
-
 let _ifActive = null;   // running finisher controller — onKeyDown uses it for SPACE-skip
 
 function _ifController(onDone) {
@@ -9387,318 +9384,6 @@ function _ifShatter(parent, xPct, yPct, color, count) {
   }
 }
 
-// ── DEFEAT / CAPTURE / EVOLUTION FINISHERS — dense 15-22fps impact barrages ──
-function playImpactFinisher(kind, onDone) {
-  const b = state.battle;
-  const theme = _IF_THEMES[getElement(state.activeAppliance)] || _IF_THEMES.neutral;
-  const pEmoji = (btPlayerSprite.textContent || '🍳').trim();
-  const eEmoji = (btEnemySprite.textContent || '👾').trim();
-  const eName = ((b && b.enemy && b.enemy.n) || 'TARGET').toUpperCase();
-  if (kind === 'capture') return _ifCaptureScene(theme, pEmoji, eEmoji, eName, onDone);
-  return _ifDefeatScene(theme, pEmoji, eEmoji, eName, onDone);
-}
-
-function _ifDefeatScene(theme, pEmoji, eEmoji, eName, onDone) {
-  const { ctl, root } = _ifController(onDone);
-  const S = (ms, fn) => ctl.sched(ms, fn);
-  const B = (s, d, fn, fr) => ctl.burst(s, d, fn, fr);
-  const C = theme.c, PAL = theme.pal;
-  const j = n => (Math.random() - 0.5) * n;
-
-  // 1 ── time-stop split
-  S(0, () => {
-    audio.swoosh();
-    const ln = _ifMk(root, `position:absolute;left:0;right:0;top:50%;height:2px;background:#fff;transform:scaleX(0);z-index:30;transition:transform .13s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
-    void ln.offsetWidth; ln.style.transform = 'scaleX(1)';
-    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 220);
-  });
-
-  // 2 ── 120-700: intro flicker (12 cuts @48ms) — halftone + ring frames mixed in
-  S(240, () => { audio.boom(); _ifShake(root); });
-  S(430, () => _ifBam(root, '!!', 72, 26, '#fff', 90, 8));
-  B(120, 580, (i) => {
-    const bg = _ifRand(['#fff', '#000', PAL[0], '#fff', PAL[3] || PAL[1], '#000', PAL[1], '#fff'], i);
-    const fg = bg === '#fff' ? '#000' : (bg === '#000' ? '#fff' : '#000');
-    return _ifFlipPanel(root, {
-      bg, lines: i % 4 === 3 ? 'halftone' : 'radial', lineColor: fg, lineAng: j(12),
-      fx: i % 5 === 4 ? [{ kind: 'rings', color: fg, width: 3 }] : null,
-      sils: [{ emoji: eEmoji, x: 58 + j(6), y: 49 + j(5), size: 170 + j(22), fill: _ifFill(fg), rot: j(11), rgb: i % 3 === 0 }]
-    });
-  }, 40);
-
-  // 3 ── 700-1760: title card over a spiral storm
-  S(700, () => {
-    audio.riser(1.05);
-    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
-    ov.dataset.ifTitle = '1';
-    _ifText(ov, 'FINISHER', 13, '#aaa', 33, false, 'letter-spacing:14px;');
-    _ifText(ov, theme.glyph + ' ' + theme.kill + ' ' + theme.glyph, 50, C, 48, true);
-  });
-  B(700, 1060, (i) => {
-    const colorFrame = i % 3 === 2;
-    const bg = colorFrame ? _ifRand(PAL, i) : (i % 2 ? '#0a0a14' : '#05050a');
-    return _ifFlipPanel(root, {
-      bg, lines: i % 3 === 2 ? 'spiral' : 'radial',
-      lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1),
-      lineAng: i * 9 + j(4)
-    });
-  }, 40);
-  S(1760, () => { const t = root.querySelector('[data-if-title]'); if (t) t.remove(); });
-
-  // 4 ── 1780-3380: dash montage — 5 dashes × 6 cuts @53ms, ghosts + onomatopoeia
-  S(1780, () => {
-    const cb = _ifMk(root, 'position:absolute;left:4%;top:6%;z-index:52;pointer-events:none;font-family:Impact,sans-serif;font-size:30px;color:#fff;letter-spacing:3px;text-shadow:2px 2px 0 #000,0 0 14px ' + C + ';');
-    cb.dataset.ifCombo = '1';
-  });
-  const BAMS = ['SLAM!', 'CRACK!', 'WHAM!', 'SMASH!', 'BREAK!'];
-  for (let d = 0; d < 5; d++) {
-    const start = 1780 + d * 320;
-    S(start, () => { audio.slamHit(); _ifShake(root); });
-    S(start + 106, () => audio.clack());
-    S(start + 160, () => {
-      const cb = root.querySelector('[data-if-combo]');
-      if (cb) { cb.textContent = 'COMBO ×' + (d + 1); cb.style.animation = 'none'; void cb.offsetWidth; cb.style.animation = 'ifBamIn .16s'; }
-      _ifBam(root, BAMS[d], 62 + j(14), 28 + j(10), _ifRand(PAL, d), 56 + d * 5, j(22));
-    });
-    B(start, 320, (i, n2) => {
-      const prog = i / Math.max(1, n2 - 1);
-      const cycle = [d % 2 ? '#000' : '#fff', _ifRand(PAL, d), d % 2 ? '#fff' : '#000', _ifRand(PAL, d + 2), '#fff', '#000'];
-      const bg = cycle[i % cycle.length];
-      const mono = bg === '#fff' ? '#000' : '#fff';
-      const hit = prog > 0.45;
-      const ax = 8 + prog * 50;
-      return _ifFlipPanel(root, {
-        bg, lines: i % 4 === 3 ? 'tear' : 'streak', lineColor: mono, lineAng: -8 + d * 6 + j(5),
-        sils: [
-          { emoji: pEmoji, x: ax + j(2), y: 44 + d * 2.5 + j(3), size: 154, fill: _ifFill(i % 3 === 2 ? _ifRand(PAL, d + 1) : mono), rot: j(13) },
-          { emoji: pEmoji, x: ax - 9, y: 44 + d * 2.5, size: 148, fill: _ifFill(mono), rot: j(6), op: 0.4 },
-          { emoji: pEmoji, x: ax - 18, y: 44 + d * 2.5, size: 142, fill: _ifFill(mono), rot: j(6), op: 0.18 },
-          { emoji: eEmoji, x: 70 + (hit ? j(8) : 0), y: 50 + (hit ? j(7) : 0), size: 154, fill: _ifFill(hit && i % 2 ? _ifRand(PAL, d + i) : mono), rot: hit ? j(30) : j(4), rgb: hit }
-        ],
-        slash: hit ? -40 + d * 22 + j(14) : null,
-        slashColor: bg === '#fff' ? '#000' : _ifRand(PAL, d), slashX: 70, slashY: 50
-      });
-    }, 40);
-  }
-  S(3420, () => { const cb = root.querySelector('[data-if-combo]'); if (cb) cb.remove(); });
-
-  // 5 ── 3400-4260: charge — glyph swells over spiral/halftone cuts
-  S(3400, () => audio.riser(0.9));
-  B(3400, 860, (i, n2) => {
-    const k = i / Math.max(1, n2 - 1);
-    const colorFrame = i % 3 === 1;
-    const bg = colorFrame ? _ifRand(PAL, i) : '#000';
-    return _ifFlipPanel(root, {
-      bg, lines: i % 3 === 2 ? 'halftone' : 'spiral',
-      lineColor: colorFrame ? '#000' : _ifRand(PAL, i), lineAng: i * 11,
-      fx: i % 4 === 0 ? [{ kind: 'rings', color: colorFrame ? '#00000055' : '#ffffff33', width: 2 }] : null,
-      sils: [{ emoji: theme.glyph, x: 50 + j(3 + k * 4), y: 50 + j(3 + k * 4), size: 90 + k * 150,
-               fill: colorFrame ? _ifFill('#000') : _ifFill(_ifRand(PAL, i + 1)), rot: j(8), rgb: true }]
-    });
-  }, 40);
-
-  // 6 ── 4280-4940: MEGA IMPACT — 15 cuts @44ms, burst/tear strobe + triple slash
-  S(4280, () => { audio.subBoom(); _ifShake(root); });
-  S(4500, () => _ifBam(root, 'BOOM!!', 50, 22, '#fff', 86, -4));
-  S(4620, () => { audio.slamHit(); _ifShake(root); });
-  B(4280, 660, (i) => {
-    const bg = _ifRand(['#fff', PAL[0], '#000', '#fff', PAL[1], '#000', PAL[2], '#fff', PAL[3] || PAL[0], '#000'], i);
-    const mono = bg === '#fff' ? '#000' : '#fff';
-    const p = _ifFlipPanel(root, {
-      bg, lines: i % 3 === 0 ? 'burst' : (i % 3 === 1 ? 'radial' : 'tear'),
-      lineColor: i % 3 === 0 ? (bg === '#fff' ? '#00000028' : '#ffffff2e') : mono, lineAng: j(28),
-      sils: [{ emoji: eEmoji, x: 50 + j(7), y: 50 + j(6), size: 210 + j(28), fill: _ifFill(mono), rot: j(22), rgb: true }],
-      slash: -35 + j(10), slashColor: mono, slashThick: 10, slashX: 50, slashY: 50
-    });
-    _ifSlash(p, 35 + j(10), mono, 10, 50, 50);
-    _ifSlash(p, 90 + j(8), mono, 6, 50, 50);
-    if (i % 3 === 0) _ifRings(p, 50, 50, bg === '#fff' ? C : '#fff', 1);
-    return p;
-  }, 40);
-
-  // 7 ── 4960-5650: shatter aftermath, two shard waves + flickering color washes
-  S(4960, () => {
-    audio.boom(); _ifShake(root);
-    const old = root.querySelector('[data-if-flip]'); if (old) old.remove();
-    if (root._ifBg) root._ifBg.style.background = '#fff';
-    _ifDrawLines(root, { lines: 'radial', lineColor: 'rgba(0,0,0,0.15)' });
-    const p = _ifMk(root, 'position:absolute;inset:0;z-index:14;pointer-events:none;', 'if-layer');
-    p.dataset.ifShards = '1';
-    _ifShatter(p, 50, 50, '#000', 22);
-    _ifShatter(p, 50, 50, C, 10);
-  });
-  S(5150, () => {
-    const p = root.querySelector('[data-if-shards]');
-    if (p) { _ifShatter(p, 50, 50, '#000', 10); _ifShatter(p, 50, 50, _ifRand(PAL, 1), 6); }
-  });
-  B(5020, 600, (i) => _ifMk(root,
-    `position:absolute;inset:0;z-index:15;pointer-events:none;background:${_ifRand(PAL, i)};opacity:${i % 2 ? 0.18 : 0.06};`,
-    'if-layer'), 40);
-
-  // 8 ── 5650-7050: K.O. stamp + double confetti over a pulsing line storm
-  S(5650, () => {
-    root.querySelectorAll('.if-layer').forEach(el => el.remove());
-    audio.stinger(); audio.victory();
-    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
-    _ifText(ov, 'K.O.', 116, C, 42, true);
-    _ifText(ov, eName + ' IS DOWN', 16, '#ddd', 67, false, 'letter-spacing:6px;');
-    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 44);
-  });
-  S(5980, () => spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.38, 30));
-  B(5650, 1300, (i) => _ifFlipPanel(root, {
-    bg: '#05050a', lines: 'radial',
-    lineColor: _ifRand([C + '66', C + '22', (PAL[1] || C) + '44', (PAL[2] || C) + '33'], i),
-    lineAng: i * 5,
-    fx: i % 4 === 0 ? [{ kind: 'rings', color: C + '22', width: 2 }] : null
-  }), 80);
-
-  // 9 ── fade out
-  S(7050, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
-  S(7430, () => ctl.finish());
-}
-
-// ── CAPTURE FINISHER — spiral suction + 4 escalating wobbles ──
-function _ifCaptureScene(theme, pEmoji, eEmoji, eName, onDone) {
-  const { ctl, root } = _ifController(onDone);
-  const S = (ms, fn) => ctl.sched(ms, fn);
-  const B = (s, d, fn, fr) => ctl.burst(s, d, fn, fr);
-  const C = theme.c, PAL = theme.pal;
-  const j = n => (Math.random() - 0.5) * n;
-  const ball = (p, x, y, sz, rot) => _ifMk(p,
-    `position:absolute;left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;border-radius:50%;z-index:24;` +
-    `transform:translate(-50%,-50%) rotate(${rot || 0}deg);` +
-    `background:linear-gradient(180deg,${C} 0 44%,#111 44% 56%,#f5f5f5 56% 100%);` +
-    `box-shadow:0 0 26px ${C}aa, inset 0 0 10px rgba(0,0,0,.5);`);
-
-  // 1 ── vertical time-stop split
-  S(0, () => {
-    audio.swoosh();
-    const ln = _ifMk(root, `position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;transform:scaleY(0);z-index:30;transition:transform .13s cubic-bezier(.7,0,.3,1);box-shadow:0 0 14px #fff;`);
-    void ln.offsetWidth; ln.style.transform = 'scaleY(1)';
-    setTimeout(() => { try { ln.remove(); } catch (e) {} }, 220);
-  });
-
-  // 2 ── 120-700: target flicker
-  S(240, () => { audio.boom(); _ifShake(root); });
-  S(430, () => _ifBam(root, '!?', 74, 24, '#fff', 84, 10));
-  B(120, 580, (i) => {
-    const bg = _ifRand(['#fff', '#000', PAL[0], '#fff', PAL[2], '#000', '#fff'], i);
-    const fg = bg === '#fff' ? '#000' : (bg === '#000' ? '#fff' : '#000');
-    return _ifFlipPanel(root, {
-      bg, lines: i % 4 === 3 ? 'halftone' : 'radial', lineColor: fg, lineAng: j(12),
-      fx: i % 5 === 4 ? [{ kind: 'rings', color: fg, width: 3 }] : null,
-      sils: [{ emoji: eEmoji, x: 60 + j(6), y: 47 + j(5), size: 168 + j(20), fill: _ifFill(fg), rot: j(10), rgb: i % 3 === 0 }]
-    });
-  }, 40);
-
-  // 3 ── 700-1660: CAPTURE ART title over spiral storm
-  S(700, () => {
-    audio.riser(0.95);
-    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
-    ov.dataset.ifTitle = '1';
-    _ifText(ov, 'CAPTURE ART', 13, '#aaa', 33, false, 'letter-spacing:14px;');
-    _ifText(ov, theme.glyph + ' ' + theme.catch + ' ' + theme.glyph, 46, C, 48, true);
-  });
-  B(700, 960, (i) => {
-    const colorFrame = i % 3 === 2;
-    const bg = colorFrame ? _ifRand(PAL, i) : (i % 2 ? '#0a0a14' : '#05050a');
-    return _ifFlipPanel(root, {
-      bg, lines: i % 3 === 2 ? 'spiral' : 'radial',
-      lineColor: colorFrame ? '#000' : _ifRand(PAL, i + 1), lineAng: i * 8
-    });
-  }, 40);
-  S(1660, () => { const t = root.querySelector('[data-if-title]'); if (t) t.remove(); });
-
-  // 4 ── 1680-2240: the throw — 11 cuts @51ms with tear glitches
-  S(1680, () => audio.swoosh());
-  B(1680, 560, (i, n2) => {
-    const k = i / Math.max(1, n2 - 1);
-    const bx = 8 + k * 42, by = 78 - Math.sin(k * Math.PI) * 44;
-    const bg = i % 4 === 3 ? _ifRand(PAL, i) : (i % 2 ? '#000' : '#0a0a12');
-    const mono = (bg === '#000' || bg === '#0a0a12') ? '#fff' : '#000';
-    const p = _ifFlipPanel(root, {
-      bg, lines: i % 4 === 2 ? 'tear' : 'streak', lineColor: mono, lineAng: -6 + j(4),
-      sils: [{ emoji: eEmoji, x: 68 + j(2), y: 46 + j(2), size: 158, fill: _ifFill(mono), rot: j(5) }]
-    });
-    ball(p, bx, by, 56, i * 74);
-    return p;
-  }, 40);
-
-  // 5 ── 2250-3160: CLANG + spiral suction — target spirals into the ball
-  S(2250, () => { audio.boom(); _ifShake(root); audio.riser(0.8); });
-  S(2290, () => _ifBam(root, 'CLANG!', 62, 26, _ifRand(PAL, 0), 64, -10));
-  B(2280, 880, (i, n2) => {
-    const k = i / Math.max(1, n2 - 1);
-    const bg = _ifRand(['#fff', '#000', PAL[0], '#000', PAL[1], '#fff', PAL[3] || PAL[0], '#000'], i);
-    const mono = bg === '#fff' ? '#000' : '#fff';
-    const ex = 68 - k * 18, ey = 46 + k * 8;
-    const p = _ifFlipPanel(root, {
-      bg, lines: 'spiral', lineColor: mono, lineAng: i * 26,
-      fx: i % 3 === 0 ? [{ kind: 'rings', color: mono + '44', width: 2 }] : null,
-      sils: [{ emoji: eEmoji, x: ex + j(3), y: ey + j(3), size: 160 * (1 - k * 0.92), fill: _ifFill(k > 0.6 ? _ifRand(PAL, i) : mono), rot: i * 44, rgb: true }]
-    });
-    ball(p, 50, 54, 64 + j(4), j(12));
-    return p;
-  }, 40);
-
-  // 6 ── 3170-3470: ball slams down in 5 cuts
-  S(3170, () => { audio.slamHit(); _ifShake(root); });
-  B(3170, 300, (i, n2) => {
-    const k = i / Math.max(1, n2 - 1);
-    const p = _ifFlipPanel(root, {
-      bg: i % 2 ? '#000' : '#0a0a12', lines: 'radial',
-      lineColor: (i % 2 ? C : '#fff') + '55', lineAng: j(8)
-    });
-    ball(p, 50, 38 + k * 22, 110, j(7));
-    if (i === n2 - 1) _ifRings(p, 50, 60, C, 2);
-    return p;
-  }, 40);
-
-  // 7 ── 3540-5780: FOUR wobbles, each a 5-cut freeze burst with rising tension
-  const tilts = [[-18, -7, 12, 4, -2], [16, 6, -13, -4, 2], [-21, 9, -10, 15, -3], [24, -12, 17, -8, 3]];
-  const marks = ['.', '..', '...', '!!!'];
-  for (let w = 0; w < 4; w++) {
-    const start = 3540 + w * 560;
-    S(start, () => { audio.clack(); if (w === 3) { audio.boom(); _ifShake(root); } });
-    if (w === 3) S(start + 60, () => _ifBam(root, '!!!', 50, 26, '#ff4040', 88, 6));
-    B(start, 480, (i) => {
-      const colorFrame = i % 3 === 1;
-      const p = _ifFlipPanel(root, {
-        bg: i % 2 ? '#000' : '#05050a', lines: 'radial',
-        lineColor: colorFrame ? _ifRand(PAL, i) + '66' : '#ffffff22', lineAng: j(5 + w * 3)
-      });
-      ball(p, 50 + j(1.5 + w * 0.7), 58 + j(1.5 + w * 0.7), 118, _ifRand(tilts[w], i) + j(4 + w * 2));
-      _ifText(p, marks[w], 64, w === 3 ? '#ff7070' : '#fff', 30, false, 'letter-spacing:18px;');
-      return p;
-    }, 72);
-  }
-
-  // 8 ── 5800-7150: ✦ CAUGHT! ✦ star burst + double confetti + harp gliss
-  S(5800, () => {
-    root.querySelectorAll('.if-layer').forEach(el => el.remove());
-    audio.stinger(); audio.catchSuccess(); audio.gliss();
-    const ov = _ifMk(root, 'position:absolute;inset:0;z-index:55;pointer-events:none;');
-    const bp = _ifMk(ov, 'position:absolute;inset:0;');
-    ball(bp, 50, 64, 92, 0);
-    _ifRings(ov, 50, 64, C, 5);
-    _ifShatter(ov, 50, 64, C, 14);
-    _ifText(ov, '✦ CAUGHT! ✦', 78, C, 32, true);
-    _ifText(ov, eName + ' REGISTERED TO PANDEX', 14, '#ddd', 86, false, 'letter-spacing:5px;');
-    spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 50);
-  });
-  S(6150, () => spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.4, 36));
-  B(5800, 1300, (i) => _ifFlipPanel(root, {
-    bg: '#05050a', lines: 'radial',
-    lineColor: _ifRand([C + '66', C + '22', (PAL[1] || C) + '44', (PAL[4] || C) + '33'], i),
-    lineAng: i * 5,
-    fx: i % 4 === 0 ? [{ kind: 'rings', color: C + '22', width: 2 }] : null
-  }), 80);
-
-  // 9 ── fade out
-  S(7150, () => { root.style.transition = 'opacity .35s ease-out'; root.style.opacity = '0'; });
-  S(7530, () => ctl.finish());
-}
-
 // ── EVOLUTION FINISHER — metamorphosis with old⇄new flip-flop reveal ──
 function _ifEvolutionScene(fromName, toName, fromEmoji, toEmoji, col, hpGain) {
   if (_ifActive) _ifActive.finish();
@@ -9826,6 +9511,7 @@ function explodeDefeatedEnemy(onDone) {
   audio.boom();
   triggerScreenShake(6, 260);
   sprite.classList.remove('hurt');   // stop any in-progress flinch animation from fighting our filter/opacity
+  sprite.style.animationPlayState = '';   // in case a crit's hitstop freeze hadn't released yet
   sprite.style.transition = 'opacity .12s ease-out';
   sprite.style.setProperty('filter', 'brightness(3) saturate(0)', 'important');
   sprite.style.opacity = '0';
@@ -9860,6 +9546,38 @@ function explodeDefeatedEnemy(onDone) {
 function triggerDefeatFinisher() {
   const b = state.battle; if (!b || b.ended) return;
   explodeDefeatedEnemy(() => { btEnemySprite.classList.add('faint'); onEnemyFaint(); });
+}
+
+// quick capture celebration — replaces the old ~7.5s manga-panel cinematic, which ran on
+// every successful catch (the most frequent action in the game) and made catching feel slow
+function celebrateCapture(b, onDone) {
+  const sprite = btEnemySprite;
+  if (!sprite || !btArena) { if (onDone) onDone(); return; }
+  const rect = sprite.getBoundingClientRect();
+  const aRect = btArena.getBoundingClientRect();
+  const cx = rect.left - aRect.left + rect.width/2;
+  const cy = rect.top - aRect.top + rect.height/2;
+  const name = (b && b.enemy && b.enemy.n) || 'IT';
+  const rarity = b && b.enemy ? b.enemy.rarity : null;
+  const col = (rarity && RARITY_COLOR[rarity]) || '#ffd700';
+  spawnConfetti(rect.left + rect.width/2, rect.top + rect.height/2, 42);
+  const tag = document.createElement('div');
+  Object.assign(tag.style, {
+    position:'absolute', left:cx+'px', top:(cy-50)+'px', transform:'translate(-50%,-50%) scale(0.5)',
+    fontFamily:`Impact,'Trebuchet MS',Arial,sans-serif`, fontSize:'20px', fontWeight:'900', letterSpacing:'3px',
+    color:col, textShadow:`0 0 14px ${col},0 0 30px ${col}88,0 2px 4px rgba(0,0,0,.9)`,
+    zIndex:'20', pointerEvents:'none', whiteSpace:'nowrap', opacity:'0',
+    transition:'transform .3s cubic-bezier(.17,.67,.28,1.5),opacity .2s ease'
+  });
+  tag.textContent = `✦ ${name.toUpperCase()} CAUGHT! ✦`;
+  btArena.appendChild(tag); void tag.offsetWidth;
+  tag.style.opacity = '1'; tag.style.transform = 'translate(-50%,-50%) scale(1)';
+  setTimeout(() => {
+    tag.style.transition = 'opacity .35s ease-out, top .4s ease-out';
+    tag.style.opacity = '0'; tag.style.top = (cy-80)+'px';
+    setTimeout(() => { try { tag.remove(); } catch(e) {} }, 420);
+  }, 750);
+  setTimeout(() => { if (onDone) onDone(); }, 820);
 }
 
 // ── shared scene builder ──────────────────────────────────
@@ -10819,7 +10537,7 @@ function _catchVerdict(b, ball, bx, by) {
       btEnemySprite.style.transition = '';
       btEnemySprite.style.transform = '';
       btEnemySprite.style.opacity = '';
-      playImpactFinisher('capture', () => onEnemyFaint());
+      celebrateCapture(b, () => onEnemyFaint());
     }, 800);
   } else {
     // Crack open + enemy re-materializes
@@ -10933,7 +10651,7 @@ function checkDotCatchEnd() {
     b.enemyHp = 0;
     b.wasCaught = true;
     renderBattle();
-    setTimeout(() => playImpactFinisher('capture', () => onEnemyFaint()), 500);
+    setTimeout(() => celebrateCapture(b, () => onEnemyFaint()), 500);
   } else if (ratio >= 0.4) {
     audio.catchFail();
     battleLog(`Almost had it! (${cd.clicked}/${cd.total}) — it takes some damage thrashing free!`);
@@ -14306,7 +14024,7 @@ const LOAD_EMOJIS = ['🍳','🔪','🍲','🧁','🥘','🍽️','👨‍🍳',
 // fast-travel and gallery button throws ReferenceError).
 Object.assign(window, {
   saveGame, loadGame, openSaveSlots, closeSaveModal, deleteSaveSlot,
-  renderSaveSlots, fastTravelTo, closeDialog, galleryNav, playImpactFinisher,
+  renderSaveSlots, fastTravelTo, closeDialog, galleryNav,
   buyItem, startTower, setGameVolume, closeWorldMap,
   continuePostgame, startNewGamePlus, toggleReducedFlash,
   openKitchen, kitchenTab, cookDish, forgeGarnish, equipGarnish, showTypeChart,
